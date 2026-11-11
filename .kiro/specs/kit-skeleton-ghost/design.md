@@ -383,6 +383,8 @@ Not covered (no requirement asks for it): an evaluator that throws or never reso
 
 Known gap, left for spec (e) (owner decision after task 7): a language switch during `evaluating` changes the locale but does not re-evaluate (transition table: "any | locale-changed | same phase"), so the pending feedback arrives in the old language. The demo evaluator resolves almost at once, so phase 1 is unaffected; slow real providers in spec (e) need a fix (for example, re-evaluate or drop a `feedback-ready` whose locale differs).
 
+Known gap, left for spec (e) (found in task 12): `withFallback` moves to the next provider only when a provider returns `{ ok: false }`. A provider that returns `ok` text which then fails `isFeedback` does not fall back to demo. The proxy already validates model output and returns `bad-output` (`netlify-proxy-safety` skill), but the bring-your-own-key (BYOK) providers that run in the browser must do the same: parse the model text, check it with `isFeedback`, and return `{ ok: false, error: 'bad-output' }` on failure, so the chain falls back to demo.
+
 ## 9. Correctness properties (fast-check, Req 12.1)
 | # | Property | Module |
 |---|---|---|
