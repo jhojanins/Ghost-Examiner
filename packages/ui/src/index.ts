@@ -6,6 +6,8 @@ export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';
 export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
+export type { PrivacyDialogProps } from './PrivacyDialog';
+export { PrivacyDialog } from './PrivacyDialog';
 export type { TranscriptLine, TranscriptProps } from './Transcript';
 export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';

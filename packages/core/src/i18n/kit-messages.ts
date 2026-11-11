@@ -27,6 +27,19 @@ export const kitMessages = defineCatalog(
     'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
     'transcript.heading': 'Transcript',
 
+    // Privacy notice (Req 10.2, steering accessibility-ethics.md). Plain and honest; no jokes.
+    'privacy.title': 'Privacy notice',
+    'privacy.intro': 'Before we start, here is what happens with what you type.',
+    'privacy.local':
+      'Demo mode runs entirely in your browser. Your answers are not sent to any server, and they are gone when you close the page.',
+    'privacy.noPersonalData':
+      'Please do not enter personal or sensitive data, such as your full name, address, health or money details. Made-up examples work just as well.',
+    'privacy.freeTier':
+      'A later version may offer a free AI service instead of demo mode. Free AI services may use the text you send to improve their products, and people at those companies may read it. The app will name the service and ask you before sending anything.',
+    'privacy.accept': 'I understand, start',
+    'privacy.notNow': 'Not now',
+    'privacy.close': 'Close',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -51,6 +64,18 @@ export const kitMessages = defineCatalog(
     'ghost.label.approving': 'El examinador fantasma, satisfecho.',
     'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
     'transcript.heading': 'Transcripción',
+
+    'privacy.title': 'Aviso de privacidad',
+    'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes.',
+    'privacy.local':
+      'El modo demo funciona por completo en tu navegador. Tus respuestas no se envían a ningún servidor y desaparecen al cerrar la página.',
+    'privacy.noPersonalData':
+      'Por favor, no escribas datos personales ni sensibles, como tu nombre completo, tu dirección o datos de salud o de dinero. Los ejemplos inventados funcionan igual de bien.',
+    'privacy.freeTier':
+      'Una versión futura podría ofrecer un servicio de IA gratuito en lugar del modo demo. Los servicios de IA gratuitos pueden usar el texto que les envíes para mejorar sus productos, y personas de esas empresas pueden leerlo. La app te dirá qué servicio es y te preguntará antes de enviar nada.',
+    'privacy.accept': 'Entendido, empezar',
+    'privacy.notNow': 'Ahora no',
+    'privacy.close': 'Cerrar',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

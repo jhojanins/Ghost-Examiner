@@ -107,7 +107,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show the full line renders at once, the word at the mocked time has the underline-and-bold class, captions are `aria-hidden`, and a finished line appears once in the transcript list and once in the polite live region.
   - _Requirements: 4.1, 4.2, 4.4, 4.5_ · Skills: `ghost-svg-animation`, `a11y-review`
 
-- [ ] 21. PrivacyDialog
+- [x] 21. PrivacyDialog
   - Native `<dialog>` with `showModal()`; text from design and steering (local processing in demo mode, no sensitive or personal data).
   - Esc must really return to the intro screen (design §8). The engine has no event for it and stays in `privacy`, so the app shows the intro screen with a Start button that reopens the dialog (task 27 wires this).
   - **Done when:** component tests show the dialog opens modal with focus inside, Accept calls `onAccept`, Esc calls `onDismiss` without `onAccept`, and the read-only mode has only a Close button.
@@ -138,7 +138,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 ### Apps, build and deploy
 - [ ] 27. ghost-interview slice wiring
   - `config.ts` (`preview: true`), `content/pack.ts` (one fictional question, 3 key points, EN/ES cues), `messages.ts`, `App.tsx` wiring only, `vite.config.ts` with `base: '/interview/'`.
-  - `useGhostPose` (task 19) has only been tested with a mocked `requestAnimationFrame`. The walk-through must check it in a real browser: the ghost blinks every 3 to 6 s, stops blinking with `reducedMotion: 'reduce'` emulated, and the mouth changes shape in step with the captions while a line plays (screenshots or attribute reads at a few moments). If task 21 already renders the animated ghost, do this check there instead and say so here.
+  - `useGhostPose` (task 19) real-browser check: **done in task 21** on its harness page (Chromium, 13 s per run at 60 fps): blinks of 117 ms, 3.5 s and 5.0 s apart; none with `reducedMotion: 'reduce'`; exactly one mouth shape visible in every frame, changing while a caption word is marked and at `rest` otherwise. Task 27 only re-checks that the mouth and captions move together with the real session runtime (its `startedAt` comes from `SilentOutput`, not the harness).
   - Check, and report to the owner, whether the ghost should stop speaking when the user submits an answer while the question line is still playing. Today the engine moves to `confirming` and the runtime lets the question line finish (captions and mouth keep going next to the confirmation view). Decide with the owner before changing it; if it should stop, the runtime cancels the line on entering `confirming`.
   - Demo feedback is labeled honestly: whenever the evaluator's provider is a demo provider (`isDemo`), the feedback panel shows a visible line, from the `en`/`es` catalogs, saying it is a keyword-based demo evaluation (for example "Demo evaluation: based on keywords, not a full reading of your answer." / "Evaluación de demostración: se basa en palabras clave, no en una lectura completa de tu respuesta."). It sits next to the "Practice feedback" heading from task 24, and the walk-through checks it in EN and ES.
   - Esc on the privacy dialog: while the engine stays in `privacy`, the app shows the intro screen with a Start button; Start reopens the dialog (it does not dispatch `start` again, which the engine would ignore).
