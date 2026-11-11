@@ -42,6 +42,8 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | `ghost-svg-animation` skill gains a version note: spec (a) phase 1 follows its design (`Timeline` shape, 4 visemes, 4 expressions, no float); the skill describes the later version | Skills |
 | 2026-11-11 | Task 11: `ghostPose` (pure, `now` passed in, no float, seeded blink hash) with example tests and properties P7, P8; a dedicated test shows reduced motion removes blinking and changes nothing else | Specs (task execution), property-based testing |
 | 2026-11-11 | Task 12: LLM types, `withFallback` and a strict `isFeedback` guard for untrusted model output, using the `netlify-proxy-safety` and `prompt-injection-defense` skills. The guard accepts only a plain object with exactly the five own keys, non-blank text up to 500 characters, and known `reaction`/`locale` values. 9 deliberate mutations, all caught. Finding: the unknown-key check only mattered when combined with a polluted `Object.prototype`, so that case got its own test | Specs (task execution), skills |
+| 2026-11-11 | Design §8 gains the spec (e) note from task 12: BYOK providers in the browser must validate with `isFeedback` and return `bad-output`, so the chain falls back to demo | Specs |
+| 2026-11-11 | Task 13: deterministic demo provider, `createLlmEvaluator` and the EN/ES feedback copy in the kit catalog (`kit-messages.ts`), written with the `ghost-persona` skill ("tú", gender-neutral, no joke after a weak answer). Example tests, property P9, 9 mutation checks | Specs (task execution), skills, property-based testing |
 
 ## Revisit later
 - **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
@@ -160,3 +162,9 @@ Text generators mix word-like tokens (accents, `ñ`, digits, `¿¡,.?!-`) joined
 | P8 | same | Without reduced motion, consecutive blink starts are 3000 to 6000 ms apart (15 s window scanned at 1 ms steps from a random start) |
 
 Three mutations were caught: ignoring `reducedMotion` (P7 and the reduced-motion example test), widening the blink jitter to 3 s (P8), and off-by-one mouth cue boundaries (the viseme example test).
+
+| Property | File | What it checks |
+|---|---|---|
+| P9 | `packages/core/src/llm/demo.prop.test.ts` | For random questions (up to 5 key points, random cues including blank ones) and random answers (any Unicode, graphemes, lorem text), the demo provider's output always passes `isFeedback`, and two evaluations with fresh providers give identical feedback in the requested locale |
+
+Mutation checks on the demo heuristic and evaluator (9 changes, all caught): "at least half" made strict, short-answer threshold changed, accent stripping removed, blank cues allowed to match, whitespace not collapsed, strength taken from the last match, evaluator locale check removed, and randomness added to the output (P9 plus 3 example tests). A no-op change was run as a control and passed.

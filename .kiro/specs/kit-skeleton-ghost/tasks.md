@@ -68,7 +68,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** unit tests show `withFallback(failing, working)` returns the working result, `withFallback(failing, failing)` returns the last error, and `isFeedback` rejects missing fields, extra fields, wrong types and an unknown reaction.
   - _Requirements: 8.1_ · Skills: `netlify-proxy-safety`
 
-- [ ] 13. Demo provider, evaluator and feedback copy
+- [x] 13. Demo provider, evaluator and feedback copy
   - Heuristic from design §3.7; EN and ES feedback templates in the kit catalog, written with the persona rules ("tú").
   - **Done when:** property P9 passes; example tests show an answer covering 2 of 3 key points gets `approving` with the right strength and improvement, a 5-word answer gets the "say a bit more" improvement, and the same input in `es` returns Spanish text.
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 9.4_ · Skills: `ghost-persona`
