@@ -34,12 +34,15 @@
   transform: translateX(5px);
 }
 
-/* Satisfied, not smiling: both brows lifted and level, eyelids relaxed. */
+/*
+ * Satisfied, not smiling (owner change after task 18: it must read clearly at about 150 px):
+ * brows lifted well above the glasses and level, eyes open wider. The mouth stays flat.
+ */
 .ge-ghost[data-expression='approving'] .ge-brow {
-  transform: translateY(-9px);
+  transform: translateY(-18px);
 }
 .ge-ghost[data-expression='approving'] .ge-eye {
-  transform: translateY(1px) scaleY(0.7);
+  transform: scale(1.15, 1.4);
 }
 
 .ge-ghost[data-expression='skeptical'] .ge-brow-left {
