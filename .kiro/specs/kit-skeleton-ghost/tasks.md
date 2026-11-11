@@ -74,7 +74,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 9.4_ · Skills: `ghost-persona`
 
 ### packages/web
-- [ ] 14. Clock, browser locale and SilentOutput
+- [x] 14. Clock, browser locale and SilentOutput
   - **Done when:** with fake timers, `createSilentOutput(clock).speak(timeline).done` resolves exactly at `timeline.duration`, `cancel()` resolves it early without error, and `browserLocale()` returns `es` for a stubbed `navigator.languages` of `['es-CO']`.
   - _Requirements: 4.1, 9.1_
 

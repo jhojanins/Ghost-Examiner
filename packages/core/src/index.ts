@@ -37,3 +37,4 @@ export { kitMessages } from './i18n/kit-messages';
 export { createDemoProvider } from './llm/demo-provider';
 export type { Evaluator } from './llm/evaluator';
 export { createLlmEvaluator } from './llm/evaluator';
+export type { Clock } from './clock';
