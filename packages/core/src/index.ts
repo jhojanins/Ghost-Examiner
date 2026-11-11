@@ -11,3 +11,16 @@ export type {
 } from './input/types';
 export type { KeyboardAdapter } from './input/keyboard-adapter';
 export { createKeyboardAdapter } from './input/keyboard-adapter';
+export type {
+  ConfirmedAnswer,
+  Effect,
+  Feedback,
+  KeyPoint,
+  LineRef,
+  Phase,
+  Question,
+  QuestionPack,
+  SessionEvent,
+  SessionState,
+} from './engine/types';
+export { initialState, reduce } from './engine/reduce';

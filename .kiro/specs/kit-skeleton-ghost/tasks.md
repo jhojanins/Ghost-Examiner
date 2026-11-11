@@ -39,7 +39,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** unit tests show `submit('  ')` returns `{ ok: false, reason: 'empty' }` with no event, `submit(' Hi ')` emits one candidate with text `Hi` and method `keyboard`, and `supports` lists all three answer kinds.
   - _Requirements: 6.1, 6.3, 6.4_
 
-- [ ] 7. Engine: types, `initialState`, `reduce`
+- [x] 7. Engine: types, `initialState`, `reduce`
   - Transition table from design §3.3, including Edit (`draft`), Retry, the `confirmedBrand`, and `locale-changed` re-evaluation in feedback.
   - **Done when:** one example test per row of the design's transition table passes, and a `@ts-expect-error` test shows a plain object can't be passed where `ConfirmedAnswer` is required.
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.6, 7.3, 7.4, 7.5, 9.2_
@@ -140,7 +140,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 
 - [ ] 28. Slice end-to-end test with network and axe checks
   - `apps/ghost-interview/e2e/slice.spec.ts` (Chromium), `webServer` with `vite preview`.
-  - **Done when:** `pnpm e2e` passes and covers: the keyboard-only flow, confirmation before feedback, captions and transcript per line, the request allowlist (any foreign origin fails the test), and axe (WCAG 2.2 AA tags) with zero violations on intro, privacy dialog, answering, confirming and feedback screens in EN with default motion.
+  - **Done when:** `pnpm e2e` passes and covers: the keyboard-only flow, typing an answer and submitting it shows the confirmation view with that exact text (catches a keyboard adapter that was never `start()`ed, since `submit()` then returns `ok` but emits nothing), confirmation before feedback, captions and transcript per line, the request allowlist (any foreign origin fails the test), and axe (WCAG 2.2 AA tags) with zero violations on intro, privacy dialog, answering, confirming and feedback screens in EN with default motion.
   - _Requirements: 12.2, 12.3 (phase 1), 12.4_ · Skills: `testing-strategy`, `a11y-review`
 
 - [ ] 29. ghost-defense shell
