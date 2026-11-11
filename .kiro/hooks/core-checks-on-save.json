@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Core checks on save",
+      "trigger": "PostFileSave",
+      "description": "Runs typecheck and unit tests for packages/core when a core TypeScript file is saved. Shell command only; no model call.",
+      "matcher": "packages/core/src/.*\\.ts$",
+      "action": {
+        "type": "command",
+        "command": "pnpm --filter @ghost-examiner/core typecheck && pnpm exec vitest run --project core",
+        "timeout": 60
+      }
+    }
+  ]
+}
