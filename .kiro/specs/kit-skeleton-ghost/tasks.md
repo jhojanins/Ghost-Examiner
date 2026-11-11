@@ -30,7 +30,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
 ### packages/core
-- [ ] 5. i18n: `Locale`, `defineCatalog`, `format`, `pickLocale`
+- [x] 5. i18n: `Locale`, `defineCatalog`, `format`, `pickLocale`
   - **Done when:** unit tests pass for `pickLocale` (`es-MX` → es, `en-GB` → en, `fr` → en, empty → en) and `format`; a `@ts-expect-error` test with a missing key and one with an extra key in `es` both typecheck (meaning the errors happen).
   - _Requirements: 9.1, 9.3_
 
