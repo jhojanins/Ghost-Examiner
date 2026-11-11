@@ -28,6 +28,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Found: 5 skill files (`ghost-svg-animation`, `kiroween-checklist`, `netlify-proxy-safety`, `prompt-injection-defense`, `testing-strategy`) had invalid YAML frontmatter because their descriptions contained an unquoted `: `, so Kiro didn't load them | Skills |
 | 2026-11-11 | Fixed by quoting each description (no wording change, checked by comparing parsed text with the previous commit). All 9 skills parse with a YAML parser; all 5 fixed skills now activate through `disclose_context` (they failed before) | Skills |
 | 2026-11-11 | First hook created: "Core checks on save" (command action, no credits) | Hooks |
+| 2026-11-11 | Task 4: package boundaries proven with temporary probes (deleted). Core: `react` import → TS2307, `window` → TS2304, JSX → TS17004; web: `react` import → TS2307 while `document` compiles; core tests see no `window`; a deep import past `exports` → TS2307 (tested in a throwaway folder outside the repo). The `window` error is the one this task adds; the others already held because `react` isn't installed and `jsx` is unset | Specs (task execution) |
 | 2026-11-11 | Lesson: always quote skill `description` values in YAML frontmatter; validate with a parser after writing a skill | Skills |
 
 ## Revisit later

@@ -24,7 +24,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `pnpm test` and `pnpm lint` each exit 0 and return to the prompt without a watcher.
   - _Requirements: 1.2, 1.3_ · Skills: `testing-strategy`
 
-- [ ] 4. Enforce the package boundaries
+- [x] 4. Enforce the package boundaries
   - `packages/core/tsconfig.json`: `lib: ["ES2022"]`, `types: []`, no `jsx`. `packages/web/tsconfig.json`: adds `DOM`. Neither package lists `react`. `exports` point at `./src/index.ts`.
   - **Done when:** a temporary probe file in core that imports `react` and uses `window` makes `pnpm typecheck` fail with both errors; a probe in web importing `react` fails too; both probes are deleted and typecheck passes again. The error output goes in the task report.
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
