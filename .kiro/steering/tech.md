@@ -18,18 +18,11 @@ Decisions and trade-offs: `docs/ARCHITECTURE.md` (final).
 - Documents (ghost-defense): `pdfjs-dist`, `mammoth`, plain text and Markdown, lazy-loaded, parsed locally.
 
 ## LLM
-- All access goes through the `LLMProvider` interface. Chain: `BYOK (optional) → Netlify proxy → DemoProvider`, with automatic fallback to demo mode.
-- `DemoProvider` is the default, needs no key, and is deterministic.
-- Gemini and Groq are called with `fetch` (no SDKs). Model names live in config.
-- The proxy accepts only the fixed tasks `generate-questions`, `evaluate-answer`, `follow-up`; prompts are built server-side. Details: `netlify-proxy-safety` skill.
+- All LLM access goes through the `LLMProvider` interface. `DemoProvider` is the default and needs no key; real providers fall back to demo automatically. Details: `netlify-proxy-safety` skill.
 - API keys never live in source code, logs or the client bundle. Never prefix a secret with `VITE_`.
 
-## Hosting and deploys
-- One Netlify site (Free plan) serves `/`, `/interview/` and `/defense/`, plus `netlify/functions/llm.mts`.
-- Free plan: 300 credits/month with a hard limit, 15 credits per production deploy. A pause at the limit is possible, so we plan for it.
-- **Production branch is `release`.** Iterate on `main` with branch deploys and deploy previews (not metered). **Every production deploy needs the owner's explicit approval.** Budget: at most 10 per month.
-- Large assets and camera models come from CDNs, not Netlify bandwidth.
-- A GitHub Pages mirror (demo + BYOK, no proxy) is published by GitHub Actions as a backup.
+## Hosting
+- Free hosting: one Netlify site plus a GitHub Pages mirror. Details load from `deploy-hosting.md` when deploy files are open. Production deploys need the owner's approval (`workflow.md`).
 
 ## Coding rules
 - Small, pure, testable modules. Side effects (mic, camera, network, timers) sit behind interfaces so tests can fake them.
@@ -41,5 +34,5 @@ Decisions and trade-offs: `docs/ARCHITECTURE.md` (final).
 - Keep steering short; put deep guidance in skills that load on demand.
 - Hooks: few, narrow matchers; prefer manual or `PostTaskExec` triggers over per-save or per-tool triggers.
 - **Context7**: use it only for fast-changing libraries: MediaPipe, Netlify Functions, fast-check, pdf.js (`pdfjs-dist`), React 19. At most 2 lookups per question. For everything else, rely on the codebase and existing knowledge.
-- Install powers or MCP servers only after the owner approves them. ScoutQA: not used. Netlify power: planned around Nov 24.
+- Install powers or MCP servers only after the owner approves them; propose any other power with its cost and wait. Not used: ScoutQA, ElevenLabs, SonarQube, Snyk, Figma. Netlify power: decision Nov 14 to 15 (alternative: Netlify CLI).
 - Log notable Kiro usage in `docs/KIRO_USAGE.md`.

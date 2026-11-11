@@ -37,6 +37,10 @@ export const config: Config = {
 - Validate model output with the core type guards; invalid output → `bad-output`.
 - Log only task, status code and latency. Never log request or response bodies.
 
+## Providers
+- Gemini and Groq are called with `fetch` against their REST APIs; no vendor SDKs. Groq uses its OpenAI-compatible endpoint.
+- The same provider code serves BYOK in the browser and the proxy on the server.
+
 ## Client side
 - `withFallback(byok?, proxy, demo)`: on any error, move to the next provider and show the ghost's fallback notice. At most one retry with backoff; never loop.
 - BYOK field: `type="password"`, `autocomplete="off"`, paste allowed. Key kept in memory; `sessionStorage` only if the user opts in; never `localStorage`; never sent to our proxy; a "Clear key" button.

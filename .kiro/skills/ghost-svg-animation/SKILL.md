@@ -23,7 +23,7 @@ metadata:
 - One `requestAnimationFrame` loop per ghost. Write pose changes through refs (`setAttribute`, `style`), not React state, so React doesn't re-render 60 times a second.
 - Blink every 3 to 6 s for ~120 ms, from a seeded RNG so tests are deterministic.
 - Expressions map to brow angle, eye shape and mouth bias; transitions 150 to 300 ms.
-- Reduced motion (media query or in-app toggle): `float = 0`, no sway or idle drift, no transitions longer than 150 ms. Keep blinking and mouth shapes (they carry meaning when muted).
+- Reduced motion (media query or in-app toggle): `float = 0`, no blinking, sway or idle drift, no transitions longer than 150 ms. Keep expression and mouth changes (they carry meaning when muted).
 - A visible motion toggle is required (WCAG 2.2.2) because idle motion runs longer than 5 s.
 - No flashing. Glows and fades take at least 1 s and never strobe.
 

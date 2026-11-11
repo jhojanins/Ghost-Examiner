@@ -8,6 +8,7 @@ Target: WCAG 2.2 AA. For detailed audits use the `a11y-review` skill.
 
 ## Inputs
 - Every question must be answerable by at least 2 input methods. Keyboard text input is always one of them.
+  - Owner-approved exception: a build marked **Preview** (shown in the UI) may ship with keyboard only; the validator then warns instead of failing. Preview ends when voice input lands in spec (b).
 - Before any answer is evaluated, show the interpreted answer (transcript, decoded Morse, recognized signs) and ask the user to confirm, edit or retry.
 - No hard time limits on answering. Any timing (Morse dot/dash thresholds, silence detection) is adjustable by the user.
 - Everything is operable by keyboard, with a logical focus order and a visible focus indicator.

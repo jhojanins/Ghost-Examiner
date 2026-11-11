@@ -1,7 +1,16 @@
 # Requirements: (a) Kit skeleton + animated ghost persona
 
 ## Introduction
-This spec creates the reusable kit (`packages/core`, `packages/web`, `packages/ui`), the two app shells (`apps/ghost-interview`, `apps/ghost-defense`), the animated ghost examiner, and a minimal end-to-end vertical slice: the ghost asks one question, the user answers by keyboard, confirms the interpreted answer, and gets demo-mode feedback. The slice must be on a public URL by **Nov 15 (Day 5)**.
+This spec creates the reusable kit (`packages/core`, `packages/web`, `packages/ui`), the two app shells (`apps/ghost-interview`, `apps/ghost-defense`), the animated ghost examiner, and a minimal end-to-end vertical slice: the ghost asks one question, the user answers by keyboard, confirms the interpreted answer, and gets demo-mode feedback. The slice must be on a public branch-deploy URL by **Nov 15 (Day 5)**.
+
+## Delivery phases
+- **Phase 1, Day 5 slice**: requirements 1, 2, 5, 6, 7, 8, 10, 11, 13, plus the parts of 3, 4, 9 and 12 that the slice needs:
+  - 3: all criteria except 3.7 (motion toggle) and 3.10 (floating), with the phase 1 expression and mouth sets from 3.2.
+  - 4: all criteria (ghost speech must always have captions).
+  - 9: all criteria (11.1 requires EN and ES).
+  - 12: criteria 12.1, 12.2, 12.4, and 12.3 for slice screens in English with default motion only.
+- **Phase 2, same spec, after the slice**: the remaining expressions and mouth shapes of 3.2, floating (3.10) together with the motion toggle (3.7), and the full axe matrix of 12.3.
+- Known phase 1 gap (owner-accepted): without the toggle, only the operating system's reduced-motion setting stops the ghost's blinking. A strict reading of WCAG 2.2.2 (pause, stop, hide) wants an in-page control; phase 2 adds it.
 
 Out of scope here: voice input and speech synthesis (spec b), Morse (spec c), camera (spec d), real LLM providers and the Netlify proxy (spec e), document upload (spec f), the GitHub Pages mirror (Nov 29–30).
 
@@ -14,6 +23,7 @@ Architecture reference: `docs/ARCHITECTURE.md` (final).
 - **Candidate**: an interpreted answer produced by an input adapter, not yet confirmed.
 - **Confirmed answer**: a candidate the user has explicitly confirmed; the only thing an evaluator accepts.
 - **Muted mode**: the ghost speaks with captions and mouth animation only, no audio. In this spec, all ghost speech is muted mode.
+- **Preview build**: an app build whose configuration sets the Preview flag. It may offer fewer than 2 input methods per question and must say so visibly. `apps/ghost-interview` is a Preview build until spec (b) adds voice input.
 
 ## Requirement 1: Monorepo skeleton
 **User story:** As the developer, I want one workspace with the kit and both apps, so that every feature is built once and reused by both apps.
@@ -38,14 +48,16 @@ Acceptance criteria:
 
 Acceptance criteria:
 1. THE ghost SHALL be an original hand-authored SVG with glasses, a bow tie and a clipboard, visibly distinct from Kiro's mascot.
-2. THE ghost SHALL support the expressions `neutral`, `attentive`, `skeptical`, `approving`, `amused`, `thinking`, `surprised`, and the mouth shapes `rest`, `A`, `E`, `O`, `U`, `MBP`, `FV`.
-3. WHILE the ghost is idle, THE ghost SHALL blink at irregular intervals of roughly 3 to 6 seconds and float gently.
+2. THE ghost SHALL support the expressions `neutral`, `attentive`, `skeptical`, `approving`, `amused`, `thinking`, `surprised`, and the mouth shapes `rest`, `A`, `E`, `O`, `U`, `MBP`, `FV`. Phase 1 delivers the expressions `neutral`, `thinking`, `approving`, `skeptical` and the mouth shapes `rest`, `A`, `O`, `MBP`; phase 2 adds the others.
+3. WHILE the ghost is idle, THE ghost SHALL blink at irregular intervals of roughly 3 to 6 seconds.
 4. WHEN the session phase changes, THE ghost SHALL change activity and expression accordingly (asking → speaking, answering → listening, evaluating → thinking, feedback → a reaction chosen by the evaluator).
 5. THE ghost SHALL expose `role="img"` with a localized accessible name that describes its current expression.
-6. WHERE the user prefers reduced motion (media query or in-app toggle), THE ghost SHALL stop floating and idle drift and SHALL keep only blinking, expression and mouth changes.
-7. THE interface SHALL provide a visible, keyboard-operable motion toggle that pauses non-essential ghost motion.
+6. WHERE the user prefers reduced motion (media query or in-app toggle), THE ghost SHALL stop floating, idle drift and blinking, and SHALL keep only expression and mouth changes.
+7. (Phase 2) THE interface SHALL provide a visible, keyboard-operable motion toggle that pauses non-essential ghost motion.
 8. THE ghost SHALL NOT flash; any glow or fade SHALL take at least 1 second.
 9. THE pose computation SHALL be a pure function of state, time and the reduced-motion flag, located in `packages/core`.
+10. (Phase 2) WHILE the ghost is idle and reduced motion is off, THE ghost SHALL float gently.
+11. THE ghost SHALL use the project palette: a mint-white body gradient (`#ffffff` → `#e3fbf4` → `#a9e8d6`), orange glasses (`#e8a13a`) and bow tie (`#e8892f`), on a dark navy scene (`#0b1020` → `#14264d`), with no purple.
 
 ## Requirement 4: Muted ghost speech and live captions
 **User story:** As a user who is deaf, hard of hearing or in a quiet place, I want every ghost line captioned and synced with its mouth, so that I never miss what the ghost says.
@@ -66,7 +78,9 @@ Acceptance criteria:
 2. THE engine SHALL emit an evaluate effect only after a confirm event for the same candidate.
 3. THE evaluator interface SHALL accept only a confirmed answer type that only the engine's confirm transition can create.
 4. THE engine SHALL NOT impose a time limit in any phase.
-5. WHEN a question pack is loaded, THE validator SHALL report every question that fewer than the required number of registered input methods can answer.
+5. WHEN a question pack is loaded, THE validator SHALL report every question that fewer than 2 registered input methods can answer.
+   - WHERE the build is a Preview build, each such report SHALL be a warning and the session SHALL start.
+   - WHERE the build is not a Preview build, each such report SHALL be an error and the session SHALL NOT start; the app SHALL show a message that explains why.
 6. THE engine SHALL get time only from an injected clock.
 
 ## Requirement 6: Keyboard input (minimal)
@@ -123,6 +137,8 @@ Acceptance criteria:
 1. `apps/ghost-interview` SHALL run the slice: greeting, privacy notice, one interview question in EN and ES, keyboard answer, confirmation, demo feedback and a closing line.
 2. `apps/ghost-defense` SHALL render the same kit shell and ghost with its own title, copy and theme accent, and SHALL state that the document defense flow is in development.
 3. BOTH apps SHALL contain only configuration, content and screens; shared behavior SHALL live in `packages/`.
+4. EACH app's configuration SHALL declare whether it is a Preview build.
+5. WHERE an app is a Preview build, THE shell SHALL show a visible "Preview" label, in EN and ES, on every screen, with text explaining that more input methods are coming.
 
 ## Requirement 12: Tests and automated accessibility checks
 **User story:** As the developer, I want automated checks from the first day, so that the definition of done can be applied to every task.
@@ -138,6 +154,6 @@ Acceptance criteria:
 
 Acceptance criteria:
 1. THE production build SHALL produce one site with the landing page at `/`, ghost-interview at `/interview/` and ghost-defense at `/defense/`.
-2. THE Netlify configuration SHALL build from the repository and SHALL be documented so that the production branch is `release` and `main` produces branch deploys.
-3. WHEN the slice is complete, THE slice SHALL be reachable on a public Netlify URL; a production deploy SHALL happen only after the owner's explicit approval.
+2. THE repository SHALL contain a `netlify.toml` that builds the site, and `docs/DEPLOY.md` SHALL give the owner step-by-step Netlify setup instructions: connect the repo, set `release` as the production branch, and enable branch deploys for `main`.
+3. WHEN the slice is complete, THE slice SHALL be reachable on the public branch-deploy URL of `main`; a production deploy SHALL happen only after the owner's explicit approval.
 4. THE repository SHALL run typecheck, lint and unit tests in GitHub Actions on every push and pull request.

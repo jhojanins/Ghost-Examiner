@@ -12,20 +12,13 @@ inclusion: always
 
 ## Layout
 ```
-/.kiro/                  steering, specs, hooks, skills, settings (tracked)
-/apps/
-  ghost-interview/       app: screens, question packs, config, e2e/
-  ghost-defense/         app: screens, document flow, fictional samples, e2e/
-/packages/               the kit
-  core/                  @ghost-examiner/core: pure TS, no React, no DOM
-  web/                   @ghost-examiner/web: browser adapters, effect runtime, no React
-  ui/                    @ghost-examiner/ui: React components, styles, tokens
-/netlify/functions/      llm.mts proxy (thin; logic from @ghost-examiner/core)
-/site/                   static landing page linking both apps
-/scripts/                build and site-assembly scripts
-/docs/                   ARCHITECTURE.md, KIRO_USAGE.md, PRIVACY.md
+/.kiro/
+/apps/ghost-interview/  /apps/ghost-defense/
+/packages/core/  /packages/web/  /packages/ui/
+/netlify/functions/  /site/  /scripts/  /docs/
 LICENSE  README.md
 ```
+Folder contents: `docs/ARCHITECTURE.md` section 4.
 
 ## Dependency direction
 - `apps → ui → web → core`. `core` depends on nothing in the repo.

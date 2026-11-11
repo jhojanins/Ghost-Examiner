@@ -8,16 +8,14 @@ inclusion: always
 A reusable skeleton kit (the three packages in `packages/`) for "face to face" conversations with an animated ghost examiner, plus two apps built from it (`apps/`). Built solo by a student for Kiroween 2026, category **Skeleton Crew**, also targeting the **Best Student** bonus.
 
 ## Key dates
-- **Nov 15 (Day 5)**: vertical slice on a public URL: ghost, one question, keyboard input, confirmation, demo-mode evaluation.
+- **Nov 15 (Day 5)**: vertical slice (marked Preview) on a public branch-deploy URL of `main`: ghost, one question, keyboard input, confirmation, demo-mode evaluation.
 - **Dec 1**: feature freeze and final production deploy.
 - **Dec 2**: submission. The official deadline (Dec 4) is buffer only.
 - The public URL must stay live until **Jan 29, 2027**.
 - Full schedule: `docs/ARCHITECTURE.md` section 6.
 
 ## The ghost
-- Original 2D character: glasses, bow tie, clipboard. Calm, neutral, slightly serious examiner with dry humor. Never cruel, never mocking the user.
-- Looks and behaves like a video-call partner: idle breathing, blinking, listening pose, reactions, mouth synced to its speech.
-- Full personality and phrasing rules live in the `ghost-persona` skill.
+An original 2D examiner (glasses, bow tie, clipboard), calm with dry humor, never cruel. Personality, tone and phrasing: `ghost-persona` skill.
 
 ## Apps (each in its own folder, both built only from the kit)
 - `apps/ghost-interview`: accessible job-interview practice. The ghost asks interview questions, listens, follows up, and gives constructive feedback.
