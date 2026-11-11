@@ -45,11 +45,13 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.6, 7.3, 7.4, 7.5, 9.2_
 
 - [ ] 8. Engine property tests
+  - Generators use only non-empty packs (an empty pack is rejected by `validatePack`, task 9).
   - **Done when:** fast-check properties P1, P2 and P3 (design §9) pass with 100 runs, each with an event-sequence generator built from valid events (no heavy filtering).
   - _Requirements: 12.1, 5.2, 5.4_ · Skills: `testing-strategy`
 
 - [ ] 9. Pack validator
-  - **Done when:** `validatePack` unit tests cover one adapter + `preview: true` (warning), one adapter + `preview: false` (error), two adapters (no issue), and property P4 passes.
+  - A pack with zero questions is always an `error`, even in Preview, because `reduce` would throw on it (owner decision after task 7). `PackIssue` gets a pack-level shape for it; the exact shape is reported in the task.
+  - **Done when:** `validatePack` unit tests cover one adapter + `preview: true` (warning), one adapter + `preview: false` (error), two adapters (no issue), a pack with zero questions (error with `preview: true` and `false`), and property P4 passes.
   - _Requirements: 5.5_
 
 - [ ] 10. Speech timeline
@@ -107,6 +109,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 
 - [ ] 21. PrivacyDialog
   - Native `<dialog>` with `showModal()`; text from design and steering (local processing in demo mode, no sensitive or personal data).
+  - Esc must really return to the intro screen (design §8). The engine has no event for it and stays in `privacy`, so the app shows the intro screen with a Start button that reopens the dialog (task 27 wires this).
   - **Done when:** component tests show the dialog opens modal with focus inside, Accept calls `onAccept`, Esc calls `onDismiss` without `onAccept`, and the read-only mode has only a Close button.
   - _Requirements: 10.1, 10.2, 10.3_ · Skills: `a11y-review`, `ghost-persona`
 
@@ -135,7 +138,8 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 ### Apps, build and deploy
 - [ ] 27. ghost-interview slice wiring
   - `config.ts` (`preview: true`), `content/pack.ts` (one fictional question, 3 key points, EN/ES cues), `messages.ts`, `App.tsx` wiring only, `vite.config.ts` with `base: '/interview/'`.
-  - **Done when:** with the dev server running in the background, a Playwright MCP keyboard-only walk-through completes greeting → privacy → question → typed answer → confirm → feedback → closing in EN, switches to ES mid-session without losing progress, shows the Preview label, and logs no console errors. Report includes the snapshot excerpts.
+  - Esc on the privacy dialog: while the engine stays in `privacy`, the app shows the intro screen with a Start button; Start reopens the dialog (it does not dispatch `start` again, which the engine would ignore).
+  - **Done when:** with the dev server running in the background, a Playwright MCP keyboard-only walk-through completes greeting → privacy → question → typed answer → confirm → feedback → closing in EN, switches to ES mid-session without losing progress, shows the Preview label, and logs no console errors. It also presses Esc on the privacy dialog, sees the intro screen with Start, and reaches the question after Start → Accept. Report includes the snapshot excerpts.
   - _Requirements: 11.1, 11.3, 11.4, 4.6, 9.2_ · Skills: `a11y-review`, `ghost-persona`
 
 - [ ] 28. Slice end-to-end test with network and axe checks

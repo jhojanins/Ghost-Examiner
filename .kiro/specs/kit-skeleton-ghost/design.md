@@ -378,6 +378,8 @@ On push and pull request: checkout, pnpm, Node 24, `pnpm install --frozen-lockfi
 
 Not covered (no requirement asks for it): an evaluator that throws or never resolves would leave the session in `evaluating`. The demo evaluator is synchronous and deterministic, so this can't happen in phase 1. Owner-approved: spec (e) gets a requirement for the evaluator failure path (error or timeout → fallback to demo, or a retry message, never a stuck session).
 
+Known gap, left for spec (e) (owner decision after task 7): a language switch during `evaluating` changes the locale but does not re-evaluate (transition table: "any | locale-changed | same phase"), so the pending feedback arrives in the old language. The demo evaluator resolves almost at once, so phase 1 is unaffected; slow real providers in spec (e) need a fix (for example, re-evaluate or drop a `feedback-ready` whose locale differs).
+
 ## 9. Correctness properties (fast-check, Req 12.1)
 | # | Property | Module |
 |---|---|---|
