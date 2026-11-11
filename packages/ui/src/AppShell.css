@@ -1,0 +1,74 @@
+/* Off-screen until focused; then shown above the header (WCAG 2.4.1). */
+.ge-skip-link {
+  position: absolute;
+  top: -100vh;
+  left: 0.5rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.ge-skip-link:focus {
+  top: 0.5rem;
+}
+
+/* Wraps instead of scrolling sideways at 320 px or 200% text (WCAG 1.4.10, 1.4.4). */
+.ge-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+}
+
+.ge-title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.ge-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+}
+.ge-preview-badge {
+  padding: 0.125rem 0.625rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+}
+.ge-preview-detail {
+  color: var(--text-muted);
+}
+
+.ge-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+/* Looks like a link, behaves like a button (it opens a dialog). Target >= 24 px (WCAG 2.5.8). */
+.ge-link-button {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.ge-main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}

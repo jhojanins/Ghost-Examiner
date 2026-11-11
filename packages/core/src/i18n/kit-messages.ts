@@ -10,6 +10,12 @@ import { defineCatalog } from './i18n';
  */
 export const kitMessages = defineCatalog(
   {
+    // App shell (design §5.1): the same header on every screen.
+    'shell.skipLink': 'Skip to main content',
+    'shell.privacy': 'Privacy notice',
+    'shell.preview.badge': 'Preview',
+    'shell.preview.detail': 'Keyboard only for now. Voice and Morse are coming.',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -21,6 +27,11 @@ export const kitMessages = defineCatalog(
     'feedback.improvement.more': 'Say a bit more: one example helps.',
   },
   {
+    'shell.skipLink': 'Saltar al contenido principal',
+    'shell.privacy': 'Aviso de privacidad',
+    'shell.preview.badge': 'Vista previa',
+    'shell.preview.detail': 'Por ahora, solo teclado. Pronto llegan la voz y el Morse.',
+
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',
     'feedback.strength.covered': 'Explicaste {point}.',

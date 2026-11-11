@@ -84,7 +84,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - _Requirements: 4.6, 5.5, 9.2_
 
 ### packages/ui
-- [ ] 16. Tokens and AppShell
+- [x] 16. Tokens and AppShell
   - `tokens.css` (design §5.3 table), `AppShell` with header (title, language switch slot, privacy link, Preview badge text), skip link, `<main>`, and `<html lang>` update.
   - **Done when:** component tests show the Preview badge text renders only when `preview` is true, in EN and ES; the skip link targets `<main>`; `document.documentElement.lang` matches the locale prop.
   - _Requirements: 9.2, 10.4, 11.5_ · Skills: `a11y-review`, `ghost-persona`
