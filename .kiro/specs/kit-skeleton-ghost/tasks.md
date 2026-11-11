@@ -54,7 +54,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `validatePack` unit tests cover one adapter + `preview: true` (warning), one adapter + `preview: false` (error), two adapters (no issue), a pack with zero questions (error with `preview: true` and `false`), and property P4 passes.
   - _Requirements: 5.5_
 
-- [ ] 10. Speech timeline
+- [x] 10. Speech timeline
   - `buildTimeline(text, locale)` with phase 1 visemes and the timing rules in design §3.5.
   - **Done when:** properties P5 and P6 pass, and example tests show "Mamá, hola." yields `MBP`/`A` cues, a comma pause of 200 ms and a final `rest`.
   - _Requirements: 4.3_ · Skills: `ghost-svg-animation`
