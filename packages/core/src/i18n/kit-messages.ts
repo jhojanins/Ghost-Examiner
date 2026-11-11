@@ -15,6 +15,10 @@ export const kitMessages = defineCatalog(
     'shell.privacy': 'Privacy notice',
     'shell.preview.badge': 'Preview',
     'shell.preview.detail': 'Keyboard only for now. Voice and Morse are coming.',
+    // Language switch: each language is named in itself, so both catalogs share these two.
+    'language.label': 'Language',
+    'language.en': 'English',
+    'language.es': 'Español',
 
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
@@ -31,6 +35,9 @@ export const kitMessages = defineCatalog(
     'shell.privacy': 'Aviso de privacidad',
     'shell.preview.badge': 'Vista previa',
     'shell.preview.detail': 'Por ahora, solo teclado. Pronto llegan la voz y el Morse.',
+    'language.label': 'Idioma',
+    'language.en': 'English',
+    'language.es': 'Español',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

@@ -1,0 +1,27 @@
+.ge-language-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Target >= 24 px (WCAG 2.5.8). Accent border on the surface is 13.0:1 (WCAG 1.4.11). */
+.ge-language-button {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.875rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/*
+ * The selected language differs by fill and weight, not by hue alone (WCAG 1.4.1):
+ * --on-accent on --accent is 14.4:1; --text on --surface is 16.0:1.
+ */
+.ge-language-button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}

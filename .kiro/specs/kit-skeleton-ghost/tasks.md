@@ -89,7 +89,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show the Preview badge text renders only when `preview` is true, in EN and ES; the skip link targets `<main>`; `document.documentElement.lang` matches the locale prop.
   - _Requirements: 9.2, 10.4, 11.5_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 17. LanguageSwitch
+- [x] 17. LanguageSwitch
   - **Done when:** component tests show two buttons with `aria-pressed` reflecting the current locale, each label carrying its own `lang`, and clicking "Español" calls `onChange('es')`.
   - _Requirements: 9.2_ · Skills: `a11y-review`
 
