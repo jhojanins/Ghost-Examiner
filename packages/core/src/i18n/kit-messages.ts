@@ -15,7 +15,7 @@ export const kitMessages = defineCatalog(
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
     'feedback.strength.covered': 'You covered {point}.',
     // Used when no key point matched: it claims nothing the keyword check can't verify.
-    'feedback.strength.direct': 'Thank you for taking the time to answer.',
+    'feedback.strength.direct': 'You took the time to answer.',
     'feedback.improvement.add': 'Add {point}.',
     'feedback.improvement.measurable': 'Add one result you can measure.',
     'feedback.improvement.more': 'Say a bit more: one example helps.',
@@ -24,7 +24,7 @@ export const kitMessages = defineCatalog(
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',
     'feedback.strength.covered': 'Explicaste {point}.',
-    'feedback.strength.direct': 'Gracias por tomarte el tiempo de responder.',
+    'feedback.strength.direct': 'Te tomaste el tiempo de responder.',
     'feedback.improvement.add': 'Agrega {point}.',
     'feedback.improvement.measurable': 'Agrega un resultado que se pueda medir.',
     'feedback.improvement.more': 'Cuéntame un poco más: un ejemplo ayuda.',
