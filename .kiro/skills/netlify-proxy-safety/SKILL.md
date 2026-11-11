@@ -1,6 +1,6 @@
 ---
 name: netlify-proxy-safety
-description: Security rules for the Ghost Examiner Netlify Function LLM proxy (netlify/functions/llm.mts) and the client code that calls it or uses a bring-your-own-key provider: fixed task types, per-IP rate limiting, server-side prompts, input validation and size caps, no API keys in client code, automatic fallback to demo mode. Use when creating or editing the proxy, LLM providers, environment variables, netlify.toml, or BYOK settings.
+description: "Security rules for the Ghost Examiner Netlify Function LLM proxy (netlify/functions/llm.mts) and the client code that calls it or uses a bring-your-own-key provider: fixed task types, per-IP rate limiting, server-side prompts, input validation and size caps, no API keys in client code, automatic fallback to demo mode. Use when creating or editing the proxy, LLM providers, environment variables, netlify.toml, or BYOK settings."
 metadata:
   project: ghost-examiner
 ---

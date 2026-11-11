@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: How to test Ghost Examiner: Vitest unit tests, fast-check property tests, React component tests, Playwright end-to-end tests, automated axe accessibility checks, and manual verification in the browser through the Playwright MCP server. Use when writing or running tests, setting up test tooling, verifying a task before marking it done, or debugging failing or flaky tests.
+description: "How to test Ghost Examiner: Vitest unit tests, fast-check property tests, React component tests, Playwright end-to-end tests, automated axe accessibility checks, and manual verification in the browser through the Playwright MCP server. Use when writing or running tests, setting up test tooling, verifying a task before marking it done, or debugging failing or flaky tests."
 metadata:
   project: ghost-examiner
 ---

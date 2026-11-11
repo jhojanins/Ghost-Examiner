@@ -1,6 +1,6 @@
 ---
 name: prompt-injection-defense
-description: Defend Ghost Examiner's LLM features against prompt injection: uploaded documents and user answers are data, never instructions. Use when writing prompt templates, document parsing or chunking, question generation from documents (ghost-defense), answer evaluation, or reviewing any code that places document or user text into an LLM prompt or renders LLM output.
+description: "Defend Ghost Examiner's LLM features against prompt injection: uploaded documents and user answers are data, never instructions. Use when writing prompt templates, document parsing or chunking, question generation from documents (ghost-defense), answer evaluation, or reviewing any code that places document or user text into an LLM prompt or renders LLM output."
 metadata:
   project: ghost-examiner
 ---

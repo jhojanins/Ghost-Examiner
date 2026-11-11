@@ -1,6 +1,6 @@
 ---
 name: ghost-svg-animation
-description: Build or change the Ghost avatar in Ghost Examiner: SVG structure, expressions, the requestAnimationFrame loop, the text-driven lip-sync speech timeline (visemes), captions synced to that timeline, reduced motion and muted mode. Use when working on the Ghost React component in packages/ui, ghost state or speech timeline code in packages/core, captions, or ghost visuals.
+description: "Build or change the Ghost avatar in Ghost Examiner: SVG structure, expressions, the requestAnimationFrame loop, the text-driven lip-sync speech timeline (visemes), captions synced to that timeline, reduced motion and muted mode. Use when working on the Ghost React component in packages/ui, ghost state or speech timeline code in packages/core, captions, or ghost visuals."
 metadata:
   project: ghost-examiner
 ---

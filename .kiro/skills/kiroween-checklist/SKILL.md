@@ -1,6 +1,6 @@
 ---
 name: kiroween-checklist
-description: Kiroween 2026 submission checklist for Ghost Examiner (Skeleton Crew category plus Best Student bonus): public repo, MIT license, tracked /.kiro, two app folders, English materials, demo video under 3 minutes, live URL until Jan 29, 2027. Use when preparing a release, the README, the demo video, the submission form, or when asked whether the project meets hackathon requirements.
+description: "Kiroween 2026 submission checklist for Ghost Examiner (Skeleton Crew category plus Best Student bonus): public repo, MIT license, tracked /.kiro, two app folders, English materials, demo video under 3 minutes, live URL until Jan 29, 2027. Use when preparing a release, the README, the demo video, the submission form, or when asked whether the project meets hackathon requirements."
 metadata:
   project: ghost-examiner
 ---
