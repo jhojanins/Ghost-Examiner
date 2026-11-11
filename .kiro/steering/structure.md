@@ -33,3 +33,4 @@ Folder contents: `docs/ARCHITECTURE.md` section 4.
 - File names: `kebab-case.ts`; React components: `PascalCase.tsx`.
 - Tests sit next to the code: `*.test.ts`, property tests `*.prop.test.ts`, e2e in each app's `e2e/` folder.
 - User-facing strings never appear inline in components; they come from the `en`/`es` catalogs.
+- Catalogs must be written inline in the `defineCatalog(en, es)` call (object literals, not variables), so extra-key errors are always caught.
