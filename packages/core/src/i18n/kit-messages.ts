@@ -20,6 +20,12 @@ export const kitMessages = defineCatalog(
     'language.en': 'English',
     'language.es': 'Español',
 
+    // Ghost accessible name per expression (Req 3.5). Describes the expression, never the user.
+    'ghost.label.neutral': 'The ghost examiner, looking calm.',
+    'ghost.label.thinking': 'The ghost examiner, thinking.',
+    'ghost.label.approving': 'The ghost examiner, looking satisfied.',
+    'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -38,6 +44,11 @@ export const kitMessages = defineCatalog(
     'language.label': 'Idioma',
     'language.en': 'English',
     'language.es': 'Español',
+
+    'ghost.label.neutral': 'El examinador fantasma, tranquilo.',
+    'ghost.label.thinking': 'El examinador fantasma, pensando.',
+    'ghost.label.approving': 'El examinador fantasma, satisfecho.',
+    'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

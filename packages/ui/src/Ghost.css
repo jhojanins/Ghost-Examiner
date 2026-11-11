@@ -1,0 +1,65 @@
+/* Fills its container's width; the app's layout decides the size. */
+.ge-ghost {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Only transform changes, on <g> elements, from their own box (ghost-svg-animation skill). */
+.ge-ghost .ge-brow,
+.ge-ghost .ge-eye,
+.ge-ghost .ge-eye-lid,
+.ge-ghost .ge-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 200ms ease-out;
+}
+
+/* A blink is 120 ms long; it switches at once (no fade). */
+.ge-ghost .ge-eye-lid {
+  transition: none;
+}
+.ge-ghost[data-blink='true'] .ge-eye-lid {
+  transform: scaleY(0.1);
+}
+
+/* Expressions (design §5.3): brows and eyes; the mouth only tilts or shifts, never smiles. */
+.ge-ghost[data-expression='thinking'] .ge-brow-right {
+  transform: translateY(-6px) rotate(-8deg);
+}
+.ge-ghost[data-expression='thinking'] .ge-eye {
+  transform: translate(2px, -3px);
+}
+.ge-ghost[data-expression='thinking'] .ge-mouth {
+  transform: translateX(5px);
+}
+
+/* Satisfied, not smiling: both brows lifted and level, eyelids relaxed. */
+.ge-ghost[data-expression='approving'] .ge-brow {
+  transform: translateY(-9px);
+}
+.ge-ghost[data-expression='approving'] .ge-eye {
+  transform: translateY(1px) scaleY(0.7);
+}
+
+.ge-ghost[data-expression='skeptical'] .ge-brow-left {
+  transform: translateY(3px) rotate(12deg);
+}
+.ge-ghost[data-expression='skeptical'] .ge-brow-right {
+  transform: translateY(-3px);
+}
+.ge-ghost[data-expression='skeptical'] .ge-eye {
+  transform: scaleY(0.55);
+}
+.ge-ghost[data-expression='skeptical'] .ge-mouth {
+  transform: rotate(-6deg);
+}
+
+/* Reduced motion (design §5.3): expression changes stay, with transitions capped at 150 ms. */
+@media (prefers-reduced-motion: reduce) {
+  .ge-ghost .ge-brow,
+  .ge-ghost .ge-eye,
+  .ge-ghost .ge-mouth {
+    transition-duration: 150ms;
+  }
+}

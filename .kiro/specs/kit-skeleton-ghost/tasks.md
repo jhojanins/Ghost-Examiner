@@ -93,7 +93,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show two buttons with `aria-pressed` reflecting the current locale, each label carrying its own `lang`, and clicking "Español" calls `onChange('es')`.
   - _Requirements: 9.2_ · Skills: `a11y-review`
 
-- [ ] 18. Ghost SVG
+- [x] 18. Ghost SVG
   - Hand-drawn SVG per design §5.3: palette, dark outlines on orange parts, glasses, bow tie, clipboard, 4 expressions, 4 mouth paths, `role="img"` with localized labels.
   - **Done when:** component tests show, for each of the 4 expressions and 4 visemes, the right mouth path is visible and the `aria-label` matches the expression in EN and ES; a test asserts every color used in the SVG is one of the design palette values (so no purple can slip in).
   - _Requirements: 3.1, 3.2 (phase 1), 3.5, 3.8, 3.11_ · Skills: `ghost-svg-animation`, `a11y-review`
