@@ -54,10 +54,10 @@ describe('demo evaluation', () => {
   });
 
   it('the same input in es returns Spanish text', async () => {
-    // An English answer meets no Spanish cues: skeptical, direct-answer strength, first point missing.
+    // An English answer meets no Spanish cues: skeptical, no-match strength, first point missing.
     expect(await evaluate(twoOfThree, 'es')).toEqual({
       summary: 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',
-      strength: 'Respondiste la pregunta de forma directa.',
+      strength: 'Gracias por tomarte el tiempo de responder.',
       improvement: 'Agrega la situación.',
       reaction: 'skeptical',
       locale: 'es',
@@ -77,10 +77,10 @@ describe('demo evaluation', () => {
     expect(all).toMatchObject({ reaction: 'approving', strength: 'You covered the situation.', improvement: 'Add one result you can measure.' });
   });
 
-  it('no key points covered: skeptical, with a kind strength and the first point to add', async () => {
+  it('no key points covered: skeptical, with a strength that claims nothing unchecked, and the first point to add', async () => {
     expect(await evaluate('I usually work hard and try my best on every single task.', 'en')).toEqual({
       summary: "Thank you. There's a good start here, and room to build on it.",
-      strength: 'You answered the question directly.',
+      strength: 'Thank you for taking the time to answer.',
       improvement: 'Add the situation.',
       reaction: 'skeptical',
       locale: 'en',

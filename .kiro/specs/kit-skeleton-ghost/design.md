@@ -223,7 +223,7 @@ export function isFeedback(value: unknown): value is Feedback;         // hand-w
   1. Normalize the answer: lowercase, strip accents, collapse spaces.
   2. A key point matches if any of its cues for the locale appears in the answer.
   3. `reaction` = `approving` if at least half the key points match, else `skeptical`.
-  4. Strength: label of the first matched point ("You covered {point}."), or "You answered the question directly." if none matched.
+  4. Strength: label of the first matched point ("You covered {point}."), or "Thank you for taking the time to answer." if none matched (owner change after task 13: the demo can't check that an answer was direct).
   5. Improvement: label of the first unmatched point ("Add {point}."); if all matched, "Add one result you can measure."; if the answer has fewer than 8 words, "Say a bit more: one example helps." takes priority.
   6. Summary: one templated line per reaction.
   All templates are kit catalog keys in EN and ES, written with the `ghost-persona` skill (Req 8.4). No randomness, no I/O (Req 8.1, 8.3).
