@@ -25,6 +25,7 @@ export const kitMessages = defineCatalog(
     'ghost.label.thinking': 'The ghost examiner, thinking.',
     'ghost.label.approving': 'The ghost examiner, looking satisfied.',
     'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
+    'transcript.heading': 'Transcript',
 
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
@@ -49,6 +50,7 @@ export const kitMessages = defineCatalog(
     'ghost.label.thinking': 'El examinador fantasma, pensando.',
     'ghost.label.approving': 'El examinador fantasma, satisfecho.',
     'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
+    'transcript.heading': 'Transcripción',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

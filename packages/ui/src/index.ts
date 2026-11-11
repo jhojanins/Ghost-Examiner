@@ -1,7 +1,11 @@
 export type { AppShellProps } from './AppShell';
 export { AppShell } from './AppShell';
+export type { CaptionLine } from './Captions';
+export { Captions } from './Captions';
 export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';
 export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
+export type { TranscriptLine, TranscriptProps } from './Transcript';
+export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';

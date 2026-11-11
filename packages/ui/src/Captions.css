@@ -1,0 +1,37 @@
+/* --text on --surface is 16.0:1 in every state; size and line length per the ghost-svg-animation skill. */
+.ge-captions {
+  max-width: 42ch;
+  margin: 1rem auto 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/*
+ * Each word reserves the width of its bold form (the hidden ::after), so marking a word
+ * never shifts the line or makes it re-wrap.
+ */
+.ge-caption-word {
+  display: inline-flex;
+  flex-direction: column;
+}
+.ge-caption-word::after {
+  content: attr(data-text);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 700;
+}
+
+/* Current word: underline and bold, not color alone (WCAG 1.4.1). Accent on --surface is 13.0:1. */
+.ge-caption-word--current {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.25em;
+}

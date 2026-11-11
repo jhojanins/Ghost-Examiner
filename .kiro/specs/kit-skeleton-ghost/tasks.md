@@ -103,7 +103,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** a test with a mocked rAF and `matchMedia` shows blinking toggles the eye attributes without re-rendering the component, and with `reduce` the eyes never close.
   - _Requirements: 3.3, 3.4, 3.6_ · Skills: `ghost-svg-animation`
 
-- [ ] 20. Captions and Transcript
+- [x] 20. Captions and Transcript
   - **Done when:** component tests show the full line renders at once, the word at the mocked time has the underline-and-bold class, captions are `aria-hidden`, and a finished line appears once in the transcript list and once in the polite live region.
   - _Requirements: 4.1, 4.2, 4.4, 4.5_ · Skills: `ghost-svg-animation`, `a11y-review`
 
