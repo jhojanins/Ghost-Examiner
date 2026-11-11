@@ -7,6 +7,8 @@ metadata:
 
 # Ghost SVG animation, lip-sync and captions
 
+> **Version note:** this skill describes the later, full version. Spec (a) phase 1 follows its design instead: `buildTimeline(text, locale)` returns the design's `Timeline` (`words`, `mouth`, `duration`; no `rate`), with 4 visemes (`rest`, `A`, `O`, `MBP`) and 4 expressions, and no float.
+
 ## Data flow
 `ghostPose(state, now, { reducedMotion })` (pure, packages/core) → `GhostPose` → `<Ghost>` (packages/ui) writes it to the SVG.
 `buildTimeline(text, locale, rate)` (pure, packages/core) → `SpeechCue[]` → read by both the mouth and the captions. One timeline, two views.
