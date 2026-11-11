@@ -1,0 +1,8 @@
+{
+  "name": "ghost-interview",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  }
+}

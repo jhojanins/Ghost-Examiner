@@ -22,6 +22,11 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Playwright MCP connected and smoke-tested; Context7 found not installed | MCP, powers |
 | 2026-11-11 | Spec (a) tasks written (38 tasks, each with a "Done when" criterion) and approved; phase 2 scheduled for Nov 16 morning | Specs |
 | 2026-11-11 | Context7 installed by the owner; one test lookup (fast-check `fc.assert` / `fc.property`) | Powers |
+| 2026-11-11 | Task 2: pnpm 12.18.0 installed globally (owner-approved); workspace created; TypeScript pinned to 6.0.3 | Specs (task execution) |
+
+## Revisit later
+- **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
+- **pnpm install scripts**: `npm install -g pnpm` skipped pnpm's preinstall/postinstall scripts (npm's new `allowScripts` default). pnpm works without them so far. If pnpm misbehaves, the owner can run `npm install -g --allow-scripts=pnpm pnpm`.
 
 ## Steering (`.kiro/steering/`)
 All files use `inclusion: always` and are kept short (about 1,600 words total) because they load on every turn. Deep guidance lives in skills, which load on demand.

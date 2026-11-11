@@ -1,0 +1,8 @@
+{
+  "name": "@ghost-examiner/core",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  }
+}

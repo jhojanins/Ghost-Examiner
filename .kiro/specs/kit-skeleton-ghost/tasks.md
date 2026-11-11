@@ -9,12 +9,12 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 ## Phase 1: Day 5 vertical slice (Nov 11 to 15)
 
 ### Repository and workspace
-- [ ] 1. Add the MIT `LICENSE` and `.gitignore` (local checks pass; GitHub license check pending the owner's push)
+- [x] 1. Add the MIT `LICENSE` and `.gitignore`
   - `LICENSE`: MIT, copyright 2026, owner's name (asked at task start). `.gitignore`: `node_modules`, `dist`, `test-results`, `playwright-report`, `.netlify`, `.playwright-mcp`.
   - **Done when:** `git check-ignore -v .kiro/steering/product.md` prints nothing, `git check-ignore .playwright-mcp/x.yml` prints the path, and after the owner pushes, `gh api repos/jhojanins/Ghost-Examiner --jq .license.spdx_id` prints `MIT`.
   - _Requirements: 1.4; steering `structure.md`_
 
-- [ ] 2. Create the pnpm workspace
+- [x] 2. Create the pnpm workspace
   - Ask the owner before running `npm install -g pnpm`. Root `package.json` (scripts, `packageManager`, no runtime deps, no `react`), `pnpm-workspace.yaml`, `tsconfig.base.json`, and the five folders with `package.json`, `tsconfig.json` and an empty `src/index.ts`.
   - **Done when:** `pnpm install` succeeds and `pnpm typecheck` exits 0 across all five workspaces.
   - _Requirements: 1.1, 1.2_

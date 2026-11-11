@@ -1,0 +1,8 @@
+{
+  "name": "@ghost-examiner/ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  }
+}
