@@ -44,7 +44,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** one example test per row of the design's transition table passes, and a `@ts-expect-error` test shows a plain object can't be passed where `ConfirmedAnswer` is required.
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.6, 7.3, 7.4, 7.5, 9.2_
 
-- [ ] 8. Engine property tests
+- [x] 8. Engine property tests
   - Generators use only non-empty packs (an empty pack is rejected by `validatePack`, task 9).
   - **Done when:** fast-check properties P1, P2 and P3 (design §9) pass with 100 runs, each with an event-sequence generator built from valid events (no heavy filtering).
   - _Requirements: 12.1, 5.2, 5.4_ · Skills: `testing-strategy`

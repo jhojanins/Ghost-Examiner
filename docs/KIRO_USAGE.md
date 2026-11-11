@@ -36,6 +36,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Owner request: task 28's e2e criteria now include "typing and submitting shows the confirmation view with that exact text", so a keyboard adapter that was never `start()`ed is caught (`submit()` stays as is) | Specs |
 | 2026-11-11 | Task 7: engine types, `initialState` and `reduce` in core, test written first and seen failing; one example test per row of the design §3.3 transition table, plus a `@ts-expect-error` test (probe confirmed the raw error: TS2322, `[confirmedBrand]` missing). Deviations from the design listed in the task report: `LineRef` shape, `Feedback` location, state field choices | Specs (task execution) |
 | 2026-11-11 | Owner decisions on the gaps found in task 7, recorded in the spec: empty pack → `validatePack` error (task 9) and non-empty packs in task 8 generators; language switch during `evaluating` → known gap for spec (e) (design §8); Esc on the privacy dialog → back to the intro screen (tasks 21 and 27) | Specs |
+| 2026-11-11 | Task 8: engine property tests P1, P2, P3 (fast-check, 100 runs each), with coverage counters and two mutation checks; details under "Property-based testing" | Property-based testing |
 
 ## Revisit later
 - **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
@@ -122,3 +123,14 @@ Main schedule: (a) kit skeleton + animated ghost + Day 5 vertical slice, (b) key
 
 ## Property-based testing
 Planned with fast-check: Morse round trip, timing classifier under jitter, scale invariance, question-engine invariants (no evaluation without confirmation), speech timeline ordering. Properties will be logged here as they are written.
+
+| Property | File | What it checks |
+|---|---|---|
+| P1 | `packages/core/src/engine/reduce.prop.test.ts` | Every `evaluate` effect comes from a `confirm` whose `candidateId` and text match the stored candidate, or from a `locale-changed` that re-evaluates an answer confirmed earlier in the run |
+| P2 | same | `line-done`, `feedback-ready` and `locale-changed` never move a state out of `answering` or `confirming` (no timeouts, no auto-advance) |
+| P3 | same | `reduce` never throws; an event the transition table doesn't accept returns the same state object and no effects |
+
+How the generator avoids filtering: events are generated as templates (for example "confirm the current candidate", "confirm a stale one", "confirm id 7") and resolved against the live state, so runs reach deep into the flow without `fc.pre`. Lessons:
+- fast-check's default `size` keeps arrays near 10 items, too short to reach the feedback phase. P1's coverage counter caught it (0 re-evaluations). `size: 'max'` fixed it.
+- Each property also counts the cases it actually checked and fails if the count is 0, so a generator change can't make it pass vacuously.
+- Two mutations of `reduce` were caught, each with a shrunk counterexample: accepting a stale `confirm` (caught by P1 and P3) and letting `feedback-ready` leave `confirming` (P2 and P3).
