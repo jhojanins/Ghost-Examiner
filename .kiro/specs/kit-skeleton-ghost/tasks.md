@@ -49,7 +49,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** fast-check properties P1, P2 and P3 (design §9) pass with 100 runs, each with an event-sequence generator built from valid events (no heavy filtering).
   - _Requirements: 12.1, 5.2, 5.4_ · Skills: `testing-strategy`
 
-- [ ] 9. Pack validator
+- [x] 9. Pack validator
   - A pack with zero questions is always an `error`, even in Preview, because `reduce` would throw on it (owner decision after task 7). `PackIssue` gets a pack-level shape for it; the exact shape is reported in the task.
   - **Done when:** `validatePack` unit tests cover one adapter + `preview: true` (warning), one adapter + `preview: false` (error), two adapters (no issue), a pack with zero questions (error with `preview: true` and `false`), and property P4 passes.
   - _Requirements: 5.5_

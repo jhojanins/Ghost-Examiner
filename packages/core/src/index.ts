@@ -24,3 +24,5 @@ export type {
   SessionState,
 } from './engine/types';
 export { initialState, reduce } from './engine/reduce';
+export type { PackIssue } from './engine/validate-pack';
+export { validatePack } from './engine/validate-pack';

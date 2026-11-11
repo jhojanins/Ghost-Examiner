@@ -37,6 +37,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Task 7: engine types, `initialState` and `reduce` in core, test written first and seen failing; one example test per row of the design §3.3 transition table, plus a `@ts-expect-error` test (probe confirmed the raw error: TS2322, `[confirmedBrand]` missing). Deviations from the design listed in the task report: `LineRef` shape, `Feedback` location, state field choices | Specs (task execution) |
 | 2026-11-11 | Owner decisions on the gaps found in task 7, recorded in the spec: empty pack → `validatePack` error (task 9) and non-empty packs in task 8 generators; language switch during `evaluating` → known gap for spec (e) (design §8); Esc on the privacy dialog → back to the intro screen (tasks 21 and 27) | Specs |
 | 2026-11-11 | Task 8: engine property tests P1, P2, P3 (fast-check, 100 runs each), with coverage counters and two mutation checks; details under "Property-based testing" | Property-based testing |
+| 2026-11-11 | Task 9: `validatePack` with unit tests and property P4, test written first. `PackIssue` became a union with a `kind` field: `too-few-inputs` (per question) and `no-questions` (always an error, even in Preview); design §3.4 updated | Specs (task execution), property-based testing |
 
 ## Revisit later
 - **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
@@ -134,3 +135,9 @@ How the generator avoids filtering: events are generated as templates (for examp
 - fast-check's default `size` keeps arrays near 10 items, too short to reach the feedback phase. P1's coverage counter caught it (0 re-evaluations). `size: 'max'` fixed it.
 - Each property also counts the cases it actually checked and fails if the count is 0, so a generator change can't make it pass vacuously.
 - Two mutations of `reduce` were caught, each with a shrunk counterexample: accepting a stale `confirm` (caught by P1 and P3) and letting `feedback-ready` leave `confirming` (P2 and P3).
+
+| Property | File | What it checks |
+|---|---|---|
+| P4 | `packages/core/src/engine/validate-pack.prop.test.ts` | For random non-empty packs and random adapter sets (distinct ids, random supported kinds), `validatePack` reports exactly the questions that fewer than 2 methods support, with `warning` in Preview and `error` otherwise |
+
+P4 counts reported and unreported questions and fails if either is 0 (both sides of the "iff"). Two mutations were caught: threshold `< 1` instead of `< 2`, and severity always `warning`.

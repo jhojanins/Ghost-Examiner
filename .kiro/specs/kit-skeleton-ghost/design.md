@@ -171,10 +171,13 @@ Design choices:
 
 ### 3.4 Pack validator (Req 5.5)
 ```ts
-export type PackIssue = { questionId: string; severity: 'warning' | 'error'; supportedBy: InputMethodId[] };
+export type PackIssue =
+  | { kind: 'too-few-inputs'; questionId: string; severity: 'warning' | 'error'; supportedBy: InputMethodId[] }
+  | { kind: 'no-questions'; severity: 'error' };
 export function validatePack(pack: QuestionPack, adapters: readonly InputAdapter[], opts: { preview: boolean }): PackIssue[];
 ```
-- An issue is reported for each question whose `kind` fewer than 2 adapters support; severity is `warning` when `preview`, else `error`.
+- An issue is reported for each question whose `kind` fewer than 2 input methods support (counted by adapter id); severity is `warning` when `preview`, else `error`.
+- A pack with zero questions returns only `{ kind: 'no-questions', severity: 'error' }`, even in Preview, because `reduce` needs a question (owner decision after task 7). `kind` lets the shell pick the localized reason.
 - The runtime (§4.1) refuses to start a session if any issue is an `error`, and the shell shows the localized reason. In Preview it logs warnings with `console.warn` and starts.
 
 ### 3.5 Speech timeline (Req 4.3)
