@@ -78,7 +78,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** with fake timers, `createSilentOutput(clock).speak(timeline).done` resolves exactly at `timeline.duration`, `cancel()` resolves it early without error, and `browserLocale()` returns `es` for a stubbed `navigator.languages` of `['es-CO']`.
   - _Requirements: 4.1, 9.1_
 
-- [ ] 15. Session runtime
+- [x] 15. Session runtime
   - `createSession` per design §4.1, with fake speech and evaluator in tests.
   - **Done when:** an integration test drives start → privacy-accepted → candidate (before `line-done`) → confirm and receives feedback; a strict build with one adapter returns `{ blocked }`; a Preview build calls `console.warn` and starts; `locale-changed` re-resolves the current line text.
   - _Requirements: 4.6, 5.5, 9.2_
