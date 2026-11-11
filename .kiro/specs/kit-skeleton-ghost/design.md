@@ -379,7 +379,7 @@ On push and pull request: checkout, pnpm, Node 24, `pnpm install --frozen-lockfi
 | `confirm` with a stale `candidateId` | Ignored by the reducer |
 | Privacy dialog dismissed with Esc | Back to intro with a Start button |
 
-Not covered (no requirement asks for it): an evaluator that throws or never resolves would leave the session in `evaluating`. The demo evaluator is synchronous and deterministic, so this can't happen in phase 1. Owner-approved: spec (e) gets a requirement for the evaluator failure path (error or timeout → fallback to demo, or a retry message, never a stuck session).
+Not covered (no requirement asks for it): an evaluator that throws or never resolves would leave the session in `evaluating`. The demo evaluator is synchronous and deterministic, so this can't happen in phase 1. Owner-approved: spec (e) gets a requirement for the evaluator failure path (error or timeout → fallback to demo, or a retry message, never a stuck session). Current state after task 15: `createLlmEvaluator` throws on a provider error or bad output, and `createSession` does not catch the rejection, so it is unhandled and the session stays in `evaluating`. Spec (e) fixes it there.
 
 Known gap, left for spec (e) (owner decision after task 7): a language switch during `evaluating` changes the locale but does not re-evaluate (transition table: "any | locale-changed | same phase"), so the pending feedback arrives in the old language. The demo evaluator resolves almost at once, so phase 1 is unaffected; slow real providers in spec (e) need a fix (for example, re-evaluate or drop a `feedback-ready` whose locale differs).
 
