@@ -39,6 +39,8 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Task 8: engine property tests P1, P2, P3 (fast-check, 100 runs each), with coverage counters and two mutation checks; details under "Property-based testing" | Property-based testing |
 | 2026-11-11 | Task 9: `validatePack` with unit tests and property P4, test written first. `PackIssue` became a union with a `kind` field: `too-few-inputs` (per question) and `no-questions` (always an error, even in Preview); design §3.4 updated | Specs (task execution), property-based testing |
 | 2026-11-11 | Task 10: `buildTimeline` (pure, no clock) with example tests and properties P5, P6, using the `ghost-svg-animation` skill. Where the skill (final version: `rate`, 7 visemes, `SpeechCue[]`) differs from spec (a)'s phase 1 design, the design was followed | Specs (task execution), skills, property-based testing |
+| 2026-11-11 | `ghost-svg-animation` skill gains a version note: spec (a) phase 1 follows its design (`Timeline` shape, 4 visemes, 4 expressions, no float); the skill describes the later version | Skills |
+| 2026-11-11 | Task 11: `ghostPose` (pure, `now` passed in, no float, seeded blink hash) with example tests and properties P7, P8; a dedicated test shows reduced motion removes blinking and changes nothing else | Specs (task execution), property-based testing |
 
 ## Revisit later
 - **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
@@ -150,3 +152,10 @@ P4 counts reported and unreported questions and fails if either is 0 (both sides
 | (extra) | same | `buildTimeline` is deterministic (same text and locale, same timeline) |
 
 Text generators mix word-like tokens (accents, `ñ`, digits, `¿¡,.?!-`) joined by mixed whitespace with arbitrary Unicode strings and graphemes. Two mutations were caught: dropping the closing rest when the line has no final punctuation (P5), and pauses moving the clock backwards (P5 and P6).
+
+| Property | File | What it checks |
+|---|---|---|
+| P7 | `packages/core/src/ghost/pose.prop.test.ts` | `ghostPose` is deterministic; under reduced motion `blink` is always false and the pose is otherwise identical (expression and mouth kept) |
+| P8 | same | Without reduced motion, consecutive blink starts are 3000 to 6000 ms apart (15 s window scanned at 1 ms steps from a random start) |
+
+Three mutations were caught: ignoring `reducedMotion` (P7 and the reduced-motion example test), widening the blink jitter to 3 s (P8), and off-by-one mouth cue boundaries (the viseme example test).

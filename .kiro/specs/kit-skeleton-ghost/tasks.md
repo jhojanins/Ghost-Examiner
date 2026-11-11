@@ -59,7 +59,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** properties P5 and P6 pass, and example tests show "Mamá, hola." yields `MBP`/`A` cues, a comma pause of 200 ms and a final `rest`.
   - _Requirements: 4.3_ · Skills: `ghost-svg-animation`
 
-- [ ] 11. Ghost pose
+- [x] 11. Ghost pose
   - `ghostPose(state, now, { reducedMotion })`: viseme lookup, seeded blink; no float.
   - **Done when:** properties P7 and P8 pass, and an example test shows the viseme at a given time matches the timeline cue.
   - _Requirements: 3.3, 3.6, 3.9_ · Skills: `ghost-svg-animation`
