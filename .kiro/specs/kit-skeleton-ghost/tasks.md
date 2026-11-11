@@ -34,7 +34,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** unit tests pass for `pickLocale` (`es-MX` → es, `en-GB` → en, `fr` → en, empty → en) and `format`; a `@ts-expect-error` test with a missing key and one with an extra key in `es` both typecheck (meaning the errors happen).
   - _Requirements: 9.1, 9.3_
 
-- [ ] 6. Input types and keyboard adapter
+- [x] 6. Input types and keyboard adapter
   - `InputAdapter` types from the architecture; `createKeyboardAdapter()` with `submit`.
   - **Done when:** unit tests show `submit('  ')` returns `{ ok: false, reason: 'empty' }` with no event, `submit(' Hi ')` emits one candidate with text `Hi` and method `keyboard`, and `supports` lists all three answer kinds.
   - _Requirements: 6.1, 6.3, 6.4_
