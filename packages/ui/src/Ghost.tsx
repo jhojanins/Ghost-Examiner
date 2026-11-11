@@ -1,10 +1,12 @@
 import { kitMessages, type GhostPose, type Locale, type Viseme } from '@ghost-examiner/core';
-import { useId } from 'react';
+import { useId, type Ref } from 'react';
 import './Ghost.css';
 
 export interface GhostProps {
   pose: GhostPose;
   locale: Locale;
+  /** From `useGhostPose`, which animates blink and mouth through it. */
+  ref?: Ref<SVGSVGElement>;
 }
 
 // Palette (design §5.3, Req 3.11). No purple anywhere.
@@ -43,12 +45,13 @@ function GlassesFrame({ color, width }: { color: string; width: number }) {
  * The ghost examiner (design §5.3): a pure SVG view of a GhostPose. Expression and blink are
  * exposed as data attributes; Ghost.css turns them into transforms on <g> elements.
  */
-export function Ghost({ pose, locale }: GhostProps) {
+export function Ghost({ pose, locale, ref }: GhostProps) {
   const gradientId = `ge-body-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const label = kitMessages[locale][`ghost.label.${pose.expression}`];
 
   return (
     <svg
+      ref={ref}
       className="ge-ghost"
       viewBox="0 0 240 280"
       role="img"

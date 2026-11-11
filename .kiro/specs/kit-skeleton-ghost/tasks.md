@@ -98,7 +98,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show, for each of the 4 expressions and 4 visemes, the right mouth path is visible and the `aria-label` matches the expression in EN and ES; a test asserts every color used in the SVG is one of the design palette values (so no purple can slip in).
   - _Requirements: 3.1, 3.2 (phase 1), 3.5, 3.8, 3.11_ · Skills: `ghost-svg-animation`, `a11y-review`
 
-- [ ] 19. `useGhostPose` animation hook
+- [x] 19. `useGhostPose` animation hook
   - One `requestAnimationFrame` loop, writes through refs, reads `prefers-reduced-motion`.
   - **Done when:** a test with a mocked rAF and `matchMedia` shows blinking toggles the eye attributes without re-rendering the component, and with `reduce` the eyes never close.
   - _Requirements: 3.3, 3.4, 3.6_ · Skills: `ghost-svg-animation`

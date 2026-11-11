@@ -4,3 +4,4 @@ export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';
 export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
+export { useGhostPose } from './useGhostPose';
