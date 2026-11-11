@@ -10,7 +10,8 @@
         "type": "command",
         "command": "pnpm --filter @ghost-examiner/core typecheck && pnpm exec vitest run --project core",
         "timeout": 60
-      }
+      },
+      "enabled": true
     }
   ]
 }
