@@ -19,7 +19,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `pnpm install` succeeds and `pnpm typecheck` exits 0 across all five workspaces.
   - _Requirements: 1.1, 1.2_
 
-- [ ] 3. Add the test and lint tooling
+- [x] 3. Add the test and lint tooling
   - `vitest.config.ts` with projects `core` (node), `web` (jsdom), `ui` (jsdom), `passWithNoTests`; `eslint.config.js` with typescript-eslint and react-hooks for `packages/ui` and `apps/*`.
   - **Done when:** `pnpm test` and `pnpm lint` each exit 0 and return to the prompt without a watcher.
   - _Requirements: 1.2, 1.3_ · Skills: `testing-strategy`

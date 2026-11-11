@@ -28,8 +28,10 @@ metadata:
 - Characters: `fc.constantFrom(...ALPHABET)`; words: `fc.array(char, { minLength: 1, maxLength: 12 })`; texts: `fc.array(word, { minLength: 1, maxLength: 6 }).map(ws => ws.join(' '))`.
 - Timing: map a symbol sequence plus `fc.integer({ min: 60, max: 400 })` (unit) and `fc.array(fc.double({ min: -0.3, max: 0.3, noNaN: true }))` (jitter) to press events.
 
+Installed: fast-check 4.10.2. Use `import * as fc` and always `await fc.assert(...)`: harmless for sync properties in v4 and required in v5. In v4, async predicates need `fc.asyncProperty`; v5 folds them into `fc.property`.
+
 ```ts
-import fc from 'fast-check';
+import * as fc from 'fast-check';
 import { describe, it } from 'vitest';
 import { encode, decode, normalize, ALPHABET } from './morse';
 
@@ -38,8 +40,8 @@ const text = fc
   .map(words => words.join(' '));
 
 describe('morse codec', () => {
-  it('round-trips any supported text', () => {
-    fc.assert(fc.property(text, s => decode(encode(s)) === normalize(s)));
+  it('round-trips any supported text', async () => {
+    await fc.assert(fc.property(text, s => decode(encode(s)) === normalize(s)));
   });
 });
 ```

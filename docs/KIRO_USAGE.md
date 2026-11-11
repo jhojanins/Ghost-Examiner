@@ -23,6 +23,9 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Spec (a) tasks written (38 tasks, each with a "Done when" criterion) and approved; phase 2 scheduled for Nov 16 morning | Specs |
 | 2026-11-11 | Context7 installed by the owner; one test lookup (fast-check `fc.assert` / `fc.property`) | Powers |
 | 2026-11-11 | Task 2: pnpm 12.18.0 installed globally (owner-approved); workspace created; TypeScript pinned to 6.0.3 | Specs (task execution) |
+| 2026-11-11 | Task 3: Vitest 5.1.0 (projects core/node, web/jsdom, ui/jsdom), ESLint 10.14.0 + typescript-eslint 8.72.2 + react-hooks 7.1.1, fast-check 4.10.2, jsdom 31.0.0, vite 8.3.7. Verified with temporary probes: environments are right, fast-check runs, lint catches `any`, unused vars and a conditional hook; probes deleted. `morse-input-pbt` skill updated for fast-check 4.10.2 | Specs, skills |
+| 2026-11-11 | pnpm 12's supply-chain policy (minimum release age) flagged vite 8.3.8, published 17 hours earlier, and auto-added an exception to `pnpm-workspace.yaml`. We removed the exception and pinned vite 8.3.7 instead (2 days old, passes the policy) | Supply-chain hygiene |
+| 2026-11-11 | Found: 5 skill files (`ghost-svg-animation`, `kiroween-checklist`, `netlify-proxy-safety`, `prompt-injection-defense`, `testing-strategy`) have invalid YAML frontmatter because their descriptions contain an unquoted `: `, so Kiro doesn't load them. Fix pending owner approval | Skills |
 
 ## Revisit later
 - **TypeScript 7**: pinned to 6.0.3 because typescript-eslint 8.72.2 supports `typescript >=4.8.4 <6.1.0` and TypeScript 7.0.2 (the native compiler) is outside that range. Move to 7 when typescript-eslint's peer range includes it (`npm view typescript-eslint peerDependencies`).
