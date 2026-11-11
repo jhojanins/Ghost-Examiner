@@ -64,7 +64,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** properties P7 and P8 pass, and an example test shows the viseme at a given time matches the timeline cue.
   - _Requirements: 3.3, 3.6, 3.9_ · Skills: `ghost-svg-animation`
 
-- [ ] 12. LLM types, `withFallback`, `isFeedback`
+- [x] 12. LLM types, `withFallback`, `isFeedback`
   - **Done when:** unit tests show `withFallback(failing, working)` returns the working result, `withFallback(failing, failing)` returns the last error, and `isFeedback` rejects missing fields, extra fields, wrong types and an unknown reaction.
   - _Requirements: 8.1_ · Skills: `netlify-proxy-safety`
 

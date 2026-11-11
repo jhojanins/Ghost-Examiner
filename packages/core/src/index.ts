@@ -30,3 +30,6 @@ export type { MouthCue, Timeline, Viseme, WordCue } from './speech/timeline';
 export { buildTimeline } from './speech/timeline';
 export type { Expression, GhostActivity, GhostPose, GhostState } from './ghost/pose';
 export { ghostPose } from './ghost/pose';
+export type { EvaluateInput, LLMProvider, LLMRequest, LLMResult, LLMTask } from './llm/types';
+export { withFallback } from './llm/with-fallback';
+export { FEEDBACK_TEXT_MAX, isFeedback } from './llm/is-feedback';
