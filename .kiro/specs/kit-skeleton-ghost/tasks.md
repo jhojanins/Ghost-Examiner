@@ -151,7 +151,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `pnpm e2e` passes and covers: the keyboard-only flow, typing an answer and submitting it shows the confirmation view with that exact text (catches a keyboard adapter that was never `start()`ed, since `submit()` then returns `ok` but emits nothing), confirmation before feedback, captions and transcript per line, the request allowlist (any foreign origin fails the test), and axe (WCAG 2.2 AA tags) with zero violations on intro, privacy dialog, answering, confirming and feedback screens in EN with default motion.
   - _Requirements: 12.2, 12.3 (phase 1), 12.4_ · Skills: `testing-strategy`, `a11y-review`
 
-- [ ] 29. ghost-defense shell
+- [x] 29. ghost-defense shell
   - `config.ts` (`preview: true`), title, amber accent, idle ghost, "in development" message with a link to `/interview/`, `base: '/defense/'`.
   - **Done when:** a Playwright MCP keyboard walk-through shows the shell, the Preview label, the language switch and the link; axe reports zero violations on the page in EN.
   - _Requirements: 11.2, 11.3, 11.4, 11.5_ · Skills: `a11y-review`, `ghost-persona`

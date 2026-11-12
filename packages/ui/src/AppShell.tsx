@@ -9,6 +9,8 @@ export interface AppShellProps {
   locale: Locale;
   /** Preview build (Req 11.5): shows the Preview label and why, on every screen. */
   preview: boolean;
+  /** Replaces the kit's Preview explanation when it would not be true for this app. */
+  previewNote?: string;
   /** Slot for the LanguageSwitch (task 17). */
   languageSwitch?: ReactNode;
   /** Opens the privacy notice; same place on every screen (Req 10.4, WCAG 3.2.6). */
@@ -19,7 +21,7 @@ export interface AppShellProps {
 const MAIN_ID = 'main-content';
 
 /** Page frame shared by both apps (design §5.1): skip link, header, and <main>. */
-export function AppShell({ title, locale, preview, languageSwitch, onPrivacy, children }: AppShellProps) {
+export function AppShell({ title, locale, preview, previewNote, languageSwitch, onPrivacy, children }: AppShellProps) {
   const m = kitMessages[locale];
 
   // Keeps <html lang> in step with the UI language (Req 9.2, WCAG 3.1.1).
@@ -37,7 +39,7 @@ export function AppShell({ title, locale, preview, languageSwitch, onPrivacy, ch
         {preview && (
           <p className="ge-preview">
             <strong className="ge-preview-badge">{m['shell.preview.badge']}</strong>
-            <span className="ge-preview-detail">{m['shell.preview.detail']}</span>
+            <span className="ge-preview-detail">{previewNote ?? m['shell.preview.detail']}</span>
           </p>
         )}
         <div className="ge-header-actions">

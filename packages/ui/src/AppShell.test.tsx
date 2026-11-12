@@ -26,6 +26,13 @@ describe('AppShell', () => {
     expect(screen.queryByText(detail)).toBeNull();
   });
 
+  it('an app can replace the Preview explanation with its own honest note', () => {
+    shell({ preview: true, previewNote: 'Work in progress: nothing to answer here yet.' });
+    expect(screen.getByText('Preview')).toBeTruthy();
+    expect(screen.getByText('Work in progress: nothing to answer here yet.')).toBeTruthy();
+    expect(screen.queryByText('Keyboard only for now. Voice and Morse are coming.')).toBeNull();
+  });
+
   it('has a skip link that targets <main>, and main holds the screen content', () => {
     shell();
     const skip = screen.getByRole('link', { name: 'Skip to main content' });

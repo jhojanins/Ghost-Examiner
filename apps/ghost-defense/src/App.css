@@ -1,0 +1,31 @@
+/* Amber accent for this app (design §5.3): on --bg-end 10.4:1, --on-accent on it 13.3:1.
+   Imported after the kit styles, so it overrides the interview accent. */
+:root {
+  --accent: #ffd27a;
+}
+
+.gd-ghost {
+  width: 150px;
+  margin: 0 auto;
+}
+
+.gd-panel {
+  max-width: 42rem;
+  margin: 1.5rem auto 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+.gd-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+/* A real link (it goes to another page), sized as a target >= 24 px (WCAG 2.5.8). */
+.gd-link {
+  display: inline-block;
+  padding: 0.25rem 0;
+  color: var(--accent);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
