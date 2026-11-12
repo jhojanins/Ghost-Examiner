@@ -25,6 +25,17 @@ const answer = fc.oneof(fc.string(), fc.string({ unit: 'grapheme', maxLength: 30
 const asConfirmed = (text: string) => ({ text, method: 'keyboard', candidateId: 1 }) as ConfirmedAnswer;
 
 describe('demo evaluation properties', () => {
+  it('switching the language never changes the judgement, only the language of the text', async () => {
+    await fc.assert(
+      fc.asyncProperty(question, answer, async (q, text) => {
+        const evaluator = createLlmEvaluator(createDemoProvider());
+        const [en, es] = await Promise.all([evaluator.evaluate(q, asConfirmed(text), 'en'), evaluator.evaluate(q, asConfirmed(text), 'es')]);
+        expect(es.reaction).toBe(en.reaction);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
   it('P9: same question, answer and locale give the same feedback, and it always passes isFeedback', async () => {
     await fc.assert(
       fc.asyncProperty(question, answer, locale, async (q, text, loc) => {
@@ -42,11 +53,11 @@ describe('demo evaluation properties', () => {
         if (!first.ok) return;
         expect(isFeedback(JSON.parse(first.text))).toBe(true);
 
-        // Through the evaluator, twice, with fresh providers: identical results.
+        // Through the evaluator, twice, with fresh providers: identical, valid results in the locale.
         const a = await createLlmEvaluator(createDemoProvider()).evaluate(q, asConfirmed(text), loc);
         const b = await createLlmEvaluator(createDemoProvider()).evaluate(q, asConfirmed(text), loc);
         expect(a).toEqual(b);
-        expect(a).toEqual(JSON.parse(first.text));
+        expect(isFeedback(a)).toBe(true);
         expect(a.locale).toBe(loc);
       }),
       { numRuns: 100 },

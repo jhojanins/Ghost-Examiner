@@ -23,7 +23,13 @@ export function createLlmEvaluator(provider: LLMProvider): Evaluator {
         locale,
         input: {
           question: question.prompt[locale],
-          keyPoints: question.keyPoints.map((k) => ({ label: k.label[locale], cues: k.cues[locale] })),
+          // Labels in the requested language. Cues from every language, the requested one first:
+          // the answer may be typed in either language, and a UI language switch must not change
+          // the result, only the language of the text (found in the task 27 walk-through).
+          keyPoints: question.keyPoints.map((k) => ({
+            label: k.label[locale],
+            cues: [...k.cues[locale], ...k.cues[locale === 'en' ? 'es' : 'en']],
+          })),
           answer: answer.text,
         },
         maxOutputTokens: MAX_OUTPUT_TOKENS,

@@ -221,7 +221,7 @@ export function isFeedback(value: unknown): value is Feedback;         // hand-w
 - `Feedback`: `{ summary, strength, improvement, reaction: 'approving' | 'skeptical', locale }`. One strength and one improvement (Req 8.2); the plural lists in ARCHITECTURE.md §3.2 are trimmed to what the requirement asks.
 - **Demo heuristic** (inside `DemoProvider`, returning JSON text so real providers in spec (e) go through the same guard):
   1. Normalize the answer: lowercase, strip accents, collapse spaces.
-  2. A key point matches if any of its cues for the locale appears in the answer.
+  2. A key point matches if any of its cues appears in the answer. Cues from both languages count (the evaluator sends the requested locale's cues first, then the other's), so a language switch changes the text of the feedback, never the result (change after the task 27 walk-through: an English answer re-evaluated after switching to ES lost all its matches).
   3. `reaction` = `approving` if at least half the key points match, else `skeptical`.
   4. Strength: label of the first matched point ("You covered {point}."), or "You took the time to answer." if none matched (owner change after task 13: the demo can't check that an answer was direct, and the summary already says "Thank you").
   5. Improvement: label of the first unmatched point ("Add {point}."); if all matched, "Add one result you can measure."; if the answer has fewer than 8 words, "Say a bit more: one example helps." takes priority.

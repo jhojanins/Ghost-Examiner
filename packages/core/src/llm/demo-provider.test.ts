@@ -53,13 +53,14 @@ describe('demo evaluation', () => {
     expect(feedback.strength).toBe('You covered the result.');
   });
 
-  it('the same input in es returns Spanish text', async () => {
-    // An English answer meets no Spanish cues: skeptical, no-match strength, first point missing.
+  it('the same input in es returns Spanish text, with the same judgement (found in the task 27 walk-through)', async () => {
+    // Cues from both languages count, so switching the UI language never changes the result,
+    // only the language of the text.
     expect(await evaluate(twoOfThree, 'es')).toEqual({
-      summary: 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',
-      strength: 'Te tomaste el tiempo de responder.',
-      improvement: 'Agrega la situación.',
-      reaction: 'skeptical',
+      summary: 'Gracias. Esa respuesta fue clara y se centró en el tema.',
+      strength: 'Explicaste la situación.',
+      improvement: 'Agrega la acción.',
+      reaction: 'approving',
       locale: 'es',
     });
     // A Spanish answer covering 2 of 3, matched without accents ("situacion").

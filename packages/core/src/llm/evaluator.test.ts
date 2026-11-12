@@ -16,13 +16,13 @@ const valid = { summary: 'S.', strength: 'T.', improvement: 'I.', reaction: 'app
 const provider = (result: LLMResult) => ({ id: 'proxy' as const, isDemo: false, complete: vi.fn(async () => result) });
 
 describe('createLlmEvaluator', () => {
-  it('sends an evaluate-answer request resolved to the locale', async () => {
+  it('sends an evaluate-answer request: text in the locale, cues from every language', async () => {
     const p = provider({ ok: true, text: JSON.stringify(valid) });
     await createLlmEvaluator(p satisfies LLMProvider).evaluate(question, answer, 'es');
     expect(p.complete).toHaveBeenCalledWith({
       task: 'evaluate-answer',
       locale: 'es',
-      input: { question: '¿Pregunta?', keyPoints: [{ label: 'el resultado', cues: ['resultado'] }], answer: 'My answer.' },
+      input: { question: '¿Pregunta?', keyPoints: [{ label: 'el resultado', cues: ['resultado', 'result'] }], answer: 'My answer.' },
       maxOutputTokens: 300,
     });
   });
