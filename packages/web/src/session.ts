@@ -6,6 +6,7 @@ import {
   type Evaluator,
   type InputAdapter,
   type InputEvent,
+  type InputMethodId,
   type LineRef,
   type Locale,
   type PackIssue,
@@ -23,6 +24,11 @@ export interface SessionDeps {
   evaluator: Evaluator;
   speech: SpeechOutput;
   locale: Locale;
+  /**
+   * Registered methods this browser can't use (`unavailableInputs`, spec b Req 10.3). They never
+   * count toward the two-method rule and are never started. Defaults to none.
+   */
+  unavailable?: readonly InputMethodId[];
 }
 
 /** The ghost line on screen: what captions show and what the mouth plays. */
@@ -50,6 +56,11 @@ export interface SessionView {
   line?: LineView;
   /** Every line the ghost said, in order (Req 4.4). */
   transcript: readonly TranscriptEntry[];
+  /**
+   * Set when this browser leaves a question with fewer than 2 available methods, so the session runs
+   * as a Preview session (spec b Req 10.4): the shell shows the Preview label and says what's missing.
+   */
+  preview?: { missing: InputMethodId[] };
 }
 
 export type SessionHandle =
@@ -59,6 +70,12 @@ export type SessionHandle =
       dispatch(event: SessionEvent): void;
     }
   | { blocked: PackIssue[] }; // strict build with validation errors, or an empty pack (Req 5.5)
+
+/** The registered methods this browser can't use, once each, in registration order (spec b Req 10.3). */
+export async function unavailableInputs(adapters: readonly InputAdapter[]): Promise<InputMethodId[]> {
+  const checks = await Promise.all(adapters.map(async (a) => ({ id: a.id, ok: (await a.checkAvailability()).available })));
+  return [...new Set(checks.filter((c) => !c.ok).map((c) => c.id))];
+}
 
 function resolveLine(ref: LineRef, locale: Locale): { text: string; locale: Locale } {
   return 'localized' in ref ? { text: ref.localized[locale], locale } : { text: ref.text, locale: ref.locale };
@@ -74,6 +91,18 @@ export function createSession(deps: SessionDeps): SessionHandle {
   if (errors.length > 0) return { blocked: errors };
   for (const issue of issues) console.warn('Ghost Examiner: question pack issue (Preview build)', issue);
 
+  // Preview session (spec b design §3.4): check again with only the methods this browser can use.
+  // A question the pack already flagged keeps its build warning; only new shortfalls count.
+  const unavailable = deps.unavailable ?? [];
+  const adapters = deps.adapters.filter((a) => !unavailable.includes(a.id));
+  const flagged = new Set(issues.map((i) => ('questionId' in i ? i.questionId : '')));
+  const lost = validatePack(deps.pack, adapters, { preview: true }).filter(
+    (i) => i.kind === 'too-few-inputs' && !flagged.has(i.questionId),
+  );
+  for (const issue of lost) console.warn('Ghost Examiner: question pack issue (Preview session)', issue);
+  const missing = [...new Set(deps.adapters.map((a) => a.id).filter((id) => unavailable.includes(id)))];
+  const preview = lost.length > 0 ? { missing } : undefined;
+
   let state = initialState(deps.pack, deps.locale);
   let line: LineView | undefined;
   let lineRef: LineRef | undefined;
@@ -82,7 +111,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
   let inputKey: string | undefined; // the question the adapters were started for
   let inputLocale: Locale | undefined; // the language they last heard about
   let transcript: readonly TranscriptEntry[] = [];
-  let view: SessionView = { state, transcript };
+  let view: SessionView = { state, transcript, preview };
   const listeners = new Set<() => void>();
 
   /**
@@ -141,12 +170,12 @@ export function createSession(deps: SessionDeps): SessionHandle {
     const answerable = state.phase === 'asking' || state.phase === 'answering';
     const key = answerable ? String(state.questionIndex) : undefined;
     if (key !== undefined && key === inputKey) {
-      if (state.locale !== inputLocale) for (const adapter of deps.adapters) adapter.setLocale?.(state.locale);
+      if (state.locale !== inputLocale) for (const adapter of adapters) adapter.setLocale?.(state.locale);
       inputLocale = state.locale;
       return;
     }
     if (key === inputKey) return;
-    if (inputKey !== undefined) for (const adapter of deps.adapters) adapter.stop();
+    if (inputKey !== undefined) for (const adapter of adapters) adapter.stop();
     inputKey = key;
     inputLocale = state.locale;
     if (key === undefined) return;
@@ -154,7 +183,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
     // Candidates go to the engine. A `partial` is accepted and changes nothing yet; barge-in uses
     // it in task 38 (spec b design §3.5).
     const onInput = (e: InputEvent) => e.type === 'candidate' && dispatch(e);
-    for (const adapter of deps.adapters) adapter.start({ question: { id, kind }, locale: state.locale }, onInput);
+    for (const adapter of adapters) adapter.start({ question: { id, kind }, locale: state.locale }, onInput);
   }
 
   function dispatch(event: SessionEvent, lineChanged = false) {
@@ -174,7 +203,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (state.phase === 'confirming' && before.phase !== 'confirming') cancelLine();
     if (state.locale !== before.locale) relocalize();
     syncInputs();
-    view = { state, line, transcript };
+    view = { state, line, transcript, preview };
     for (const listener of listeners) listener();
   }
 

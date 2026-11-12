@@ -8,7 +8,7 @@ import {
   type Timeline,
 } from '@ghost-examiner/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSession, type SessionDeps, type SessionHandle } from './session';
+import { createSession, unavailableInputs, type SessionDeps, type SessionHandle } from './session';
 import type { Playback, SpeechOutput } from './silent-output';
 
 // Fictional pack, test data only.
@@ -367,5 +367,67 @@ describe('createSession', () => {
     unsubscribe();
     handle.dispatch({ type: 'privacy-accepted' });
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('unavailableInputs and the Preview session (spec b task 30, Req 10)', () => {
+  const voice = (available: boolean): InputAdapter => ({
+    ...morse,
+    id: 'voice',
+    supports: ['free-text'],
+    checkAvailability: async () => (available ? { available: true } : { available: false, reason: 'voice.unavailable' }),
+    start: vi.fn(),
+    stop: vi.fn(),
+    setLocale: vi.fn(),
+  });
+
+  it('unavailableInputs lists the methods whose adapter reports unavailable, once each, in order', async () => {
+    const keyboard = createKeyboardAdapter();
+    await expect(unavailableInputs([keyboard, voice(false), morse, voice(false)])).resolves.toEqual(['voice']);
+    await expect(unavailableInputs([keyboard, voice(true)])).resolves.toEqual([]);
+  });
+
+  it('voice registered but unavailable: the session starts as a Preview session and never touches the voice adapter', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const offline = voice(false);
+    const { handle } = setup({ adapters: [createKeyboardAdapter(), offline], preview: false, unavailable: ['voice'] });
+    expect(handle.getSnapshot().preview).toEqual({ missing: ['voice'] });
+    expect(warn).toHaveBeenCalledTimes(1); // once per question that lost its second method
+    expect(warn.mock.calls[0]).toContainEqual(expect.objectContaining({ kind: 'too-few-inputs', questionId: 'q1', severity: 'warning' }));
+
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    handle.dispatch({ type: 'locale-changed', locale: 'es' });
+    expect(offline.start).not.toHaveBeenCalled();
+    expect(offline.setLocale).not.toHaveBeenCalled();
+    expect(handle.getSnapshot().preview).toEqual({ missing: ['voice'] }); // kept in every snapshot
+    expect(handle.getSnapshot().state.locale).toBe('es');
+  });
+
+  it('every method available: no Preview session and no warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { handle } = setup({ adapters: [createKeyboardAdapter(), voice(true)], preview: false, unavailable: [] });
+    expect(handle.getSnapshot().preview).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('a question pack error still blocks: one registered method in a strict build', () => {
+    const handle = createSession({
+      pack,
+      adapters: [createKeyboardAdapter()],
+      preview: false,
+      unavailable: [],
+      evaluator: fakeEvaluator(),
+      speech: fakeSpeech().speech,
+      locale: 'en',
+    });
+    expect(handle).toEqual({ blocked: [{ kind: 'too-few-inputs', questionId: 'q1', severity: 'error', supportedBy: ['keyboard'] }] });
+  });
+
+  it('a Preview build with one method keeps its build warning only: no Preview session on top, no second warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { handle } = setup({ adapters: [createKeyboardAdapter()], preview: true });
+    expect(handle.getSnapshot().preview).toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

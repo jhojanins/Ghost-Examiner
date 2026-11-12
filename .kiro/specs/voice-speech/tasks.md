@@ -265,7 +265,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - all existing session tests pass.
   - _Design §3.5; Requirements: 4.6_
 
-- [ ] 30. `unavailableInputs` and the Preview session
+- [x] 30. `unavailableInputs` and the Preview session
+  - `SessionDeps.unavailable` is optional (defaults to none) until task 33 wires the app; a question the pack already flags in a Preview build keeps its build warning and doesn't also make a Preview session.
   - **Done when:** tests show:
     - `unavailableInputs` returns the ids of unavailable adapters;
     - with keyboard + voice registered and voice unavailable, `createSession` starts, sets `view.preview = { missing: ['voice'] }`, warns once per issue, and never starts the voice adapter;

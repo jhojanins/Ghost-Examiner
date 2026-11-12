@@ -14,4 +14,4 @@ export { createVoiceAdapter } from './voice-adapter';
 export type { SoundView, SynthLike, UtteranceCtor, UtteranceLike, VoiceOutput, WebSpeechDeps } from './web-speech-output';
 export { createWebSpeechOutput } from './web-speech-output';
 export type { LineView, SessionDeps, SessionHandle, SessionView, TranscriptEntry } from './session';
-export { createSession } from './session';
+export { createSession, unavailableInputs } from './session';
