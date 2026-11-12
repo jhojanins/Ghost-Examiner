@@ -69,6 +69,9 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-11 | Task 27: ghost-interview slice wired in five commits (runtime change, scaffold and config, pack and messages, App wiring, walk-through fixes). Owner decision implemented: submitting during the question stops the ghost. The runtime now also keeps the transcript (lines that finished, were replaced or were cancelled) | Specs (task execution) |
 | 2026-11-11 | Task 27 browser walk-through with Playwright MCP, keyboard only, scripted (`.playwright-mcp/task27-walk.js`, git-ignored): EN (with a switch to ES during feedback) and ES runs, 15 axe runs with 0 violations, screenshots of every phase, mouth and captions measured frame by frame with the real `SilentOutput` timing. Real bug found: after switching the language during feedback, an English answer was re-evaluated with Spanish cues only, so the result changed (approving → skeptical) on a language switch. Fix: the evaluator sends cues from both languages; new property test "a language switch never changes the judgement" | MCP, property-based testing |
 
+## Credit check
+- **2026-11-11, after task 27**: credits used so far: _(owner to fill in from the Kiro usage page; the agent cannot read that page)_.
+
 ## Revisit later
 - **Caption word spacing (polish day, found in the task 27 walk-through)**: each caption word reserves the width of its bold form, so some gaps look uneven ("difficult  problem"). Look for a marker that keeps underline and bold without the uneven gaps, and keep the "no re-wrap" property.
 - **Language of the user's answer (phase 2, owner note after task 23)**: the confirmed answer text in `ConfirmAnswer` has no `lang` attribute, so a screen reader may read it with the wrong voice when the user typed in a different language than the UI. Fix by storing the answer's language with the candidate and setting `lang` on the quoted answer.
