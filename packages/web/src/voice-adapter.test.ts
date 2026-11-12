@@ -163,3 +163,92 @@ describe('createVoiceAdapter: a recognizer that cannot run makes voice unavailab
     expect(adapter.getSnapshot().listening).toBe(false);
   });
 });
+
+describe('createVoiceAdapter: results and the candidate (task 25)', () => {
+  function listening() {
+    const s = setup();
+    s.adapter.start(en, s.emit);
+    s.adapter.listen();
+    return { ...s, r: s.instances[0] };
+  }
+
+  it('splits the results into final and interim text, and emits a partial with all of it', () => {
+    const { adapter, r, events } = listening();
+    r.result([['I fixed', false]]);
+    expect(adapter.getSnapshot()).toMatchObject({ final: '', interim: 'I fixed' });
+    r.result([['I fixed the build', true], [' and then', false]]);
+    expect(adapter.getSnapshot()).toMatchObject({ final: 'I fixed the build', interim: 'and then' });
+    expect(events).toEqual([
+      { type: 'partial', text: 'I fixed' },
+      { type: 'partial', text: 'I fixed the build and then' },
+    ]);
+  });
+
+  it('joins several final results with single spaces, whatever spacing the browser sends', () => {
+    const { adapter, r, events } = listening();
+    r.result([['First part.', true], [' second part', true], ['third', true]], 2);
+    expect(adapter.getSnapshot().final).toBe('First part. second part third');
+    expect(events.at(-1)).toEqual({ type: 'partial', text: 'First part. second part third' });
+  });
+
+  it('stopListening() stops the recognizer; on its end, one candidate with the trimmed text and method voice', () => {
+    const { adapter, r, events } = listening();
+    r.result([['  I fixed the build  ', true]]);
+    adapter.stopListening();
+    expect(r.stop).toHaveBeenCalledTimes(1);
+    expect(events.filter((e) => e.type === 'candidate')).toEqual([]); // waits for the last results
+    r.result([['I fixed the build', true], [' on Friday', false]]); // late results still count
+    r.end();
+    expect(events.filter((e) => e.type === 'candidate')).toEqual([
+      { type: 'candidate', candidate: { text: 'I fixed the build on Friday', method: 'voice' } },
+    ]);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: '', interim: '' });
+  });
+
+  it('blank text: no candidate, and the view says what to do', () => {
+    const { adapter, r, events } = listening();
+    r.result([['   ', true]]);
+    adapter.stopListening();
+    r.end();
+    expect(events.filter((e) => e.type === 'candidate')).toEqual([]);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, error: 'voice.empty' });
+    adapter.listen(); // trying again clears the message
+    expect(adapter.getSnapshot().error).toBeUndefined();
+  });
+
+  it('stop() also clears an "empty answer" message, so it never carries over to the next question', () => {
+    const { adapter, r } = listening();
+    adapter.stopListening();
+    r.end();
+    expect(adapter.getSnapshot().error).toBe('voice.empty');
+    adapter.stop();
+    expect(adapter.getSnapshot().error).toBeUndefined();
+  });
+
+  it('an end the user did not ask for makes no candidate and shows no message (task 26 restarts instead)', () => {
+    const { adapter, r, events } = listening();
+    r.result([['I fixed the build', true]]);
+    r.end(); // the browser stopped on its own, e.g. after a pause
+    expect(events.filter((e) => e.type === 'candidate')).toEqual([]);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: 'I fixed the build' });
+    expect(adapter.getSnapshot().error).toBeUndefined();
+  });
+
+  it('stopListening() while not listening does nothing', () => {
+    const { adapter, events, emit } = setup();
+    adapter.start(en, emit);
+    expect(() => adapter.stopListening()).not.toThrow();
+    expect(events).toEqual([]);
+  });
+
+  it('stop() aborts listening, clears the text, and a late end emits nothing', () => {
+    const { adapter, r, events } = listening();
+    r.result([['I fixed', false]]);
+    adapter.stop();
+    expect(r.abort).toHaveBeenCalled();
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: '', interim: '' });
+    r.result([['I fixed the build', true]]); // events of an aborted recognizer
+    r.end();
+    expect(events).toEqual([{ type: 'partial', text: 'I fixed' }]);
+  });
+});

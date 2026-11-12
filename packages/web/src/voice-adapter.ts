@@ -1,4 +1,4 @@
-import { speechLang, type Availability, type InputAdapter, type InputContext } from '@ghost-examiner/core';
+import { speechLang, type Availability, type InputAdapter, type InputContext, type InputEvent } from '@ghost-examiner/core';
 
 /**
  * The members of `SpeechRecognition` / `webkitSpeechRecognition` this adapter uses (spec b design
@@ -42,6 +42,8 @@ export interface VoiceAdapter extends InputAdapter {
   subscribe(listener: () => void): () => void;
   /** Start listening (the voice button); the browser asks for the microphone on the first time. */
   listen(): void;
+  /** Stop listening (the voice button again): the answer becomes a candidate once the last results arrive. */
+  stopListening(): void;
 }
 
 export interface VoiceAdapterDeps {
@@ -62,6 +64,18 @@ const UNAVAILABLE: Availability = { available: false, reason: 'voice.unavailable
  */
 const cannotRun = (code: string) => code === 'service-not-allowed' || code === 'network';
 
+/** The results' text, final or not: trimmed pieces joined by one space (browsers differ in spacing). */
+function textOf(event: RecognitionResultEventLike, isFinal: boolean): string {
+  const pieces: string[] = [];
+  for (let i = 0; i < event.results.length; i++) {
+    const result = event.results[i];
+    if (result.isFinal === isFinal) pieces.push(result[0].transcript.trim());
+  }
+  return pieces.filter(Boolean).join(' ');
+}
+
+const joined = (view: VoiceView) => [view.final, view.interim].filter(Boolean).join(' ');
+
 /**
  * Voice answers with the browser's speech recognition (spec b design §3.3, Req 4). Feature
  * detection never creates a recognizer, so the microphone is only requested when the user starts
@@ -72,7 +86,9 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
   const { Recognition } = deps;
   let availability: Availability = Recognition ? { available: true } : UNAVAILABLE;
   let ctx: InputContext | undefined; // the question the adapter is armed for
+  let emit: ((e: InputEvent) => void) | undefined;
   let recognizer: RecognitionLike | undefined;
+  let stopping = false; // the user asked to stop: the next end turns the text into a candidate
   let view: VoiceView = { availability, listening: false, final: '', interim: '' };
   const listeners = new Set<() => void>();
 
@@ -96,17 +112,28 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       r.interimResults = true;
       r.maxAlternatives = 1;
       r.lang = speechLang(locale, deps.languages);
+      r.onresult = (e) => {
+        if (r !== recognizer) return;
+        update({ final: textOf(e, true), interim: textOf(e, false) });
+        emit?.({ type: 'partial', text: joined(view) }); // live captions and barge-in (Req 5.1, 7.1)
+      };
       r.onerror = (e) => {
         if (r === recognizer && cannotRun(e.error)) becomeUnavailable();
       };
       r.onend = () => {
         if (r !== recognizer) return; // an aborted or failed recognizer
         recognizer = undefined;
-        update({ listening: false });
+        if (!stopping) return update({ listening: false }); // ended by the browser: task 26 restarts it
+        stopping = false;
+        const text = joined(view).trim();
+        if (!text) return update({ listening: false, error: 'voice.empty' }); // Req 4.8
+        update({ listening: false, final: '', interim: '' });
+        emit?.({ type: 'candidate', candidate: { text, method: 'voice' } }); // Req 4.7: to confirmation
       };
       recognizer = r;
+      stopping = false;
       r.start();
-      update({ listening: true });
+      update({ listening: true, final: '', interim: '', error: undefined });
     } catch {
       becomeUnavailable(); // no constructor that works, or start() refused
     }
@@ -118,17 +145,23 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
     experimental: false,
     supports: ['free-text'],
     checkAvailability: async () => availability,
-    start(context) {
+    start(context, onEvent) {
       ctx = context;
+      emit = onEvent;
     },
     stop() {
       ctx = undefined;
+      emit = undefined;
+      stopping = false;
       const r = recognizer;
       recognizer = undefined;
-      if (r) {
-        r.abort();
-        update({ listening: false });
-      }
+      r?.abort();
+      if (r || view.final || view.interim || view.error) update({ listening: false, final: '', interim: '', error: undefined });
+    },
+    stopListening() {
+      if (!recognizer) return;
+      stopping = true;
+      recognizer.stop(); // the browser sends its last results, then `end`
     },
     getSnapshot: () => view,
     subscribe(listener) {

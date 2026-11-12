@@ -228,7 +228,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - the view shows `listening: true`.
   - _Design §3.3; Requirements: 4.1, 4.2, 4.3, 4.5_
 
-- [ ] 25. VoiceAdapter: results and the candidate
+- [x] 25. VoiceAdapter: results and the candidate
   - **Done when:** unit tests show:
     - `result` events split the text into `final` and `interim`, and emit `partial` with the full text;
     - `stopListening()` → `recognizer.stop()` → on `end`, one candidate with the trimmed text and method `voice`;
