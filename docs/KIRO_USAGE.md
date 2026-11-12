@@ -77,6 +77,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 - **2026-11-11, after task 27**: credits used so far: _(owner to fill in from the Kiro usage page; the agent cannot read that page)_.
 
 ## Revisit later
+- **Landing page polish (Nov 25 to 28, owner request after task 30)**: a large ghost, a one-line pitch, two big buttons (Ghost Interview, Ghost Defense) and a language toggle. The page has no JavaScript today, so the toggle needs a no-JS approach (for example two static pages, `/` and `/es/`) or a small script; decide then. Re-run axe and the 320 px check after the change.
 - **Caption word spacing (polish day, found in the task 27 walk-through)**: each caption word reserves the width of its bold form, so some gaps look uneven ("difficult  problem"). Look for a marker that keeps underline and bold without the uneven gaps, and keep the "no re-wrap" property.
 - **Language of the user's answer (phase 2, owner note after task 23)**: the confirmed answer text in `ConfirmAnswer` has no `lang` attribute, so a screen reader may read it with the wrong voice when the user typed in a different language than the UI. Fix by storing the answer's language with the candidate and setting `lang` on the quoted answer.
 - **Ghost polish day (around Nov 28, owner decision after task 18)**: the hands look like floating ovals next to the clipboard, and the body is tall for its width. Redraw both; re-run the Ghost component tests, screenshots of every expression and mouth shape, and axe.
