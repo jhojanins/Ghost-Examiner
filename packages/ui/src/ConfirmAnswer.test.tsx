@@ -48,6 +48,28 @@ describe('ConfirmAnswer', () => {
     }
   });
 
+  it('shows a voice notice next to the recognized text, read together with the heading, in EN and ES (owner decision after task 30)', () => {
+    const spoken: AnswerCandidate = { text: 'I fixed the build', method: 'voice', notice: 'voice.error.network' };
+    const { rerender } = setup({ candidate: spoken });
+    const notice = screen.getByText('The connection to the speech service dropped. Try again, or type your answer.');
+    const region = screen.getByRole('region', { name: 'I noted this. Is that what you meant?' });
+    expect(region.contains(notice)).toBe(true);
+    const quote = region.querySelector('blockquote')!;
+    expect(quote.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // right after the text
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading.getAttribute('aria-describedby')).toBe(notice.id); // focus lands on the heading: the notice is read too
+    expect(notice.closest('[aria-live]')).toBeNull();
+
+    rerender({ candidate: spoken, locale: 'es' });
+    expect(screen.getByText('Se cortó la conexión con el servicio de voz. Inténtalo de nuevo o escribe tu respuesta.')).toBeTruthy();
+  });
+
+  it('without a notice it shows nothing extra and the heading has no description', () => {
+    setup();
+    expect(screen.getByRole('heading', { level: 2 }).hasAttribute('aria-describedby')).toBe(false);
+    expect(document.querySelector('.ge-confirm-notice')).toBeNull();
+  });
+
   it('offers the three actions in Spanish, Confirm first', () => {
     setup({ locale: 'es' });
     const region = screen.getByRole('region', { name: 'Anoté esto. ¿Es lo que quisiste decir?' });

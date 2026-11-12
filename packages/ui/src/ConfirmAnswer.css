@@ -26,6 +26,22 @@
   color: var(--text-muted);
 }
 
+/*
+ * A voice notice (the message that ended listening). Marked by a left border and an "!" sign, not
+ * color alone; --text on --surface is 16.0:1.
+ */
+.ge-confirm-notice {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--error);
+  color: var(--text);
+}
+
+.ge-confirm-notice::before {
+  content: '! ';
+  font-weight: 700;
+}
+
 .ge-confirm-actions {
   display: flex;
   flex-wrap: wrap;

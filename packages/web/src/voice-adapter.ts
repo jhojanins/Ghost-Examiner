@@ -130,7 +130,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
    * Ends listening for good: errors, the loop guard and "unavailable". Text recognized so far becomes
    * a candidate (owner rule after task 25); it still goes to the confirmation step.
    */
-  function finish(patch: Partial<VoiceView>) {
+  function finish(patch: Partial<VoiceView>, notice: KitMessageKey) {
     const r = recognizer;
     recognizer = undefined;
     stopping = false;
@@ -138,12 +138,14 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
     const text = joined(view).trim();
     committed = '';
     update({ listening: false, final: '', interim: '', ...patch });
-    if (text) emit?.({ type: 'candidate', candidate: { text, method: 'voice' } });
+    // The message goes with the text, so the confirmation screen can still show it (the runtime stops
+    // this adapter when the session moves on, which clears the view).
+    if (text) emit?.({ type: 'candidate', candidate: { text, method: 'voice', notice } });
   }
 
   function becomeUnavailable() {
     availability = UNAVAILABLE;
-    finish({ availability });
+    finish({ availability }, 'voice.unavailable');
   }
 
   /** Creates and starts one recognizer for the armed question; used by listen() and every restart. */
@@ -168,7 +170,10 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       r.onerror = (e) => {
         if (r !== recognizer || IGNORED.has(e.error)) return;
         if (cannotRun(e.error, everHeard)) becomeUnavailable();
-        else finish({ error: ERRORS[e.error] ?? 'voice.error.service' }); // voice stays available: retry works
+        else {
+          const error = ERRORS[e.error] ?? 'voice.error.service';
+          finish({ error }, error); // voice stays available: retry works
+        }
       };
       r.onend = () => {
         if (r !== recognizer) return; // an aborted or failed recognizer
@@ -193,7 +198,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
    */
   function endedEarly(heard: boolean, ms: number) {
     quickEnds = !heard && ms < QUICK_END_MS ? quickEnds + 1 : 0;
-    if (quickEnds >= QUICK_ENDS) return finish({ error: 'voice.error.service' });
+    if (quickEnds >= QUICK_ENDS) return finish({ error: 'voice.error.service' }, 'voice.error.service');
     committed = joined(view);
     update({ final: committed, interim: '' });
     if (ctx) begin(ctx);

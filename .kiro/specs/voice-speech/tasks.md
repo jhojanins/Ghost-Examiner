@@ -284,7 +284,9 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - a test asserts the old "Your answers are not sent to any server" sentence is gone from both catalogs.
   - _Design §2.6; Requirements: 9.1, 9.3, 9.4, 9.6, 10.5, 11.1_ · Skills: `ghost-persona`, `a11y-review`
 
-- [ ] 32. `VoiceInput` component
+- [x] 32. `VoiceInput` component
+  - Deviation: when voice is unavailable, the button stays (focusable, `aria-disabled`, dashed) and the reason is the status, instead of the reason replacing the button, so the layout doesn't shift and keyboard users still reach the reason.
+  - Owner decision after task 30, done here: `AnswerCandidate.notice` (core), set by the voice adapter to the message that ended listening, shown by `ConfirmAnswer` next to the text until the user acts.
   - **Done when:** component tests show:
     - the start/stop button keeps focus and its label changes;
     - a "Listening" indicator with text (not color alone);

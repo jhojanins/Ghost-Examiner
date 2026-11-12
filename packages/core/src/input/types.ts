@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/i18n';
+import type { KitMessageKey } from '../i18n/kit-messages';
 
 // From docs/ARCHITECTURE.md §3.1, trimmed to what the specs use. Spec (b) adds `partial` (the
 // runtime needs it for barge-in); listening status and errors stay inside the voice adapter's own
@@ -20,6 +21,12 @@ export interface InputContext {
 export interface AnswerCandidate {
   text: string;
   method: InputMethodId;
+  /**
+   * Something the user should know about how this answer was captured, shown next to it on the
+   * confirmation screen until they act (owner decision after spec b task 30), e.g. the error that
+   * ended listening. Never used in evaluation.
+   */
+  notice?: KitMessageKey;
 }
 
 export type InputEvent =

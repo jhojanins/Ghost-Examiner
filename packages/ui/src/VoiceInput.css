@@ -1,0 +1,100 @@
+/* Below the keyboard answer, so nothing here can move the answer field (Req 4.5 of spec a, task 19b). */
+.ge-voice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 42rem;
+  margin-top: 1.5rem;
+}
+
+.ge-voice-heading {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.ge-voice-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+}
+
+/* The sign carries the state by shape: a round "record" dot, then a square "stop" sign (WCAG 1.4.1). */
+.ge-voice-sign {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ge-voice-button[data-listening='true'] .ge-voice-sign {
+  border-radius: 0.125rem;
+}
+
+/* Unavailable: a dashed border, no sign; the reason is the status below. */
+.ge-voice-button[aria-disabled='true'] {
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.ge-voice-button[aria-disabled='true'] .ge-voice-sign {
+  display: none;
+}
+
+/* All messages stacked in one cell: the box is as tall as the longest at any width (no layout shift). */
+.ge-voice-messages {
+  display: grid;
+}
+
+.ge-voice-messages > * {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.ge-voice-sizer {
+  visibility: hidden;
+}
+
+/* --text on the page background is 13.8:1 or more. A live region stays in the tree: never display:none. */
+.ge-voice-status {
+  color: var(--text);
+}
+
+/* --text-muted on the page background is 9.4:1 or more. */
+.ge-voice-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.ge-voice-note .ge-link-button {
+  min-height: 1.5rem; /* inline in a sentence: >= 24 px (WCAG 2.5.8) */
+  padding: 0;
+}
+
+.ge-voice-words {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--text-muted);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.ge-voice-words-label {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Room for three lines, so the first words don't push the transcript down. */
+.ge-voice-words-text {
+  min-height: 4.5em;
+  margin: 0.25rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+/* Interim text: italic and dotted underline, not color alone (spec b Req 5.2). */
+.ge-voice-interim {
+  font-style: italic;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+}

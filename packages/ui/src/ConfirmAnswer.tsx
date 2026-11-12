@@ -22,6 +22,7 @@ export interface ConfirmAnswerProps {
 export function ConfirmAnswer({ locale, candidate, onConfirm, onEdit, onRetry }: ConfirmAnswerProps) {
   const m = kitMessages[locale];
   const headingId = useId();
+  const noticeId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -30,10 +31,23 @@ export function ConfirmAnswer({ locale, candidate, onConfirm, onEdit, onRetry }:
 
   return (
     <section className="ge-confirm" aria-labelledby={headingId}>
-      <h2 id={headingId} ref={heading} tabIndex={-1} className="ge-confirm-heading">
+      <h2
+        id={headingId}
+        ref={heading}
+        tabIndex={-1}
+        className="ge-confirm-heading"
+        aria-describedby={candidate.notice ? noticeId : undefined}
+      >
         {m['confirm.heading']}
       </h2>
       <blockquote className="ge-confirm-answer">{candidate.text}</blockquote>
+      {/* Owner decision after spec b task 30: the message that ended listening stays next to the
+          text until the user acts. Read with the heading when focus lands there; not a live region. */}
+      {candidate.notice && (
+        <p id={noticeId} className="ge-confirm-notice">
+          {m[candidate.notice]}
+        </p>
+      )}
       <p className="ge-confirm-method">{format(m['confirm.method'], { method: m[`method.${candidate.method}`] })}</p>
       <div className="ge-confirm-actions">
         <button type="button" className="ge-button ge-button--primary" onClick={onConfirm}>

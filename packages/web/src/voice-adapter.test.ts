@@ -288,7 +288,7 @@ describe('createVoiceAdapter: early end and the loop guard (task 26)', () => {
 
     adapter.stopListening();
     instances[1].end();
-    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build on Friday', method: 'voice' } }]);
+    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build on Friday', method: 'voice' } }]); // no notice
   });
 
   it('a no-speech error is ignored: the end that follows restarts listening, with no message', () => {
@@ -403,7 +403,9 @@ describe('createVoiceAdapter: errors (task 27)', () => {
     const { adapter, instances, events } = listening();
     instances[0].result([['I fixed', true], ['the build', false]]);
     instances[0].error('audio-capture');
-    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+    expect(candidates(events)).toEqual([
+      { type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice', notice: 'voice.error.noMic' } },
+    ]);
     expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: '', interim: '', error: 'voice.error.noMic' });
   });
 
@@ -411,7 +413,9 @@ describe('createVoiceAdapter: errors (task 27)', () => {
     const { adapter, instances, events } = listening();
     instances[0].result([['I fixed the build', true]]);
     instances[0].error('service-not-allowed');
-    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+    expect(candidates(events)).toEqual([
+      { type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice', notice: 'voice.unavailable' } },
+    ]);
     expect(adapter.getSnapshot().availability).toEqual(UNAVAILABLE);
   });
 
@@ -425,7 +429,9 @@ describe('createVoiceAdapter: errors (task 27)', () => {
       instances[i].end(); // three quick ends with nothing heard
     }
     expect(adapter.getSnapshot().error).toBe('voice.error.service');
-    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+    expect(candidates(events)).toEqual([
+      { type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice', notice: 'voice.error.service' } },
+    ]);
   });
 
   it('an error after the user pressed stop is handled the same way, once', () => {

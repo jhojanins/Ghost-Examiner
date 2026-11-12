@@ -19,6 +19,8 @@ export { PrivacyDialog } from './PrivacyDialog';
 export type { SoundState, SoundToggleProps } from './SoundToggle';
 export { SoundToggle } from './SoundToggle';
 export type { TranscriptLine, TranscriptProps } from './Transcript';
+export type { VoiceInputProps, VoiceInputState } from './VoiceInput';
+export { VoiceInput } from './VoiceInput';
 export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';
 export type { SessionStore } from './useSession';
