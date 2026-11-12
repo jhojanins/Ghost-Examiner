@@ -17,11 +17,13 @@ import {
   KeyboardInput,
   LanguageSwitch,
   PrivacyDialog,
+  SoundToggle,
   Transcript,
   useGhostPose,
   useSession,
+  useStore,
 } from '@ghost-examiner/ui';
-import { browserLocale, createSession, createSilentOutput, systemClock, type SessionHandle } from '@ghost-examiner/web';
+import { browserLocale, createSession, createWebSpeechOutput, systemClock, type SessionHandle } from '@ghost-examiner/web';
 import { useEffect, useId, useRef, useState } from 'react';
 import { config } from './config';
 import { pack } from './content/pack';
@@ -39,7 +41,18 @@ interface AppSession {
 
 const GHOST_SEED = 7; // fixed blink pattern; any number works
 
-/** Demo mode only in phase 1: keyboard input, the demo evaluator, muted speech. */
+/**
+ * The ghost's voice: one per page (spec b design §5), so the sound setting survives "Practice
+ * again". Feature-detected: without the speech API every line plays muted (Req 1.2).
+ */
+const speech = createWebSpeechOutput({
+  synth: globalThis.speechSynthesis,
+  Utterance: globalThis.SpeechSynthesisUtterance,
+  clock: systemClock,
+  languages: navigator.languages?.length ? navigator.languages : [navigator.language],
+});
+
+/** Demo mode: keyboard input, the demo evaluator, the ghost's voice (muted until consent). */
 function startSession(locale: Locale, id = 1): AppSession {
   const keyboard = createKeyboardAdapter();
   const provider = createDemoProvider();
@@ -48,7 +61,7 @@ function startSession(locale: Locale, id = 1): AppSession {
     adapters: [keyboard],
     preview: config.preview,
     evaluator: createLlmEvaluator(provider),
-    speech: createSilentOutput(systemClock),
+    speech,
     locale,
   });
   return { id, handle, keyboard, demo: provider.isDemo, locale };
@@ -116,7 +129,12 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
   if (!state.feedback && phase !== 'evaluating' && lastFeedback) setLastFeedback(undefined);
   const shownFeedback = state.feedback ?? (phase === 'evaluating' ? lastFeedback : undefined);
 
-  const { ref: ghostRef, pose } = useGhostPose(ghostState(view, GHOST_SEED));
+  // The mouth reads the playback origin every frame, so it follows the voice's boundary events.
+  const { ref: ghostRef, pose } = useGhostPose(ghostState(view, GHOST_SEED), line?.origin);
+
+  // The sound control's "no voice" reason follows the UI language, even with no line playing.
+  const sound = useStore(speech);
+  useEffect(() => speech.setLocale(locale), [locale]);
 
   // Focus on phase change (design §5.1): the answer field when answering starts (after the
   // privacy notice, or back from Edit / Answer again), the heading at the end. ConfirmAnswer and
@@ -188,6 +206,7 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
       title={m.title}
       locale={locale}
       preview={config.preview}
+      soundControl={<SoundToggle locale={locale} sound={sound} onChange={speech.setOn} />}
       languageSwitch={<LanguageSwitch locale={locale} onChange={(next) => dispatch({ type: 'locale-changed', locale: next })} />}
       onPrivacy={() => setReadOnlyPrivacy(true)}
     >
@@ -203,7 +222,12 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
         open={consentOpen || readOnlyPrivacy}
         locale={locale}
         mode={consentOpen ? 'consent' : 'read-only'}
-        onAccept={() => dispatch({ type: 'privacy-accepted' })}
+        onAccept={() => {
+          // Consent first, then the question: it is the first line spoken aloud (Req 2.2), and
+          // this click is the user activation browsers require before speaking.
+          speech.unlock();
+          dispatch({ type: 'privacy-accepted' });
+        }}
         onDismiss={() => (consentOpen ? setConsentDismissed(true) : setReadOnlyPrivacy(false))}
       />
     </AppShell>

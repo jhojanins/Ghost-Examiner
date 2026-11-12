@@ -165,7 +165,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - **Done when:** `pnpm e2e` passes unchanged with the fake installed, and a temporary assertion shows the fake is the `speechSynthesis` the page sees (removed before the commit).
   - _Design §8; Requirements: 12.3_ · Skills: `testing-strategy`
 
-- [ ] 19. ghost-interview: the ghost speaks **[Browser + axe]**
+- [x] 19. ghost-interview: the ghost speaks **[Browser + axe]**
+  - Done with additions the owner asked for: `VoiceOutput.setLocale` (the "no-voice" reason follows a language switch with no line playing, the open point from task 11), `e2e/voice-output.spec.ts` (3 tests: the page follows the fake's events, not its estimate; sound off mid-line; the language-switch reason), and an `en-only` variant plus a manual mode in the e2e fake. Task 20 extends `voice-output.spec.ts` with the rest.
   - Create one `WebSpeechOutput` for the page, call `unlock()` in the privacy `onAccept` before dispatching, put `SoundToggle` in the shell, and pass `line.origin` to `useGhostPose`.
   - **Done when:** a Playwright MCP keyboard walk-through, with the task 18 fake, shows:
     - no utterance before Accept, and the question spoken after it;

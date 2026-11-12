@@ -104,6 +104,8 @@ test('slice: keyboard only, confirmation before feedback, captions and transcrip
   await expect(field).toBeFocused();
   await expect(captions(page)).toHaveText(LINES.question);
   await expect(transcriptItems(page)).toHaveText([LINES.greeting]);
+  // The greeting played muted (before consent), so the live region announces it once.
+  await expect(page.locator('.ge-transcript [aria-live="polite"]')).toHaveText(LINES.greeting);
 
   // Answering: wait for the question to finish, so this is the answering screen.
   await expect(transcriptItems(page)).toHaveText([LINES.greeting, LINES.question], { timeout: 10_000 });
@@ -134,9 +136,10 @@ test('slice: keyboard only, confirmation before feedback, captions and transcrip
   await expect(captions(page)).toHaveText(LINES.summary);
   await expectNoAxeViolations(page, 'feedback');
 
-  // The summary line finishes and goes to the transcript, announced once in the live region.
+  // The summary line finishes and goes to the transcript. It was spoken aloud (fake voice), so the
+  // live region does not repeat it (spec b Req 3.6).
   await expect(transcriptItems(page)).toHaveText([LINES.greeting, LINES.question, LINES.summary], { timeout: 10_000 });
-  await expect(page.locator('.ge-transcript [aria-live="polite"]')).toHaveText(LINES.summary);
+  await expect(page.locator('.ge-transcript [aria-live="polite"]')).toHaveText('');
 
   // Continue -> the closing line and the end screen.
   await tabTo(page, feedback.getByRole('button', { name: 'Continue' }));

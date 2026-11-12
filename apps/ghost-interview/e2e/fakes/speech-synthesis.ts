@@ -5,16 +5,23 @@ import type { Page } from '@playwright/test';
  * design §8), installed before any page script runs, so results never depend on the host's voices.
  *
  * - `two-voices`: one local en-US voice (the default) and one local es-MX voice.
+ * - `en-only`: the local en-US voice only, so Spanish has no voice.
  * - `no-voices`: the API exists, but the voice list stays empty and `voiceschanged` never fires.
  * - `no-api`: neither global exists, as in a browser without speech synthesis.
  *
- * Each utterance fires `start` after 50 ms, a `word` boundary at each word's start, and `end` when
- * the text is over, at 60 ms per character. That is close to the app's own estimate but not the
+ * Automatic mode (the default): each utterance fires `start` after 50 ms, a `word` boundary at each
+ * word's start, and `end` when the text is over, at 60 ms per character. That is close to the app's own estimate but not the
  * same rule, on purpose: the app must follow the boundaries, not its estimate. `cancel()` fires
  * `interrupted` on the utterance speaking and `canceled` on the queued ones, as Chrome does.
+ * Manual mode (`manual: true`, task 19): nothing fires on its own; the test fires events on the
+ * utterance speaking through `window.__fakeSpeech.control`, so assertions never depend on timing.
  * Every call and event goes into `window.__fakeSpeech.log` for the test to read.
  */
-export type FakeSpeechVariant = 'two-voices' | 'no-voices' | 'no-api';
+export type FakeSpeechVariant = 'two-voices' | 'en-only' | 'no-voices' | 'no-api';
+export interface FakeSpeechOptions {
+  variant?: FakeSpeechVariant;
+  manual?: boolean;
+}
 
 export interface FakeSpeechEntry {
   type: 'speak' | 'cancel' | 'start' | 'boundary' | 'end' | 'error';
@@ -27,12 +34,24 @@ export interface FakeSpeechEntry {
 
 declare global {
   interface Window {
-    __fakeSpeech?: { log: FakeSpeechEntry[] };
+    __fakeSpeech?: {
+      log: FakeSpeechEntry[];
+      /** Manual mode: fire an event on the utterance speaking (no-op when none is). */
+      control: {
+        start(): void;
+        boundary(charIndex: number): void;
+        end(): void;
+        error(code: string): void;
+      };
+    };
   }
 }
 
-/** Runs inside the page (serialized by Playwright), so it may not use anything from this module. */
-function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
+/**
+ * Runs inside the page (serialized by Playwright), so it may not use anything from this module.
+ * Exported so the Playwright MCP walk-through can install the very same fake.
+ */
+export function fakeSpeechSynthesis({ variant = 'two-voices', manual = false }: FakeSpeechOptions) {
   const w = window as unknown as Record<string, unknown>;
   if (variant === 'no-api') {
     // Window attributes are own properties of the global object (WebIDL [Global]), so this removes them.
@@ -43,7 +62,6 @@ function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
   const MS_PER_CHAR = 60;
   const START_DELAY_MS = 50;
   const log: FakeSpeechEntry[] = [];
-  window.__fakeSpeech = { log };
 
   const voice = (name: string, lang: string, isDefault: boolean) => ({
     name,
@@ -52,7 +70,9 @@ function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
     default: isDefault,
     voiceURI: `fake:${name}`,
   });
-  const voices = variant === 'two-voices' ? [voice('Fake English', 'en-US', true), voice('Fake Español', 'es-MX', false)] : [];
+  const english = voice('Fake English', 'en-US', true);
+  const spanish = voice('Fake Español', 'es-MX', false);
+  const voices = variant === 'two-voices' ? [english, spanish] : variant === 'en-only' ? [english] : [];
 
   type Handler = ((this: FakeUtterance, ev: Event) => unknown) | null;
   class FakeUtterance extends EventTarget {
@@ -90,6 +110,7 @@ function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
     if (!utterance) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
     speaking = { utterance, timers };
+    if (manual) return; // the test drives it through `control`
     const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, START_DELAY_MS + ms));
     at(0, () => utterance.fire('start'));
     for (const word of utterance.text.matchAll(/\S+/g)) {
@@ -100,6 +121,23 @@ function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
       next();
     });
   }
+
+  const now = () => speaking?.utterance;
+  window.__fakeSpeech = {
+    log,
+    control: {
+      start: () => now()?.fire('start'),
+      boundary: (charIndex) => now()?.fire('boundary', { name: 'word', charIndex }),
+      end() {
+        now()?.fire('end');
+        next();
+      },
+      error(code) {
+        now()?.fire('error', { error: code });
+        next();
+      },
+    },
+  };
 
   // A class, so `pending` and `speaking` stay live getters (Object.assign would copy their values once).
   class FakeSynth extends EventTarget {
@@ -139,8 +177,8 @@ function fakeSpeechSynthesis(variant: FakeSpeechVariant) {
 }
 
 /** Installs the fake before the page's own scripts run; call before `page.goto`. */
-export async function installFakeSpeech(page: Page, variant: FakeSpeechVariant = 'two-voices') {
-  await page.addInitScript(fakeSpeechSynthesis, variant);
+export async function installFakeSpeech(page: Page, options: FakeSpeechOptions = {}) {
+  await page.addInitScript(fakeSpeechSynthesis, options);
 }
 
 /** Everything the fake did so far, in order. */

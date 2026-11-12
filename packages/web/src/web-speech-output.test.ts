@@ -591,3 +591,34 @@ describe('createWebSpeechOutput: end watchdog (task 13b)', () => {
     expect(cancelled.output.getSnapshot()).toEqual({ on: true });
   });
 });
+
+describe('createWebSpeechOutput: setLocale (task 19, open point from task 11)', () => {
+  it('the no-voice reason follows the UI language even when no line plays', () => {
+    const { output } = unlocked([alex]); // English only
+    const listener = vi.fn();
+    output.subscribe(listener);
+    output.setLocale('es');
+    expect(output.getSnapshot()).toEqual({ on: true, reason: 'no-voice' });
+    expect(listener).toHaveBeenCalledTimes(1);
+    output.setLocale('en');
+    expect(output.getSnapshot()).toEqual({ on: true });
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('works before any line was spoken, and a later line in another language still wins', () => {
+    const { output } = unlocked([alex]);
+    output.setLocale('es');
+    expect(output.getSnapshot().reason).toBe('no-voice');
+    output.speak(line); // an English line
+    expect(output.getSnapshot()).toEqual({ on: true });
+  });
+
+  it('changes nothing about the line that is playing', () => {
+    const { output, utterances } = unlocked([alex, paulina]);
+    const playback = output.speak(line);
+    utterances[0].fire('start');
+    output.setLocale('es');
+    expect(playback.audible()).toBe(true);
+    expect(utterances).toHaveLength(1);
+  });
+});

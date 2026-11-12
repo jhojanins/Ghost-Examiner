@@ -27,6 +27,11 @@ export interface VoiceOutput extends SpeechOutput {
   setOn(on: boolean): void;
   /** The privacy notice was accepted (Req 2.2); browsers also need this user activation to speak. */
   unlock(): void;
+  /**
+   * The UI language changed (Req 1.4): the "no-voice" reason follows it even when no line plays.
+   * The next `speak` still sets the language of what is actually said.
+   */
+  setLocale(locale: Locale): void;
 }
 
 export interface WebSpeechDeps {
@@ -72,7 +77,7 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
   let on = true; // sound on by default (Req 2.2)
   let unlocked = false;
   let current: Line | undefined;
-  let lastLocale: Locale | undefined; // language of the latest line: the one the "no-voice" reason is about
+  let lastLocale: Locale | undefined; // latest UI or line language: the one the "no-voice" reason is about
   let voicesLoading = true;
   let failed = false; // the voice failed; muted until the user turns sound on again (Req 1.6)
   const listeners = new Set<() => void>();
@@ -236,6 +241,10 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
     },
     unlock() {
       unlocked = true;
+    },
+    setLocale(locale) {
+      lastLocale = locale;
+      refresh();
     },
   };
 }
