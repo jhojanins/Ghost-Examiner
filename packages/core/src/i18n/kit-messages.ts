@@ -16,6 +16,8 @@ export const kitMessages = defineCatalog(
     'shell.preview.badge': 'Preview',
     // Short, so the Preview line fits next to its badge at 320 px (task 19b). "For now" says more is coming.
     'shell.preview.detail': 'Keyboard only for now.',
+    // Preview session (spec b Req 10.5): names what is missing and what works now; never blames the user.
+    'shell.preview.missing.voice': 'No voice input in this browser. You can type your answers.',
     // Language switch: each language is named in itself, so both catalogs share these two.
     'language.label': 'Language',
     'language.en': 'English',
@@ -37,9 +39,13 @@ export const kitMessages = defineCatalog(
 
     // Privacy notice (Req 10.2, steering accessibility-ethics.md). Plain and honest; no jokes.
     'privacy.title': 'Privacy notice',
-    'privacy.intro': 'Before we start, here is what happens with what you type.',
+    'privacy.intro': 'Before we start, here is what happens with what you type or say.',
+    // Spec b Req 9.3: true for spoken answers too, because this app itself sends nothing anywhere.
     'privacy.local':
-      'Demo mode runs entirely in your browser. Your answers are not sent to any server, and they are gone when you close the page.',
+      'Demo mode runs in your browser. This app sends your answers to no server, and they are gone when you close the page. If you answer by voice, read the next point.',
+    // Spec b Req 9.1, 9.4 and the owner's wording (task 31): never claims recognition stays on the device.
+    'privacy.voice':
+      'Answering by voice is optional; typing always works. The microphone is asked for only when you press the voice button. To turn your speech into text, your browser may send your voice to the company that makes it, for example Google for Chrome or Apple for Safari. This app only receives the text. It never records or stores audio.',
     // Spec b Req 9.2: true because the kit only ever picks local voices (pickVoice, Req 1.3).
     'privacy.ghostVoice':
       'The ghost speaks with voices installed on your device, so its lines are not sent anywhere to be spoken.',
@@ -60,6 +66,21 @@ export const kitMessages = defineCatalog(
     'keyboard.hint': 'Press Ctrl+Enter (⌘+Enter on Mac) to submit.',
     'keyboard.submit': 'Submit answer',
     'keyboard.empty': 'The answer is empty. Type a few words, then submit.',
+    // Voice answer (spec b Req 4, 5, 9.5). Messages say what happened and what to do next.
+    'voice.heading': 'Answer by voice',
+    'voice.start': 'Start speaking',
+    'voice.stop': 'Stop speaking',
+    'voice.listening': 'Listening…',
+    'voice.stopped': 'Stopped listening.',
+    'voice.yourWords': 'Your words',
+    'voice.note': 'Your browser may send your voice to its maker to turn it into text.',
+    'voice.unavailable': "Voice input isn't available in this browser. You can type your answer.",
+    'voice.empty': "I didn't catch any words. Try again, or type your answer.",
+    'voice.error.permission': "I can't hear you, which is usually my line. Allow the microphone in your browser, or type your answer.",
+    'voice.error.noMic': "I can't find a microphone. Connect one and try again, or type your answer.",
+    'voice.error.network': 'The connection to the speech service dropped. Try again, or type your answer.',
+    'voice.error.language': "This browser can't recognize speech in this language. Switch language, or type your answer.",
+    'voice.error.service': 'Speech recognition stopped working. Try again, or type your answer.',
 
     // Confirmation step (Req 7). Wording from the ghost-persona phrase bank.
     'confirm.heading': 'I noted this. Is that what you meant?',
@@ -95,6 +116,7 @@ export const kitMessages = defineCatalog(
     'shell.privacy': 'Aviso de privacidad',
     'shell.preview.badge': 'Vista previa',
     'shell.preview.detail': 'Por ahora, solo teclado.',
+    'shell.preview.missing.voice': 'Este navegador no tiene entrada por voz. Puedes escribir tus respuestas.',
     'language.label': 'Idioma',
     'language.en': 'English',
     'language.es': 'Español',
@@ -111,9 +133,11 @@ export const kitMessages = defineCatalog(
     'sound.noApi': 'Este navegador no puede hablar.',
 
     'privacy.title': 'Aviso de privacidad',
-    'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes.',
+    'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes o dices.',
     'privacy.local':
-      'El modo demo funciona por completo en tu navegador. Tus respuestas no se envían a ningún servidor y desaparecen al cerrar la página.',
+      'El modo demo funciona en tu navegador. Esta app no envía tus respuestas a ningún servidor y desaparecen al cerrar la página. Si respondes por voz, lee el punto siguiente.',
+    'privacy.voice':
+      'Responder por voz es opcional; escribir siempre funciona. El micrófono se pide solo cuando presionas el botón de voz. Para convertir tu voz en texto, tu navegador puede enviar tu voz a la empresa que lo creó, por ejemplo Google en Chrome o Apple en Safari. Esta app solo recibe el texto y nunca graba ni guarda audio.',
     'privacy.ghostVoice':
       'El fantasma habla con voces instaladas en tu dispositivo, así que sus frases no se envían a ningún sitio para ser leídas.',
     'privacy.noPersonalData':
@@ -131,6 +155,20 @@ export const kitMessages = defineCatalog(
     'keyboard.hint': 'Presiona Ctrl+Enter (⌘+Enter en Mac) para enviar.',
     'keyboard.submit': 'Enviar respuesta',
     'keyboard.empty': 'La respuesta está vacía. Escribe unas palabras y luego envíala.',
+    'voice.heading': 'Responder por voz',
+    'voice.start': 'Empezar a hablar',
+    'voice.stop': 'Dejar de hablar',
+    'voice.listening': 'Escuchando…',
+    'voice.stopped': 'Dejé de escuchar.',
+    'voice.yourWords': 'Tus palabras',
+    'voice.note': 'Tu navegador puede enviar tu voz a la empresa que lo creó para convertirla en texto.',
+    'voice.unavailable': 'La entrada por voz no está disponible en este navegador. Puedes escribir tu respuesta.',
+    'voice.empty': 'No escuché ninguna palabra. Inténtalo de nuevo o escribe tu respuesta.',
+    'voice.error.permission': 'No puedo oírte, y eso suele decirlo yo. Permite el micrófono en tu navegador o escribe tu respuesta.',
+    'voice.error.noMic': 'No encuentro un micrófono. Conecta uno e inténtalo de nuevo, o escribe tu respuesta.',
+    'voice.error.network': 'Se cortó la conexión con el servicio de voz. Inténtalo de nuevo o escribe tu respuesta.',
+    'voice.error.language': 'Este navegador no reconoce la voz en este idioma. Cambia de idioma o escribe tu respuesta.',
+    'voice.error.service': 'El reconocimiento de voz dejó de funcionar. Inténtalo de nuevo o escribe tu respuesta.',
 
     'confirm.heading': 'Anoté esto. ¿Es lo que quisiste decir?',
     'confirm.method': 'Cómo respondiste: {method}',
@@ -158,3 +196,6 @@ export const kitMessages = defineCatalog(
     'feedback.improvement.more': 'Cuéntame un poco más: un ejemplo ayuda.',
   },
 );
+
+/** A key of the kit catalog: code that names a message by key gets it checked by the compiler. */
+export type KitMessageKey = keyof (typeof kitMessages)['en'];

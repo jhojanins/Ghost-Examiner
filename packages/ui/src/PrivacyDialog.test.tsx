@@ -152,11 +152,22 @@ describe('PrivacyDialog', () => {
     );
   });
 
+  it('says where a spoken answer may go, as its own point right after the local one, in EN and ES (spec b Req 9.1)', () => {
+    const { rerender } = setup();
+    const points = () => within(document.querySelector('dialog')!).getAllByRole('listitem').map((li) => li.textContent ?? '');
+    expect(points()[1]).toMatch(/^Answering by voice is optional; typing always works\./);
+    expect(points()[1]).toContain('This app only receives the text. It never records or stores audio.');
+    expect(document.querySelector('dialog p')!.textContent).toBe('Before we start, here is what happens with what you type or say.');
+    rerender({ locale: 'es' });
+    expect(points()[1]).toMatch(/^Responder por voz es opcional; escribir siempre funciona\./);
+    expect(document.querySelector('dialog p')!.textContent).toBe('Antes de empezar, esto es lo que pasa con lo que escribes o dices.');
+  });
+
   it('says honestly what happens with the data, in EN and ES', () => {
     const { rerender } = setup();
     const en = document.querySelector('dialog')!.textContent!;
-    expect(en).toContain('Demo mode runs entirely in your browser.');
-    expect(en).toContain('not sent to any server');
+    expect(en).toContain('Demo mode runs in your browser.');
+    expect(en).toContain('This app sends your answers to no server');
     expect(en).toContain('personal or sensitive');
     expect(en).toContain('free AI service');
     expect(en).toContain('may use the text you send');
@@ -165,7 +176,7 @@ describe('PrivacyDialog', () => {
     const es = document.querySelector('dialog')!;
     expect(es.getAttribute('lang')).toBe('es');
     expect(screen.getByRole('dialog', { name: 'Aviso de privacidad' })).toBe(es);
-    expect(es.textContent).toContain('El modo demo funciona por completo en tu navegador.');
+    expect(es.textContent).toContain('El modo demo funciona en tu navegador.');
     expect(es.textContent).toContain('datos personales ni sensibles');
     expect(es.textContent).toContain('pueden usar el texto que les envíes');
     expect(within(es).getAllByRole('button').map((b) => b.textContent)).toEqual(['Entendido, empezar', 'Ahora no']);

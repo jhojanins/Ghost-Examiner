@@ -13,7 +13,7 @@ export interface PrivacyDialogProps {
   onDismiss: () => void;
 }
 
-const POINTS = ['privacy.local', 'privacy.ghostVoice', 'privacy.noPersonalData', 'privacy.freeTier'] as const;
+const POINTS = ['privacy.local', 'privacy.voice', 'privacy.ghostVoice', 'privacy.noPersonalData', 'privacy.freeTier'] as const;
 
 /**
  * Privacy notice (Req 10, design §5.1): a native <dialog> opened with showModal(), so the

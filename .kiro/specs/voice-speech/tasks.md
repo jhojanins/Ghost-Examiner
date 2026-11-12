@@ -275,7 +275,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §3.4; Requirements: 10.2, 10.3, 10.4_
 
 ### Copy and UI
-- [ ] 31. Voice copy and privacy texts
+- [x] 31. Voice copy and privacy texts
+  - Owner addition: the privacy point also says the microphone is asked for only when the user presses the voice button. Also done: `KitMessageKey` (core) types every message key the voice adapter can show, so a missing catalog entry fails typecheck; the landing page's privacy sentence (EN and ES) now says the same as the notice; `shell.preview.missing.voice` is shorter than design §2.6 so the compact 320 px header stays small.
   - `voice.*` keys, the changed `privacy.intro` and `privacy.local`, the new `privacy.voice`, `voice.note` and `shell.preview.missing.voice`, in EN and ES as in design §2.6. `PrivacyDialog` shows `privacy.voice`.
   - **Done when:**
     - typecheck passes;

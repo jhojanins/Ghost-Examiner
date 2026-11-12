@@ -1,4 +1,12 @@
-import { speechLang, type Availability, type Clock, type InputAdapter, type InputContext, type InputEvent } from '@ghost-examiner/core';
+import {
+  speechLang,
+  type Availability,
+  type Clock,
+  type InputAdapter,
+  type InputContext,
+  type InputEvent,
+  type KitMessageKey,
+} from '@ghost-examiner/core';
 
 /**
  * The members of `SpeechRecognition` / `webkitSpeechRecognition` this adapter uses (spec b design
@@ -34,7 +42,7 @@ export interface VoiceView {
   listening: boolean;
   final: string; // text the recognizer has settled
   interim: string; // text it may still change
-  error?: string; // kit catalog key
+  error?: KitMessageKey; // the compiler checks that every message the adapter can show exists (task 31)
 }
 
 export interface VoiceAdapter extends InputAdapter {
@@ -55,7 +63,7 @@ export interface VoiceAdapterDeps {
   languages: readonly string[];
 }
 
-const UNAVAILABLE: Availability = { available: false, reason: 'voice.unavailable' };
+const UNAVAILABLE: Availability = { available: false, reason: 'voice.unavailable' satisfies KitMessageKey };
 
 /** Loop guard (Req 4.9, design §3.3): this many early ends in a row, each this soon with no result, stop listening. */
 const QUICK_ENDS = 3;
@@ -72,7 +80,7 @@ const QUICK_END_MS = 500;
 const cannotRun = (code: string, everHeard: boolean) => code === 'service-not-allowed' || (code === 'network' && !everHeard);
 
 /** Error messages (Req 4.10, design §3.3), as kit catalog keys; any other code is a service error. */
-const ERRORS: Record<string, string> = {
+const ERRORS: Record<string, KitMessageKey> = {
   'not-allowed': 'voice.error.permission',
   'audio-capture': 'voice.error.noMic',
   network: 'voice.error.network',

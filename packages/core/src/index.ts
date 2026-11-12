@@ -36,6 +36,7 @@ export { ghostPose } from './ghost/pose';
 export type { EvaluateInput, LLMProvider, LLMRequest, LLMResult, LLMTask } from './llm/types';
 export { withFallback } from './llm/with-fallback';
 export { FEEDBACK_TEXT_MAX, isFeedback } from './llm/is-feedback';
+export type { KitMessageKey } from './i18n/kit-messages';
 export { kitMessages } from './i18n/kit-messages';
 export { createDemoProvider } from './llm/demo-provider';
 export type { Evaluator } from './llm/evaluator';
