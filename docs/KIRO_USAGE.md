@@ -77,6 +77,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 | 2026-11-12 | Task 32: CI workflow written to mirror Netlify's install path (Node 24 + `corepack enable`, pnpm version from `packageManager`, frozen lockfile), then typecheck, lint, tests and the site build. Actions pinned to commit SHAs of their latest releases (looked up with `gh api`). Waiting for the owner's push to check the first run | Specs (task execution) |
 | 2026-11-12 | Task 32 done: first CI run on `main` (commit `f398ac6`, [run 43150099010](https://github.com/jhojanins/Ghost-Examiner/actions/runs/43150099010)) green in 23 s, checked with `gh run list` / `gh run watch`. Node v24.22.2, Corepack 0.36.0, pnpm 12.18.0: the Netlify install path works; lockfile passed pnpm's supply-chain check; 264 tests passed; site assembled. A first push attempt had not reached GitHub (`git ls-remote` showed the old head), so the run was checked only after the owner confirmed the push | Specs (task execution) |
 | 2026-11-12 | **One-time push authorization (owner, in the conversation):** the agent may run exactly two pushes, `git push origin main` and the fast-forward `git push origin main:release` (never `--force`); nothing else, and Netlify is not touched. Checked first: `origin/release` (`05bc194`) is an ancestor of `main`. Result: `main` was already on GitHub ("Everything up-to-date"); `release` moved `05bc194..6b4b51c` as a fast-forward. `git ls-remote` shows both branches at `6b4b51c`, the same as local `main`. CI green on both: `main` run 43150884318, `release` run 43151232333. The standing rule is back in force: no pushes without the owner's explicit approval | Git, CI |
+| 2026-11-12 | Spec (b) requirements drafted (`.kiro/specs/voice-speech/requirements.md`, supervised, requirements only): 12 EARS requirements in 3 delivery phases, Preview-only criteria marked, out-of-scope reasons for a duplex cloud audio model, and 4 decisions for the owner. Researched with web search first: where Chrome and Safari process `SpeechRecognition` audio, `processLocally`, `localService` voices, missing boundary events and a macOS `speechSynthesis` hang; sources cited in the spec | Specs, web search |
 
 ## Credit check
 - **2026-11-11, after task 27**: credits used so far: _(owner to fill in from the Kiro usage page; the agent cannot read that page)_.
@@ -159,6 +160,7 @@ Main schedule: (a) kit skeleton + animated ghost + Day 5 vertical slice, (b) key
 | Spec | Folder | Status |
 |---|---|---|
 | (a) Kit skeleton + animated ghost | `kit-skeleton-ghost/` | Requirements approved (13 requirements, EARS, with a Preview flag and two delivery phases); design drafted with 9 correctness properties and a requirement traceability table, awaiting review |
+| (b) Voice and speech | `voice-speech/` | Requirements drafted (12 requirements, EARS, 3 phases, Preview-only criteria marked), awaiting owner review |
 
 ## Hooks (`.kiro/hooks/`)
 | Name | File | Trigger | Matcher | Action | Cost |
