@@ -7,6 +7,7 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "test": "vitest run",
+    "build": "pnpm --filter ghost-interview build && pnpm --filter ghost-defense build && node scripts/build-site.mjs",
     "e2e": "playwright test -c apps/ghost-interview/playwright.config.ts"
   },
   "devDependencies": {

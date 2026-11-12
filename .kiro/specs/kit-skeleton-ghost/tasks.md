@@ -156,7 +156,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** a Playwright MCP keyboard walk-through shows the shell, the Preview label, the language switch and the link; axe reports zero violations on the page in EN.
   - _Requirements: 11.2, 11.3, 11.4, 11.5_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 30. Landing page and site assembly
+- [x] 30. Landing page and site assembly
   - `site/index.html` (bilingual, no JS) and `scripts/build-site.mjs`.
   - **Done when:** `pnpm build` produces `dist/index.html`, `dist/interview/index.html` and `dist/defense/index.html`; serving `dist/` locally and opening each path with Playwright MCP shows the right page with working asset paths; axe reports zero violations on the landing page.
   - _Requirements: 13.1_ · Skills: `a11y-review`
