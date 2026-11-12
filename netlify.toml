@@ -1,0 +1,10 @@
+# Netlify build settings (design §7). One site: / (landing), /interview/, /defense/.
+# Netlify reads pnpm's version from "packageManager" in package.json and installs it with
+# Corepack; CI (.github/workflows/ci.yml) installs pnpm the same way on Node 24.
+
+[build]
+  command = "pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"

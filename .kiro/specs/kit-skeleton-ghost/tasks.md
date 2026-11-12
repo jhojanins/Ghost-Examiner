@@ -161,7 +161,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `pnpm build` produces `dist/index.html`, `dist/interview/index.html` and `dist/defense/index.html`; serving `dist/` locally and opening each path with Playwright MCP shows the right page with working asset paths; axe reports zero violations on the landing page.
   - _Requirements: 13.1_ · Skills: `a11y-review`
 
-- [ ] 31. `netlify.toml` and `docs/DEPLOY.md`
+- [ ] 31. `netlify.toml` and `docs/DEPLOY.md` (files written; waiting for the owner to confirm every step is clear)
   - Config from design §7 and step-by-step setup for the owner (import, `release` as production branch, branch deploys for `main`, the 15-credit import cost).
   - **Done when:** `netlify.toml` matches design §7, and the owner reads `docs/DEPLOY.md` and confirms every step is clear before the import in task 34. The build itself is verified locally by task 30 and on Node 24 in CI by task 32.
   - _Requirements: 13.2_ · Skills: `kiroween-checklist`
