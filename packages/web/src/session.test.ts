@@ -225,6 +225,39 @@ describe('createSession', () => {
     expect(stop).toHaveBeenCalled();
   });
 
+  it('a language switch while answering calls setLocale on adapters that have it, and stops or restarts none (task 29)', () => {
+    const setLocale = vi.fn();
+    const voice: InputAdapter = { ...morse, id: 'voice', start: vi.fn(), stop: vi.fn(), setLocale };
+    const keyboard = createKeyboardAdapter(); // no setLocale: it is simply left alone
+    const keyboardStart = vi.spyOn(keyboard, 'start');
+    const keyboardStop = vi.spyOn(keyboard, 'stop');
+    const { handle } = setup({ adapters: [keyboard, voice] });
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    expect(voice.start).toHaveBeenCalledTimes(1);
+
+    handle.dispatch({ type: 'locale-changed', locale: 'es' });
+    expect(setLocale).toHaveBeenCalledExactlyOnceWith('es');
+    expect(voice.start).toHaveBeenCalledTimes(1);
+    expect(voice.stop).not.toHaveBeenCalled();
+    expect(keyboardStart).toHaveBeenCalledTimes(1);
+    expect(keyboardStop).not.toHaveBeenCalled();
+
+    handle.dispatch({ type: 'locale-changed', locale: 'es' }); // the same language again: nothing to tell
+    expect(setLocale).toHaveBeenCalledTimes(1);
+  });
+
+  it('a language switch when no question is answerable tells no adapter, and the next start uses the new language', () => {
+    const setLocale = vi.fn();
+    const voice: InputAdapter = { ...morse, id: 'voice', start: vi.fn(), stop: vi.fn(), setLocale };
+    const { handle } = setup({ adapters: [createKeyboardAdapter(), voice] });
+    handle.dispatch({ type: 'start' }); // privacy: nothing started yet
+    handle.dispatch({ type: 'locale-changed', locale: 'es' });
+    expect(setLocale).not.toHaveBeenCalled();
+    handle.dispatch({ type: 'privacy-accepted' });
+    expect(voice.start).toHaveBeenCalledWith({ question: { id: 'q1', kind: 'free-text' }, locale: 'es' }, expect.any(Function));
+  });
+
   it('submitting during the question stops the ghost speaking (owner decision, task 27)', async () => {
     const { handle, keyboard, speech } = setup();
     handle.dispatch({ type: 'start' });

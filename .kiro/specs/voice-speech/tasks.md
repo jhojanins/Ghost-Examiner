@@ -256,7 +256,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §3.3; Requirements: 4.6_
 
 ### packages/web: runtime
-- [ ] 29. Runtime: input routing and language switch without a restart
+- [x] 29. Runtime: input routing and language switch without a restart
+  - "A `partial` changes no state" was delivered in task 22, when the wider `InputEvent` first reached the runtime.
   - `onInput`: a `candidate` is dispatched and a `partial` is accepted (barge-in arrives in task 37). `syncInputs` keys on the question only, and calls `setLocale?.()` on a language switch.
   - **Done when:**
     - runtime tests show a language switch calls `setLocale` and doesn't call `stop`/`start`;

@@ -79,7 +79,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
   let lineRef: LineRef | undefined;
   let playback = 0; // identifies the current playback, so a cancelled one never ends the line
   let current: Playback | undefined; // the current line's playback
-  let inputKey: string | undefined; // question and locale the adapters were started for
+  let inputKey: string | undefined; // the question the adapters were started for
+  let inputLocale: Locale | undefined; // the language they last heard about
   let transcript: readonly TranscriptEntry[] = [];
   let view: SessionView = { state, transcript };
   const listeners = new Set<() => void>();
@@ -131,16 +132,27 @@ export function createSession(deps: SessionDeps): SessionHandle {
     line = { ...line, text, locale, timeline: buildTimeline(text, locale) };
   }
 
-  /** Inputs listen only while the current question can be answered (asking or answering). */
+  /**
+   * Inputs listen only while the current question can be answered (asking or answering). A language
+   * switch doesn't restart them: adapters that care get `setLocale` and keep the answer going
+   * (spec b design §3.5, Req 4.6).
+   */
   function syncInputs() {
     const answerable = state.phase === 'asking' || state.phase === 'answering';
-    const key = answerable ? `${state.questionIndex}:${state.locale}` : undefined;
+    const key = answerable ? String(state.questionIndex) : undefined;
+    if (key !== undefined && key === inputKey) {
+      if (state.locale !== inputLocale) for (const adapter of deps.adapters) adapter.setLocale?.(state.locale);
+      inputLocale = state.locale;
+      return;
+    }
     if (key === inputKey) return;
     if (inputKey !== undefined) for (const adapter of deps.adapters) adapter.stop();
     inputKey = key;
+    inputLocale = state.locale;
     if (key === undefined) return;
     const { id, kind } = state.pack.questions[state.questionIndex];
-    // Only candidates go to the engine; `partial` events arrive for barge-in (spec b task 29).
+    // Candidates go to the engine. A `partial` is accepted and changes nothing yet; barge-in uses
+    // it in task 38 (spec b design §3.5).
     const onInput = (e: InputEvent) => e.type === 'candidate' && dispatch(e);
     for (const adapter of deps.adapters) adapter.start({ question: { id, kind }, locale: state.locale }, onInput);
   }
