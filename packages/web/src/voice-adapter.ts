@@ -220,6 +220,22 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       r?.abort();
       if (r || view.final || view.interim || view.error) update({ listening: false, final: '', interim: '', error: undefined });
     },
+    /**
+     * The UI language changed (Req 4.6): listening goes on in the new language and keeps the text so
+     * far. Not while the user's stop is finishing: that answer is already on its way.
+     */
+    setLocale(locale) {
+      if (!ctx) return;
+      ctx = { ...ctx, locale };
+      if (!recognizer || stopping) return;
+      const old = recognizer;
+      recognizer = undefined;
+      old.abort(); // its late events are ignored
+      committed = joined(view);
+      quickEnds = 0;
+      update({ final: committed, interim: '' });
+      begin(ctx);
+    },
     stopListening() {
       if (!recognizer) return;
       stopping = true;

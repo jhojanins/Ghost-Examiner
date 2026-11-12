@@ -251,7 +251,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - **text before an error (owner decision after task 25):** text recognized before any error becomes a candidate, also for the loop guard and for the error that makes voice unavailable; it goes to the confirmation step like any candidate.
   - _Design §3.3, §6; Requirements: 4.10_
 
-- [ ] 28. VoiceAdapter: `setLocale` while listening
+- [x] 28. VoiceAdapter: `setLocale` while listening
   - **Done when:** a unit test shows a switch from `en` to `es` in the middle of a turn starts a recognizer with `lang` `es-MX` and keeps the text recognized so far.
   - _Design §3.3; Requirements: 4.6_
 

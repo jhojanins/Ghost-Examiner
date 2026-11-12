@@ -438,3 +438,56 @@ describe('createVoiceAdapter: errors (task 27)', () => {
     expect(adapter.getSnapshot().error).toBe('voice.error.noMic');
   });
 });
+
+describe('createVoiceAdapter: setLocale (task 28)', () => {
+  const candidates = (events: InputEvent[]) => events.filter((e) => e.type === 'candidate');
+
+  it('a switch from en to es mid-turn restarts in es-MX and keeps the text recognized so far', () => {
+    const { adapter, instances, events, emit } = setup(fakeRecognition(), ['en-GB']); // no Spanish preference
+    adapter.start(en, emit);
+    adapter.listen();
+    instances[0].result([['I fixed', true], ['the', false]]);
+
+    adapter.setLocale!('es');
+    expect(instances[0].abort).toHaveBeenCalled();
+    expect(instances).toHaveLength(2);
+    expect(instances[1].lang).toBe('es-MX');
+    expect(instances[1].start).toHaveBeenCalledTimes(1);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: true, final: 'I fixed the', interim: '' });
+
+    instances[0].end(); // the aborted recognizer's end changes nothing
+    expect(instances).toHaveLength(2);
+    instances[1].result([['y luego', true]]);
+    adapter.stopListening();
+    instances[1].end();
+    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the y luego', method: 'voice' } }]);
+  });
+
+  it('when not listening, the next listen() uses the new language', () => {
+    const { adapter, instances, emit } = setup(fakeRecognition(), ['en-GB', 'es-AR']);
+    adapter.start(en, emit);
+    adapter.setLocale!('es');
+    expect(instances).toHaveLength(0); // no microphone just for a language switch
+    adapter.listen();
+    expect(instances[0].lang).toBe('es-AR');
+  });
+
+  it('after the user pressed stop, a switch does not restart: the answer is on its way', () => {
+    const { adapter, instances, events, emit } = setup();
+    adapter.start(en, emit);
+    adapter.listen();
+    instances[0].result([['I fixed the build', true]]);
+    adapter.stopListening();
+    adapter.setLocale!('es');
+    expect(instances).toHaveLength(1);
+    instances[0].end();
+    expect(candidates(events)).toHaveLength(1);
+  });
+
+  it('before start() it does nothing', () => {
+    const { adapter, instances } = setup();
+    expect(() => adapter.setLocale!('es')).not.toThrow();
+    adapter.listen();
+    expect(instances).toHaveLength(0);
+  });
+});
