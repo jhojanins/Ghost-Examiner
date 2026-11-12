@@ -4,8 +4,8 @@ import { Transcript, type TranscriptLine } from './Transcript';
 
 afterEach(cleanup);
 
-const greeting: TranscriptLine = { id: 1, text: 'Good evening. Please, have a seat.', locale: 'en' };
-const question: TranscriptLine = { id: 2, text: 'Tell me about a problem you solved.', locale: 'en' };
+const greeting: TranscriptLine = { id: 1, text: 'Good evening. Please, have a seat.', locale: 'en', heard: false };
+const question: TranscriptLine = { id: 2, text: 'Tell me about a problem you solved.', locale: 'en', heard: false };
 
 const liveRegion = () => document.querySelector('[aria-live]') as HTMLElement;
 
@@ -62,6 +62,23 @@ describe('Transcript', () => {
     expect(liveRegion().children).toHaveLength(1);
   });
 
+  it('a line the user heard spoken aloud is listed but not announced (Req 3.6)', () => {
+    const spoken: TranscriptLine = { ...question, heard: true };
+    const { rerender } = render(<Transcript lines={[]} locale="en" />);
+    rerender(<Transcript lines={[spoken]} locale="en" />);
+    expect(within(screen.getByRole('list')).getAllByText(spoken.text)).toHaveLength(1);
+    expect(liveRegion().textContent).toBe('');
+  });
+
+  it('after a heard line, the next muted line is announced, once', () => {
+    const spoken: TranscriptLine = { ...greeting, heard: true };
+    const { rerender } = render(<Transcript lines={[]} locale="en" />);
+    rerender(<Transcript lines={[spoken]} locale="en" />);
+    rerender(<Transcript lines={[spoken, question]} locale="en" />);
+    expect(liveRegion().textContent).toBe(question.text);
+    expect(liveRegion().children).toHaveLength(1);
+  });
+
   it('lines that were already there when it mounted are listed but not announced', () => {
     render(<Transcript lines={[greeting, question]} locale="en" />);
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -69,14 +86,14 @@ describe('Transcript', () => {
   });
 
   it('is a labeled region, each line marked with its own language', () => {
-    render(<Transcript lines={[greeting, { id: 2, text: 'Cuéntame más.', locale: 'es' }]} locale="es" />);
+    render(<Transcript lines={[greeting, { id: 2, text: 'Cuéntame más.', locale: 'es', heard: false }]} locale="es" />);
     const region = screen.getByRole('region', { name: 'Transcripción' });
     expect(within(region).getByRole('heading', { level: 2, name: 'Transcripción' })).toBeTruthy();
     expect(within(region).getAllByRole('listitem').map((li) => li.getAttribute('lang'))).toEqual(['en', 'es']);
   });
 
   it('announces a line in its own language', () => {
-    const spanish: TranscriptLine = { id: 2, text: 'Cuéntame más.', locale: 'es' };
+    const spanish: TranscriptLine = { id: 2, text: 'Cuéntame más.', locale: 'es', heard: false };
     const { rerender } = render(<Transcript lines={[greeting]} locale="en" />);
     rerender(<Transcript lines={[greeting, spanish]} locale="en" />);
     expect(within(liveRegion()).getByText('Cuéntame más.').getAttribute('lang')).toBe('es');

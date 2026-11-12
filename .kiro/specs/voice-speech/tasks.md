@@ -77,7 +77,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - without `origin`, behavior is unchanged (the existing tests pass).
   - _Design §4; Requirements: 3.1, 3.2_ · Skills: `ghost-svg-animation`
 
-- [ ] 9. `Transcript` announces only lines not heard
+- [x] 9. `Transcript` announces only lines not heard
   - **Done when:**
     - component tests show a `heard: true` line is listed but not placed in the live region, and a `heard: false` line is announced once;
     - the existing "announced once" tests still pass.
