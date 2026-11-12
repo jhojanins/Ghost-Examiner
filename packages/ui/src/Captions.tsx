@@ -8,7 +8,9 @@ export interface CaptionLine {
   text: string;
   locale: Locale;
   timeline: Timeline;
-  startedAt: number; // on the performance.now() clock, like the requestAnimationFrame timestamp
+  startedAt: number; // on the performance.now() clock, like the requestAnimationFrame timestamp; identifies the playback
+  /** The timeline's current time origin on the same clock; moves on boundary resync (spec b design §3.1). */
+  origin: () => number;
   playing: boolean;
 }
 
@@ -16,7 +18,7 @@ const CURRENT = 'ge-caption-word--current';
 
 /** Index of the word being said: the last word that has started, while the line lasts. */
 function currentWord(line: CaptionLine, now: number): number {
-  const elapsed = now - line.startedAt;
+  const elapsed = now - line.origin(); // -Infinity before a spoken line starts: no word
   if (!line.playing || elapsed < 0 || elapsed >= line.timeline.duration) return -1;
   let index = -1;
   for (const word of line.timeline.words) if (word.start <= elapsed) index = word.index;

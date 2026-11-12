@@ -67,7 +67,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §3.5; Requirements: 3.6_
 
 ### packages/ui: read the moving origin
-- [ ] 7. `Captions` reads `line.origin()`
+- [x] 7. `Captions` reads `line.origin()`
   - **Done when:** a component test with a mocked rAF moves `origin` forward between frames and the marked word changes without a re-render or a remount (same element; `key` still from `startedAt`).
   - _Design §4; Requirements: 3.1, 3.2_ · Skills: `ghost-svg-animation`, `a11y-review`
 

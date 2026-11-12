@@ -27,15 +27,19 @@ function frame(t: number) {
 }
 
 // Words (see timeline.test.ts): "Mamá," 0-240, pause 240-440, "hola." 440-680, then rest to 1080.
-const line = (p: Partial<CaptionLine> = {}): CaptionLine => ({
-  id: 1,
-  text: 'Mamá, hola.',
-  locale: 'es',
-  timeline: buildTimeline('Mamá, hola.', 'es'),
-  startedAt: 1000,
-  playing: true,
-  ...p,
-});
+const line = (p: Partial<CaptionLine> = {}): CaptionLine => {
+  const startedAt = p.startedAt ?? 1000;
+  return {
+    id: 1,
+    text: 'Mamá, hola.',
+    locale: 'es',
+    timeline: buildTimeline('Mamá, hola.', 'es'),
+    startedAt,
+    origin: () => startedAt, // a muted line: the origin is the start time
+    playing: true,
+    ...p,
+  };
+};
 const words = (c: HTMLElement) => [...c.querySelectorAll('.ge-caption-word')].map((w) => w.textContent);
 const current = (c: HTMLElement) =>
   [...c.querySelectorAll('.ge-caption-word--current')].map((w) => w.textContent);
@@ -94,6 +98,30 @@ describe('Captions', () => {
     rerender(tree(line({ id: 2, text: 'Bien.', timeline: buildTimeline('Bien.', 'es'), startedAt: 5000 })));
     expect(words(container)).toEqual(['Bien.']);
     expect(current(container)).toEqual([]); // no marker carried over from the old line
+  });
+
+  it('follows origin() as it moves between frames, without a re-render or a remount', () => {
+    let origin = 1000;
+    let commits = 0;
+    const { container } = render(
+      <Profiler id="captions" onRender={() => commits++}>
+        <Captions line={line({ origin: () => origin })} />
+      </Profiler>,
+    );
+    const afterMount = commits;
+    const element = container.querySelector('.ge-captions');
+
+    frame(1100);
+    expect(current(container)).toEqual(['Mamá,']);
+    origin = 600; // a boundary event: the audio is at "hola." (440 ms into the line)
+    frame(1100);
+    expect(current(container)).toEqual(['hola.']);
+    origin = Infinity; // a spoken line that has not started yet
+    frame(1100);
+    expect(current(container)).toEqual([]);
+
+    expect(container.querySelector('.ge-captions')).toBe(element); // same element: no remount
+    expect(commits).toBe(afterMount); // no React render
   });
 
   it('renders nothing without a line, and stops its loop on unmount', () => {
