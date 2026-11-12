@@ -108,7 +108,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - a boundary from an older utterance changes nothing.
   - _Design §3.2; Requirements: 3.2, 3.4_ · Skills: `ghost-svg-animation`
 
-- [ ] 13. WebSpeechOutput: failure and mute paths
+- [x] 13. WebSpeechOutput: failure and mute paths
   - **Done when:** unit tests with fake timers show:
     - no `start` within 2 s → `synth.cancel()`, a clock playback from now, and `reason: 'failed'` with `on: false`;
     - an utterance `error` → the same result;

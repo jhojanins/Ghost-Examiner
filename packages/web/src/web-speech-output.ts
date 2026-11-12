@@ -39,6 +39,8 @@ export interface WebSpeechDeps {
 
 /** How long an empty voice list counts as "still loading" (some systems never fire voiceschanged). */
 const VOICES_GRACE_MS = 2000;
+/** A spoken line that hasn't started by then counts as failed (Req 1.6; macOS hang, Chromium 572750556). */
+const START_TIMEOUT_MS = 2000;
 
 /** One line: spoken aloud, or played on the clock (muted) like SilentOutput. */
 interface Line {
@@ -65,6 +67,7 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
   let current: Line | undefined;
   let lastLocale: Locale | undefined; // language of the latest line: the one the "no-voice" reason is about
   let voicesLoading = true;
+  let failed = false; // the voice failed; muted until the user turns sound on again (Req 1.6)
   const listeners = new Set<() => void>();
 
   /** The local voice `pickVoice` chooses for `locale` (Req 1.3), from the current voice list. */
@@ -77,6 +80,7 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
 
   function reasonNow(): SoundView['reason'] {
     if (!api) return 'no-api';
+    if (failed) return 'failed';
     if (api.synth.getVoices().length === 0) return voicesLoading ? undefined : 'no-voice';
     if (lastLocale && !voiceFor(lastLocale)) return 'no-voice';
     return undefined;
@@ -125,17 +129,46 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
    */
   const live = (line: Line) => line.audio && !line.settled;
 
+  /**
+   * The line goes on muted, on the clock, from its current origin, or from now if the audio never
+   * started. `audio` turns false before `synth.cancel()`, so the "interrupted" error that the
+   * cancel causes finds the line no longer live.
+   */
+  function mute(line: Line) {
+    line.audio = false;
+    if (!line.started) line.anchor = clock.now();
+    runOnClock(line);
+    api?.synth.cancel();
+  }
+
+  /** The voice failed: this line goes on muted, and so does the session until sound is turned on. */
+  function fail(line: Line) {
+    failed = true;
+    on = false;
+    mute(line);
+    refresh();
+  }
+
   function speakAloud(line: Line, voice: SpeechSynthesisVoice, { synth, Utterance }: NonNullable<typeof api>) {
     line.audio = true;
     line.anchor = Infinity;
+    line.timer = setTimeout(() => fail(line), START_TIMEOUT_MS); // cleared by start, mute or settle
     const utterance = new Utterance(line.text);
     utterance.voice = voice;
     utterance.lang = voice.lang;
     utterance.rate = 1;
     utterance.onstart = () => {
       if (!live(line)) return;
+      clearTimeout(line.timer);
       line.started = true;
       line.anchor = clock.now();
+    };
+    // Our own cancel() never reaches here (the line is settled or muted first), so an
+    // "interrupted" or "canceled" error comes from outside: go on muted, but keep sound on.
+    utterance.onerror = (e) => {
+      if (!live(line)) return;
+      if (e.error === 'interrupted' || e.error === 'canceled') mute(line);
+      else fail(line);
     };
     // Req 3.2: shift the origin so the reported word is current. Without boundary events
     // (many network voices) the origin stays at `start` and the estimate drives the mouth (Req 3.4).
@@ -167,7 +200,9 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
       const done = new Promise<void>((resolve) => (finish = resolve));
       const line: Line = { text, timeline, anchor: startedAt, audio: false, started: false, settled: false, finish };
       current = line;
-      const voice = api && unlocked && on ? voiceFor(locale) : undefined;
+      // A line with no words stays on the clock: an empty utterance may never fire `start`,
+      // and the start timeout would then mute the whole session.
+      const voice = api && unlocked && on && timeline.words.length > 0 ? voiceFor(locale) : undefined;
       if (api && voice) speakAloud(line, voice, api);
       else runOnClock(line);
       return { startedAt, origin: () => line.anchor, audible: () => line.audio && line.started, done };
@@ -180,6 +215,8 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
     },
     setOn(next) {
       on = next; // without the API the view stays "off, no-api" whatever the user picks
+      if (next) failed = false; // Req 1.6: the user can turn sound on again after a failure
+      else if (current && live(current)) mute(current); // Req 2.3: the audio stops at once
       refresh();
     },
     unlock() {

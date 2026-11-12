@@ -356,3 +356,166 @@ describe('createWebSpeechOutput: mouth resync on boundary events', () => {
     expect(second.origin()).toBe(before);
   });
 });
+
+describe('createWebSpeechOutput: failure and mute paths', () => {
+  const duration = line.timeline.duration; // 1050 ms
+
+  it('no start within 2 s: cancel the synth, play the line on the clock from then, sound off as failed', async () => {
+    const { output, synth } = unlocked();
+    const listener = vi.fn();
+    output.subscribe(listener);
+    const playback = output.speak(line);
+    const state = track(playback.done);
+
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(synth.cancel).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    expect(playback.origin()).toBe(7000);
+    expect(playback.audible()).toBe(false);
+    expect(output.getSnapshot()).toEqual({ on: false, reason: 'failed' });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(duration - 1);
+    expect(state.resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(state.resolved).toBe(true);
+  });
+
+  it('a start before 2 s clears the timeout', async () => {
+    const { output, utterances, synth } = unlocked();
+    output.speak(line);
+    await vi.advanceTimersByTimeAsync(1500);
+    utterances[0].fire('start');
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(synth.cancel).not.toHaveBeenCalled();
+    expect(output.getSnapshot()).toEqual({ on: true });
+  });
+
+  it('an utterance error: the line continues on the clock from its origin, sound off as failed', async () => {
+    const { output, utterances, synth } = unlocked();
+    const playback = output.speak(line);
+    await vi.advanceTimersByTimeAsync(300);
+    utterances[0].fire('start');
+    await vi.advanceTimersByTimeAsync(100);
+    utterances[0].fire('error', { error: 'synthesis-failed' });
+
+    expect(synth.cancel).toHaveBeenCalled();
+    expect(playback.origin()).toBe(5300);
+    expect(playback.audible()).toBe(false);
+    expect(output.getSnapshot()).toEqual({ on: false, reason: 'failed' });
+    const state = track(playback.done);
+    await vi.advanceTimersByTimeAsync(5300 + duration - clock.now() - 1);
+    expect(state.resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(state.resolved).toBe(true);
+  });
+
+  it('an error before the start event plays the line on the clock from that moment', async () => {
+    const { output, utterances } = unlocked();
+    const playback = output.speak(line);
+    await vi.advanceTimersByTimeAsync(200);
+    utterances[0].fire('error', { error: 'not-allowed' });
+    expect(playback.origin()).toBe(5200);
+    expect(output.getSnapshot().reason).toBe('failed');
+  });
+
+  it.each(['interrupted', 'canceled'])(
+    'an %s error the app did not cause: the line continues on the clock, and sound stays on',
+    async (error) => {
+      const { output, utterances } = unlocked();
+      const playback = output.speak(line);
+      utterances[0].fire('start');
+      await vi.advanceTimersByTimeAsync(100);
+      utterances[0].fire('error', { error });
+      expect(playback.audible()).toBe(false);
+      expect(output.getSnapshot()).toEqual({ on: true });
+      const state = track(playback.done);
+      await vi.advanceTimersByTimeAsync(duration - 100 - 1); // ends at 5000 + duration
+      expect(state.resolved).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(state.resolved).toBe(true);
+      output.speak(line);
+      expect(utterances).toHaveLength(2); // the next line is spoken
+    },
+  );
+
+  it('cancel() on a started line resolves at once; the synth error it causes changes nothing', async () => {
+    const { output, utterances, synth } = unlocked();
+    const playback = output.speak(line);
+    utterances[0].fire('start');
+    output.cancel(); // the fake synth fires "interrupted" right away
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    await expect(playback.done).resolves.toBeUndefined();
+    expect(clock.now()).toBe(5000);
+    expect(output.getSnapshot()).toEqual({ on: true });
+  });
+
+  it('sound off mid-line: the audio stops and the line ends on the clock; sound on again speaks the next line', async () => {
+    const { output, utterances, synth } = unlocked();
+    const playback = output.speak(line);
+    utterances[0].fire('start');
+    await vi.advanceTimersByTimeAsync(400);
+    output.setOn(false);
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    expect(playback.audible()).toBe(false);
+    expect(playback.origin()).toBe(5000);
+    expect(output.getSnapshot()).toEqual({ on: false });
+
+    output.setOn(true); // the current line stays muted (Req 2.4: the next line is spoken)
+    const state = track(playback.done);
+    await vi.advanceTimersByTimeAsync(duration - 400 - 1);
+    expect(state.resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(state.resolved).toBe(true);
+    expect(utterances).toHaveLength(1);
+    output.speak(line);
+    expect(utterances).toHaveLength(2);
+  });
+
+  it('after sound off, late events of the muted line change nothing', async () => {
+    const { output, utterances } = unlocked();
+    const playback = output.speak(line);
+    utterances[0].fire('start');
+    await vi.advanceTimersByTimeAsync(100);
+    output.setOn(false);
+    const state = track(playback.done);
+    utterances[0].fire('boundary', { name: 'word', charIndex: 8 });
+    utterances[0].fire('end');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(playback.origin()).toBe(5000); // the clock line keeps its origin
+    expect(state.resolved).toBe(false); // and ends on the clock, not on the late `end`
+  });
+
+  it('sound off while waiting for the start event plays the line on the clock from then', async () => {
+    const { output } = unlocked();
+    const playback = output.speak(line);
+    await vi.advanceTimersByTimeAsync(250);
+    output.setOn(false);
+    expect(playback.origin()).toBe(5250);
+  });
+
+  it('after a failure, lines play muted until the user turns sound on again', async () => {
+    const { output, utterances } = unlocked();
+    output.speak(line);
+    utterances[0].fire('error', { error: 'synthesis-failed' });
+    output.speak(line);
+    expect(utterances).toHaveLength(1);
+
+    output.setOn(true);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    output.speak(line);
+    expect(utterances).toHaveLength(2);
+  });
+
+  it('a line with no words never becomes an utterance, so it cannot time out as a failure', async () => {
+    const { output, utterances } = unlocked();
+    const empty = { text: ' ', locale: 'en' as const, timeline: buildTimeline(' ', 'en') };
+    const state = track(output.speak(empty).done);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.resolved).toBe(true);
+    expect(utterances).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(output.getSnapshot()).toEqual({ on: true });
+  });
+});
