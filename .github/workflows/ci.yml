@@ -1,0 +1,55 @@
+# CI (Req 13.4, design §7): typecheck, lint, unit and property tests, and the site build, on every
+# push and pull request. pnpm is installed the way Netlify installs it: Node 24 plus Corepack,
+# which reads the exact pnpm version from "packageManager" in package.json. So a green run also
+# tests the install path of the Netlify build (docs/DEPLOY.md).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' # no interactive prompt when Corepack fetches pnpm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Enable Corepack (as Netlify does)
+        run: corepack enable
+
+      - name: Show versions
+        run: |
+          node --version
+          corepack --version
+          pnpm --version
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit and property tests
+        run: pnpm test
+
+      - name: Build the site
+        run: pnpm build

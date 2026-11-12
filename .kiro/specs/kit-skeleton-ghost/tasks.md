@@ -166,8 +166,8 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** `netlify.toml` matches design §7, and the owner reads `docs/DEPLOY.md` and confirms every step is clear before the import in task 34. The build itself is verified locally by task 30 and on Node 24 in CI by task 32.
   - _Requirements: 13.2_ · Skills: `kiroween-checklist`
 
-- [ ] 32. CI workflow
-  - `.github/workflows/ci.yml`: Node 24, pnpm, frozen lockfile, typecheck, lint, test, build.
+- [ ] 32. CI workflow (file written; waiting for the owner's push and a green run)
+  - `.github/workflows/ci.yml`: Node 24, pnpm installed with `corepack enable` as Netlify does (owner request), frozen lockfile, typecheck, lint, test, build.
   - **Done when:** after the owner approves the push, the workflow run on `main` is green (`gh run list --limit 1` shows success).
   - _Requirements: 13.4_
 
