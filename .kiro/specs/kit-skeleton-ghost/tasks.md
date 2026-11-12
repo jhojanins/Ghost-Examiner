@@ -125,7 +125,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show the "Practice feedback" heading (EN and ES), strength and improvement, the feedback's `lang` attribute, focus on the heading at mount, and Next calling its handler.
   - _Requirements: 8.2, 8.5_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 25. `useSession` hook
+- [x] 25. `useSession` hook
   - `useSyncExternalStore` over the runtime handle.
   - **Done when:** a component test with a fake handle re-renders on `subscribe` notifications and not otherwise, and `dispatch` reaches the handle.
   - _Requirements: 5.1_

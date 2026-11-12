@@ -17,3 +17,5 @@ export { PrivacyDialog } from './PrivacyDialog';
 export type { TranscriptLine, TranscriptProps } from './Transcript';
 export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';
+export type { SessionStore } from './useSession';
+export { useSession } from './useSession';
