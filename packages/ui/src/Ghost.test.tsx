@@ -7,7 +7,7 @@ import css from './Ghost.css?raw';
 afterEach(cleanup);
 
 const EXPRESSIONS: Expression[] = ['neutral', 'attentive', 'thinking', 'approving', 'skeptical', 'amused', 'surprised'];
-const VISEMES: Viseme[] = ['rest', 'A', 'O', 'MBP'];
+const VISEMES: Viseme[] = ['rest', 'A', 'E', 'O', 'U', 'MBP', 'FV'];
 const LABELS: Record<Locale, Record<Expression, string>> = {
   en: {
     neutral: 'The ghost examiner, looking calm.',
@@ -74,7 +74,7 @@ describe('Ghost', () => {
     expect(new Set(looks.map(([, look]) => look)).size).toBe(looks.length);
   });
 
-  it('has one pre-drawn mouth path per phase 1 viseme', () => {
+  it('has one pre-drawn mouth path per viseme', () => {
     render(<Ghost pose={pose()} locale="en" />);
     const paths = [...screen.getByRole('img').querySelectorAll('[data-part="mouth"] path')];
     expect(paths.map((p) => p.getAttribute('data-viseme'))).toEqual(VISEMES);

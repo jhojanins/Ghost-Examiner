@@ -188,7 +188,8 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** the Ghost component tests cover all 7 expressions and the mapping test uses `attentive` for answering and confirming.
   - _Requirements: 3.2, 3.4_ · Skills: `ghost-svg-animation`, `a11y-review`
 
-- [ ] 36. Mouth shapes `E`, `U`, `FV`
+- [x] 36. Mouth shapes `E`, `U`, `FV`
+  - Rules now `a` → `A`, `e, i` → `E`, `o` → `O`, `u` → `U`, `m, b, p` → `MBP`, `f, v` → `FV` (the skill's extra `y → E`, `w → U` were not added: the task names only these). New paths: `E` a wide, symmetric lens; `U` a small round pucker; `FV` a small arch with a flat base. None curves up at the corners.
   - Types, SVG paths, timeline rules `e, i` → `E`, `u` → `U`, `f, v` → `FV`.
   - **Done when:** P5 and P6 still pass and example tests show the new visemes for "fue", "mi", "voz".
   - _Requirements: 3.2, 4.3_ · Skills: `ghost-svg-animation`

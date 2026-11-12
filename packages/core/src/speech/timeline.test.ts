@@ -23,6 +23,20 @@ describe('buildTimeline', () => {
     expect(t.duration).toBe(1080);
   });
 
+  // Phase 2 mouth shapes (spec a task 36): e, i → E; u → U; f, v → FV. 60 ms per letter in Spanish.
+  it.each([
+    ['fue', [{ start: 0, end: 60, viseme: 'FV' }, { start: 60, end: 120, viseme: 'U' }, { start: 120, end: 180, viseme: 'E' }]],
+    ['mi', [{ start: 0, end: 60, viseme: 'MBP' }, { start: 60, end: 120, viseme: 'E' }]],
+    // "z" keeps the previous shape, so O lasts two letters.
+    ['voz', [{ start: 0, end: 60, viseme: 'FV' }, { start: 60, end: 180, viseme: 'O' }]],
+  ] as const)('"%s" (es) shows the phase 2 shapes, then rest', (word, cues) => {
+    const t = buildTimeline(word, 'es');
+    const end = cues[cues.length - 1].end;
+    expect(t.mouth).toEqual([...cues, { start: end, end: end + 200, viseme: 'rest' }]); // the line closes like a comma
+  });
+  it('"Ví tú fé." (es): accented letters give the same shapes; "t" keeps the previous one', () => {
+    expect(buildTimeline('Ví tú fé.', 'es').mouth.map((c) => c.viseme)).toEqual(['FV', 'E', 'U', 'FV', 'E', 'rest']);
+  });
   it('uses 65 ms per letter in English and a 120 ms minimum per word', () => {
     const t = buildTimeline('I see', 'en');
     expect(t.words).toEqual([

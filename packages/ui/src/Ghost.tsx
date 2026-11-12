@@ -24,8 +24,11 @@ const WHITE = '#ffffff';
 const MOUTHS: Record<Viseme, { d: string; filled: boolean }> = {
   rest: { d: 'M108,149 Q120,146.5 132,149', filled: false }, // flat, a touch serious
   A: { d: 'M112,146.5 C112,141.5 128,141.5 128,146.5 C128,154.5 124,159 120,159 C116,159 112,154.5 112,146.5 Z', filled: true }, // open, rounded corners
+  E: { d: 'M109,148 Q120,142 131,148 Q120,155 109,148 Z', filled: true }, // wide and a little open; the corners stay level (no grin)
   O: { d: 'M113.5,150 A6.5,7.5 0 1,0 126.5,150 A6.5,7.5 0 1,0 113.5,150 Z', filled: true },
+  U: { d: 'M116,150 A4,5 0 1,0 124,150 A4,5 0 1,0 116,150 Z', filled: true }, // a small round pucker, smaller than O
   MBP: { d: 'M113,148.5 Q120,144 127,148.5 Q120,153 113,148.5 Z', filled: true }, // lips pressed together
+  FV: { d: 'M112,150 Q120,144 128,150 Z', filled: true }, // upper lip over the lower one: an arch with a flat base
 };
 
 /** Round frames, bridge and temples; drawn twice so the orange gets a 2 px dark edge. */

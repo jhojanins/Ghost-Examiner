@@ -1,6 +1,6 @@
 import type { Locale } from '../i18n/i18n';
 
-export type Viseme = 'rest' | 'A' | 'O' | 'MBP'; // phase 2 adds 'E' | 'U' | 'FV'
+export type Viseme = 'rest' | 'A' | 'E' | 'O' | 'U' | 'MBP' | 'FV';
 export interface WordCue {
   index: number;
   text: string;
@@ -28,11 +28,14 @@ const LETTER = /[\p{L}\p{N}]/u;
 /** Lowercase, then strip accents ("Á" → "a", "ñ" → "n"). */
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
 
-/** Phase 1 letter rules (design §3.5); undefined means "keep the previous shape". */
+/** Letter rules (design §3.5, phase 2 in spec a task 36); undefined means "keep the previous shape". */
 function visemeFor(letter: string): Viseme | undefined {
-  if ('aei'.includes(letter)) return 'A';
-  if ('ou'.includes(letter)) return 'O';
-  if ('mbpfv'.includes(letter)) return 'MBP';
+  if (letter === 'a') return 'A';
+  if ('ei'.includes(letter)) return 'E';
+  if (letter === 'o') return 'O';
+  if (letter === 'u') return 'U';
+  if ('mbp'.includes(letter)) return 'MBP';
+  if ('fv'.includes(letter)) return 'FV';
   return undefined;
 }
 

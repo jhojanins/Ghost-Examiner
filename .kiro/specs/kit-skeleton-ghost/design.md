@@ -182,7 +182,7 @@ export function validatePack(pack: QuestionPack, adapters: readonly InputAdapter
 
 ### 3.5 Speech timeline (Req 4.3)
 ```ts
-export type Viseme = 'rest' | 'A' | 'O' | 'MBP';               // phase 2 adds 'E' | 'U' | 'FV'
+export type Viseme = 'rest' | 'A' | 'E' | 'O' | 'U' | 'MBP' | 'FV'; // phase 2 (task 36) added 'E' | 'U' | 'FV'
 export interface WordCue  { index: number; text: string; start: number; end: number }
 export interface MouthCue { start: number; end: number; viseme: Viseme }
 export interface Timeline { words: WordCue[]; mouth: MouthCue[]; duration: number }
@@ -190,7 +190,7 @@ export function buildTimeline(text: string, locale: Locale): Timeline;
 ```
 - Refinement of ARCHITECTURE.md §3.4: words and mouth shapes are separate lists on one shared clock, because a word has several mouth shapes. Captions read `words`, the mouth reads `mouth`. The `rate` parameter arrives with real speech in spec (b).
 - Duration per word ≈ letters × 65 ms (EN) or 60 ms (ES), with a 120 ms minimum; pauses of 200 ms after commas and 400 ms after `.`, `?`, `!`.
-- Phase 1 letter rules: `a, e, i` → `A`; `o, u` → `O`; `m, b, p, f, v` → `MBP`; other letters keep the previous shape; gaps → `rest`. The last cue is always `rest`.
+- Phase 1 letter rules: `a, e, i` → `A`; `o, u` → `O`; `m, b, p, f, v` → `MBP`; other letters keep the previous shape; gaps → `rest`. The last cue is always `rest`. Phase 2 (task 36): `a` → `A`, `e, i` → `E`, `o` → `O`, `u` → `U`, `m, b, p` → `MBP`, `f, v` → `FV`; the rest is unchanged.
 - Pure; Spanish accents are normalized before mapping (`á` → `a`).
 
 ### 3.6 Ghost pose (Req 3)
@@ -291,7 +291,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 
 ### 5.3 SVG and visual design
 - `viewBox="0 0 240 280"`. Groups with stable ids: `ghost-body` (rounded top, three-lobe hem), `brows`, `eye-left`, `eye-right`, `glasses` (round frames with a bridge), `mouth`, `bowtie`, `clipboard` (held at the lower right), `hands`. Coordinates rounded to 1 decimal. Hand-drawn in this repo; no copied assets.
-- Mouth: four pre-drawn `<path>`s, one per viseme; only the active one is visible.
+- Mouth: one pre-drawn `<path>` per viseme (four in phase 1; `E`, `U`, `FV` added in phase 2, task 36); only the active one is visible.
 - Expressions change brow rotation and eye shape: `neutral` flat brows; `thinking` one brow raised, eyes up; `approving` brows up, eyes curved; `skeptical` one brow down, eyes narrowed. Phase 2, all subtle: `attentive` brows a touch up, eyes a touch wider; `amused` level brows a little up, relaxed (narrower) eyes, mouth a little off-center, no smile; `surprised` level brows high, small round pupils, narrower mouth. 200 ms transitions on `transform` only, on `<g>` with `transform-box: fill-box`.
 - Phase 2 applies the float to a wrapper `<div>`, not the `<svg>`.
 - Matches the owner's Devpost thumbnail (Req 3.11). Distinct from Kiro's mascot: glasses, bow tie, clipboard, mint-white palette, no purple anywhere.
