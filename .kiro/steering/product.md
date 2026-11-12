@@ -31,7 +31,7 @@ Voice, keyboard and Morse code (tap). A personalized small-vocabulary sign input
 - Accessibility, privacy and ethics rules in `accessibility-ethics.md` are non-negotiable and override convenience.
 
 ## Scope
-Main schedule, in order: (a) kit skeleton + animated ghost + Day 5 slice, (b) keyboard + voice + captions, (c) Morse + property tests, (d) camera tier 1 (self-view), (e) ghost-interview, (f) ghost-defense.
+Main schedule, in order: (a) kit skeleton + animated ghost + Day 5 slice, (b) voice input + ghost speech + captions, (c) Morse + property tests, (d) camera tier 1 (self-view), (e) ghost-interview, (f) ghost-defense.
 
 Stretch goals, only if ahead of schedule: camera tier 2 (face signals for the ghost's gaze), (g) experimental sign input.
 

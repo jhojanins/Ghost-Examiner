@@ -156,7 +156,7 @@ We read each `SKILL.md` and its license before deciding. Nothing was imported. U
 | 2026-11-14 to 15 (planned) | Import the repo into Netlify; counts as the one pre-approved production deploy (15 credits) |
 
 ## Specs (`.kiro/specs/`)
-Main schedule: (a) kit skeleton + animated ghost + Day 5 vertical slice, (b) keyboard + voice + captions, (c) Morse + PBT, (d) camera tier 1, (e) ghost-interview, (f) ghost-defense. Stretch only: camera tier 2, (g) experimental signs.
+Main schedule: (a) kit skeleton + animated ghost + Day 5 vertical slice, (b) voice input + ghost speech + captions, (c) Morse + PBT, (d) camera tier 1, (e) ghost-interview, (f) ghost-defense. Stretch only: camera tier 2, (g) experimental signs.
 
 | Spec | Folder | Status |
 |---|---|---|
