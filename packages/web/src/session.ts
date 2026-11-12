@@ -5,6 +5,7 @@ import {
   validatePack,
   type Evaluator,
   type InputAdapter,
+  type InputEvent,
   type LineRef,
   type Locale,
   type PackIssue,
@@ -139,7 +140,9 @@ export function createSession(deps: SessionDeps): SessionHandle {
     inputKey = key;
     if (key === undefined) return;
     const { id, kind } = state.pack.questions[state.questionIndex];
-    for (const adapter of deps.adapters) adapter.start({ question: { id, kind }, locale: state.locale }, (e) => dispatch(e));
+    // Only candidates go to the engine; `partial` events arrive for barge-in (spec b task 29).
+    const onInput = (e: InputEvent) => e.type === 'candidate' && dispatch(e);
+    for (const adapter of deps.adapters) adapter.start({ question: { id, kind }, locale: state.locale }, onInput);
   }
 
   function dispatch(event: SessionEvent, lineChanged = false) {

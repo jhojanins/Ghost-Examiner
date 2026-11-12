@@ -1,8 +1,9 @@
 import type { Locale } from '../i18n/i18n';
 
-// From docs/ARCHITECTURE.md §3.1, trimmed to what spec (a) uses. Later specs add the
-// `status`, `partial` and `error` events and the optional candidate fields
-// (`confidence`, `alternatives`, `trace`) when an adapter produces them.
+// From docs/ARCHITECTURE.md §3.1, trimmed to what the specs use. Spec (b) adds `partial` (the
+// runtime needs it for barge-in); listening status and errors stay inside the voice adapter's own
+// view (spec b design §2.1). The optional candidate fields (`confidence`, `alternatives`, `trace`)
+// arrive when an adapter produces them.
 
 export type InputMethodId = 'keyboard' | 'voice' | 'morse' | 'sign';
 export type AnswerKind = 'free-text' | 'choice' | 'yes-no';
@@ -21,7 +22,9 @@ export interface AnswerCandidate {
   method: InputMethodId;
 }
 
-export type InputEvent = { type: 'candidate'; candidate: AnswerCandidate };
+export type InputEvent =
+  | { type: 'candidate'; candidate: AnswerCandidate }
+  | { type: 'partial'; text: string }; // all text recognized so far in this turn, before any confirmation
 
 export interface InputAdapter {
   readonly id: InputMethodId;
@@ -31,4 +34,6 @@ export interface InputAdapter {
   checkAvailability(): Promise<Availability>;
   start(ctx: InputContext, emit: (e: InputEvent) => void): void;
   stop(): void;
+  /** The UI language changed while started; keep the turn going in the new language (spec b Req 4.6). */
+  setLocale?(locale: Locale): void;
 }

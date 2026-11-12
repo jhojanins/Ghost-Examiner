@@ -208,7 +208,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
 ## Phase 2: voice answers
 
 ### packages/core
-- [ ] 22. `partial` input event and `setLocale` hook
+- [x] 22. `partial` input event and `setLocale` hook
   - **Done when:**
     - typecheck passes, and the keyboard adapter is unchanged;
     - a type test shows `{ type: 'partial', text }` is an `InputEvent` and `setLocale` is optional on `InputAdapter`.

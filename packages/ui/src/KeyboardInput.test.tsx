@@ -9,7 +9,7 @@ afterEach(cleanup);
 function setup(props: Partial<KeyboardInputProps> = {}) {
   const adapter = createKeyboardAdapter();
   const emitted: string[] = [];
-  adapter.start({ question: { id: 'q1', kind: 'free-text' }, locale: 'en' }, (e) => emitted.push(e.candidate.text));
+  adapter.start({ question: { id: 'q1', kind: 'free-text' }, locale: 'en' }, (e) => e.type === 'candidate' && emitted.push(e.candidate.text));
   const onSubmit = vi.fn(adapter.submit);
   render(<KeyboardInput locale="en" onSubmit={onSubmit} {...props} />);
   return { onSubmit, emitted, field: screen.getByRole('textbox') as HTMLTextAreaElement };

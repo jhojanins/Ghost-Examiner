@@ -3,6 +3,7 @@ import {
   type Evaluator,
   type Feedback,
   type InputAdapter,
+  type InputEvent,
   type QuestionPack,
   type Timeline,
 } from '@ghost-examiner/core';
@@ -186,6 +187,24 @@ describe('createSession', () => {
     handle.dispatch({ type: 'locale-changed', locale: 'es' });
     expect(handle.getSnapshot().line).toMatchObject({ text: 'Buenas noches.', locale: 'es', playing: false });
     expect(speech.speak).toHaveBeenCalledTimes(1);
+  });
+
+  it('a partial event from an adapter changes nothing; only candidates reach the engine (spec b task 22)', () => {
+    let emit: ((e: InputEvent) => void) | undefined;
+    const voice: InputAdapter = { ...morse, id: 'voice', start: (_ctx, onEvent) => void (emit = onEvent) };
+    const { handle } = setup({ adapters: [createKeyboardAdapter(), voice] });
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    const before = handle.getSnapshot();
+    const listener = vi.fn();
+    handle.subscribe(listener);
+
+    emit!({ type: 'partial', text: 'I fixed the' });
+    expect(handle.getSnapshot()).toBe(before);
+    expect(listener).not.toHaveBeenCalled();
+
+    emit!({ type: 'candidate', candidate: { text: 'I fixed the build.', method: 'voice' } });
+    expect(handle.getSnapshot().state.phase).toBe('confirming');
   });
 
   it('starts adapters only while a question can be answered, with the question and locale', () => {
