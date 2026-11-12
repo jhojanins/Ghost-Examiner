@@ -1,4 +1,4 @@
-import { speechLang, type Availability, type InputAdapter, type InputContext, type InputEvent } from '@ghost-examiner/core';
+import { speechLang, type Availability, type Clock, type InputAdapter, type InputContext, type InputEvent } from '@ghost-examiner/core';
 
 /**
  * The members of `SpeechRecognition` / `webkitSpeechRecognition` this adapter uses (spec b design
@@ -49,11 +49,17 @@ export interface VoiceAdapter extends InputAdapter {
 export interface VoiceAdapterDeps {
   /** `SpeechRecognition ?? webkitSpeechRecognition`, or undefined when the browser has neither. */
   Recognition?: RecognitionCtor;
+  /** For the loop guard (task 26): how soon a recognizer ended after it started. */
+  clock: Clock;
   /** The browser's preferred languages (`navigator.languages`), for the recognition region. */
   languages: readonly string[];
 }
 
 const UNAVAILABLE: Availability = { available: false, reason: 'voice.unavailable' };
+
+/** Loop guard (Req 4.9, design §3.3): this many early ends in a row, each this soon with no result, stop listening. */
+const QUICK_ENDS = 3;
+const QUICK_END_MS = 500;
 
 /**
  * Errors that mean this browser can't recognize speech at all, so voice becomes unavailable (the
@@ -74,7 +80,8 @@ function textOf(event: RecognitionResultEventLike, isFinal: boolean): string {
   return pieces.filter(Boolean).join(' ');
 }
 
-const joined = (view: VoiceView) => [view.final, view.interim].filter(Boolean).join(' ');
+const join = (...parts: string[]) => parts.filter(Boolean).join(' ');
+const joined = (view: VoiceView) => join(view.final, view.interim);
 
 /**
  * Voice answers with the browser's speech recognition (spec b design §3.3, Req 4). Feature
@@ -89,6 +96,8 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
   let emit: ((e: InputEvent) => void) | undefined;
   let recognizer: RecognitionLike | undefined;
   let stopping = false; // the user asked to stop: the next end turns the text into a candidate
+  let committed = ''; // text kept from earlier recognizers in this turn (the browser ended them early)
+  let quickEnds = 0; // early ends in a row that were too quick and heard nothing (loop guard)
   let view: VoiceView = { availability, listening: false, final: '', interim: '' };
   const listeners = new Set<() => void>();
 
@@ -103,18 +112,23 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
     update({ availability, listening: false });
   }
 
-  function listen() {
-    if (!Recognition || !availability.available || !ctx || recognizer) return;
-    const locale = ctx.locale;
+  /** Creates and starts one recognizer for the armed question; used by listen() and every restart. */
+  function begin(context: InputContext) {
+    if (!Recognition) return;
     try {
       const r = new Recognition();
+      const startedAt = deps.clock.now();
+      let heard = false;
       r.continuous = true;
       r.interimResults = true;
       r.maxAlternatives = 1;
-      r.lang = speechLang(locale, deps.languages);
+      r.lang = speechLang(context.locale, deps.languages);
       r.onresult = (e) => {
         if (r !== recognizer) return;
-        update({ final: textOf(e, true), interim: textOf(e, false) });
+        const final = textOf(e, true);
+        const interim = textOf(e, false);
+        if (final || interim) heard = true;
+        update({ final: join(committed, final), interim });
         emit?.({ type: 'partial', text: joined(view) }); // live captions and barge-in (Req 5.1, 7.1)
       };
       r.onerror = (e) => {
@@ -123,7 +137,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       r.onend = () => {
         if (r !== recognizer) return; // an aborted or failed recognizer
         recognizer = undefined;
-        if (!stopping) return update({ listening: false }); // ended by the browser: task 26 restarts it
+        if (!stopping) return endedEarly(heard, deps.clock.now() - startedAt);
         stopping = false;
         const text = joined(view).trim();
         if (!text) return update({ listening: false, error: 'voice.empty' }); // Req 4.8
@@ -131,12 +145,31 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
         emit?.({ type: 'candidate', candidate: { text, method: 'voice' } }); // Req 4.7: to confirmation
       };
       recognizer = r;
-      stopping = false;
       r.start();
-      update({ listening: true, final: '', interim: '', error: undefined });
     } catch {
       becomeUnavailable(); // no constructor that works, or start() refused
     }
+  }
+
+  /**
+   * The browser ended recognition on its own (Req 4.9), e.g. after a pause: keep the text and listen
+   * again, so speaking has no time limit. The loop guard stops a recognizer that keeps ending at once.
+   */
+  function endedEarly(heard: boolean, ms: number) {
+    quickEnds = !heard && ms < QUICK_END_MS ? quickEnds + 1 : 0;
+    if (quickEnds >= QUICK_ENDS) return update({ listening: false, error: 'voice.error.service' });
+    committed = joined(view);
+    update({ final: committed, interim: '' });
+    if (ctx) begin(ctx);
+  }
+
+  function listen() {
+    if (!Recognition || !availability.available || !ctx || recognizer) return;
+    stopping = false;
+    committed = '';
+    quickEnds = 0;
+    update({ listening: true, final: '', interim: '', error: undefined });
+    begin(ctx);
   }
 
   return {
@@ -153,6 +186,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       ctx = undefined;
       emit = undefined;
       stopping = false;
+      committed = '';
       const r = recognizer;
       recognizer = undefined;
       r?.abort();

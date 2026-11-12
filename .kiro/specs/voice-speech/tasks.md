@@ -236,7 +236,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - `stop()` aborts listening and clears the text.
   - _Design §3.3; Requirements: 4.7, 4.8, 5.1_
 
-- [ ] 26. VoiceAdapter: early end and the loop guard
+- [x] 26. VoiceAdapter: early end and the loop guard
   - **Done when:** unit tests show:
     - an `end` the user didn't ask for keeps the text and starts a new recognizer;
     - `no-speech` is ignored;
