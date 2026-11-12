@@ -25,21 +25,29 @@ const feedback: Feedback = {
   locale: 'en',
 };
 
-/** Speech you finish by hand; `cancel()` ends the current line early, like SilentOutput. */
-function fakeSpeech() {
-  const lines: { timeline: Timeline; finish: () => void; playback: Playback }[] = [];
+/**
+ * Speech you finish by hand; `cancel()` ends the current line early, like SilentOutput.
+ * With `audible`, each line is "spoken aloud" until `cancel()` silences it, so a runtime that
+ * reads `audible()` only after cancelling would see false.
+ */
+function fakeSpeech(audible = false) {
+  const lines: { timeline: Timeline; finish: () => void; playback: Playback; silence: () => void }[] = [];
   let now = 0;
   const speech: SpeechOutput = {
     speak: vi.fn(({ timeline }: { timeline: Timeline }) => {
       now += 1000;
       const startedAt = now;
+      let on = audible;
       let finish!: () => void;
       const done = new Promise<void>((resolve) => (finish = resolve));
-      const playback: Playback = { startedAt, origin: () => startedAt, audible: () => false, done };
-      lines.push({ timeline, finish, playback });
+      const playback: Playback = { startedAt, origin: () => startedAt, audible: () => on, done };
+      lines.push({ timeline, finish, playback, silence: () => (on = false) });
       return playback;
     }),
-    cancel: vi.fn(() => lines.at(-1)?.finish()),
+    cancel: vi.fn(() => {
+      lines.at(-1)?.silence();
+      lines.at(-1)?.finish();
+    }),
   };
   const finishLast = async () => {
     lines.at(-1)?.finish();
@@ -61,8 +69,8 @@ const morse: InputAdapter = {
   stop() {},
 };
 
-function setup(overrides: Partial<SessionDeps> = {}) {
-  const { speech, lines, finishLast } = fakeSpeech();
+function setup(overrides: Partial<SessionDeps> = {}, audible = false) {
+  const { speech, lines, finishLast } = fakeSpeech(audible);
   const keyboard = createKeyboardAdapter();
   const evaluator = fakeEvaluator();
   const deps: SessionDeps = { pack, adapters: [keyboard, morse], preview: false, evaluator, speech, locale: 'en', ...overrides };
@@ -233,7 +241,7 @@ describe('createSession', () => {
 
     handle.dispatch({ type: 'start' });
     handle.dispatch({ type: 'privacy-accepted' }); // the question replaces the greeting mid-line
-    expect(handle.getSnapshot().transcript).toEqual([{ id: 1, text: 'Good evening.', locale: 'en' }]);
+    expect(handle.getSnapshot().transcript).toEqual([{ id: 1, text: 'Good evening.', locale: 'en', heard: false }]);
 
     keyboard.submit('My answer.'); // cancels the question
     expect(handle.getSnapshot().transcript.map((l) => l.text)).toEqual(['Good evening.', 'Tell me more.']);
@@ -256,8 +264,34 @@ describe('createSession', () => {
     await flush();
     await finishLast();
     expect(handle.getSnapshot().transcript).toEqual([
-      { id: 1, text: 'Good evening.', locale: 'en' },
-      { id: 2, text: 'Cuéntame más.', locale: 'es' },
+      { id: 1, text: 'Good evening.', locale: 'en', heard: false },
+      { id: 2, text: 'Cuéntame más.', locale: 'es', heard: false },
+    ]);
+  });
+
+  it('a muted line that ends is not heard', async () => {
+    const { handle, finishLast } = setup();
+    handle.dispatch({ type: 'start' });
+    await finishLast();
+    expect(handle.getSnapshot().transcript).toEqual([{ id: 1, text: 'Good evening.', locale: 'en', heard: false }]);
+  });
+
+  it('a line that ends while audible is heard', async () => {
+    const { handle, finishLast } = setup({}, true);
+    handle.dispatch({ type: 'start' });
+    await finishLast();
+    expect(handle.getSnapshot().transcript).toEqual([{ id: 1, text: 'Good evening.', locale: 'en', heard: true }]);
+  });
+
+  it('a line cancelled or replaced while audible is heard: audible() is read before cancel()', () => {
+    const { handle, keyboard, speech } = setup({}, true);
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' }); // the question replaces the greeting
+    keyboard.submit('My answer.'); // cancels the question
+    expect(speech.cancel).toHaveBeenCalled();
+    expect(handle.getSnapshot().transcript.map(({ id, heard }) => ({ id, heard }))).toEqual([
+      { id: 1, heard: true },
+      { id: 2, heard: true },
     ]);
   });
 

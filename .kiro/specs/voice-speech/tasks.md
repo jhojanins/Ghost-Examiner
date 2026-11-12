@@ -58,7 +58,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - a runtime test shows `view.line.origin` is the playback's function.
   - _Design §3.1; Requirements: 3.1_
 
-- [ ] 6. Transcript entries record whether a line was heard
+- [x] 6. Transcript entries record whether a line was heard
   - `TranscriptEntry.heard`, read from `playback.audible()` in `stopLine` before any cancel.
   - **Done when:** runtime tests with a fake output show:
     - a line that ends while audible → `heard: true`;

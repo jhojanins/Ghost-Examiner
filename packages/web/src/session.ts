@@ -13,7 +13,7 @@ import {
   type SessionState,
   type Timeline,
 } from '@ghost-examiner/core';
-import type { SpeechOutput } from './silent-output';
+import type { Playback, SpeechOutput } from './silent-output';
 
 export interface SessionDeps {
   pack: QuestionPack;
@@ -40,6 +40,8 @@ export interface TranscriptEntry {
   id: number;
   text: string;
   locale: Locale;
+  /** The line was audio when it stopped, so the user already heard it (Req 3.6). */
+  heard: boolean;
 }
 
 export interface SessionView {
@@ -75,6 +77,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
   let line: LineView | undefined;
   let lineRef: LineRef | undefined;
   let playback = 0; // identifies the current playback, so a cancelled one never ends the line
+  let current: Playback | undefined; // the current line's playback
   let inputKey: string | undefined; // question and locale the adapters were started for
   let transcript: readonly TranscriptEntry[] = [];
   let view: SessionView = { state, transcript };
@@ -83,11 +86,13 @@ export function createSession(deps: SessionDeps): SessionHandle {
   /**
    * The current line stops playing and goes into the transcript in the language it ended in.
    * Once only: a line that is not playing returns early, and a replay keeps the same playing line.
+   * Call it before `speech.cancel()`: `heard` reads whether the line is still audio.
    */
   function stopLine() {
     if (!line?.playing) return;
     line = { ...line, playing: false };
-    transcript = [...transcript, { id: line.id, text: line.text, locale: line.locale }];
+    const heard = current?.audible() ?? false;
+    transcript = [...transcript, { id: line.id, text: line.text, locale: line.locale, heard }];
   }
 
   /**
@@ -96,8 +101,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
    */
   function cancelLine() {
     if (!line?.playing) return;
-    deps.speech.cancel();
     stopLine();
+    deps.speech.cancel();
   }
 
   function play(id: number, ref: LineRef) {
@@ -106,7 +111,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
     const timeline = buildTimeline(text, locale);
     deps.speech.cancel(); // a newer line cancels the older one
     const token = ++playback;
-    const { startedAt, origin, done } = deps.speech.speak({ text, locale, timeline });
+    current = deps.speech.speak({ text, locale, timeline });
+    const { startedAt, origin, done } = current;
     line = { id, text, locale, timeline, startedAt, origin, playing: true };
     lineRef = ref;
     void done.then(() => {
