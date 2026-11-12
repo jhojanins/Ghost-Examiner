@@ -519,3 +519,75 @@ describe('createWebSpeechOutput: failure and mute paths', () => {
     expect(output.getSnapshot()).toEqual({ on: true });
   });
 });
+
+describe('createWebSpeechOutput: end watchdog (task 13b)', () => {
+  const duration = line.timeline.duration; // 1050 ms: the deadline is duration + 5 s
+  const word = (charIndex: number) => ({ name: 'word', charIndex });
+
+  /** A spoken line that started at 5000. */
+  function started(l = line) {
+    const setup = unlocked();
+    const playback = setup.output.speak(l);
+    setup.utterances[0].fire('start');
+    return { ...setup, playback, utterance: setup.utterances[0] };
+  }
+
+  it('a short line with no end fails at origin + duration + 5 s', async () => {
+    const { output, synth, playback } = started();
+    const state = track(playback.done);
+    await vi.advanceTimersByTimeAsync(duration + 5000 - 1);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(output.getSnapshot()).toEqual({ on: false, reason: 'failed' });
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1); // its timeline is long over: the clock end is a 0 ms timer (1 ms, as in browsers)
+    expect(state.resolved).toBe(true);
+  });
+
+  it('a long line with no end fails at origin + 2 x duration', async () => {
+    const text = Array.from({ length: 30 }, () => 'word').join(' ');
+    const long = { text, locale: 'en' as const, timeline: buildTimeline(text, 'en') };
+    expect(long.timeline.duration).toBeGreaterThan(5000);
+    const { output } = started(long);
+    await vi.advanceTimersByTimeAsync(2 * long.timeline.duration - 1);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(output.getSnapshot().reason).toBe('failed');
+  });
+
+  it('a boundary that moves the origin later moves the deadline later', async () => {
+    const { output, utterance, playback } = started();
+    await vi.advanceTimersByTimeAsync(300);
+    utterance.fire('boundary', word(0)); // the estimate is ahead: hold on "me"
+    expect(playback.origin()).toBe(5040);
+    await vi.advanceTimersByTimeAsync(5040 + duration + 5000 - clock.now() - 1);
+    expect(output.getSnapshot()).toEqual({ on: true }); // past the first deadline (11050)
+    await vi.advanceTimersByTimeAsync(1);
+    expect(output.getSnapshot().reason).toBe('failed');
+  });
+
+  it('a boundary that moves the origin earlier moves the deadline earlier', async () => {
+    const { output, utterance, playback } = started();
+    await vi.advanceTimersByTimeAsync(100);
+    utterance.fire('boundary', word(8)); // the audio is ahead: jump to "more."
+    expect(playback.origin()).toBe(4710);
+    await vi.advanceTimersByTimeAsync(4710 + duration + 5000 - clock.now() - 1);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(output.getSnapshot().reason).toBe('failed');
+  });
+
+  it('end before the deadline, sound off, and cancel() each stop the watchdog', async () => {
+    const ended = started();
+    ended.utterance.fire('end');
+    const muted = started();
+    muted.output.setOn(false);
+    const cancelled = started();
+    cancelled.output.cancel();
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(ended.output.getSnapshot()).toEqual({ on: true });
+    expect(muted.output.getSnapshot()).toEqual({ on: false });
+    expect(cancelled.output.getSnapshot()).toEqual({ on: true });
+  });
+});

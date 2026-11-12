@@ -41,6 +41,8 @@ export interface WebSpeechDeps {
 const VOICES_GRACE_MS = 2000;
 /** A spoken line that hasn't started by then counts as failed (Req 1.6; macOS hang, Chromium 572750556). */
 const START_TIMEOUT_MS = 2000;
+/** A started line with no `end` by origin + max(2 × duration, duration + 5 s) counts as failed (task 13b). */
+const endDeadline = (duration: number) => Math.max(2 * duration, duration + 5000);
 
 /** One line: spoken aloud, or played on the clock (muted) like SilentOutput. */
 interface Line {
@@ -51,7 +53,12 @@ interface Line {
   started: boolean; // the audio started
   settled: boolean; // `done` resolved
   finish: () => void;
-  timer?: ReturnType<typeof setTimeout>;
+  timer?: ReturnType<typeof setTimeout>; // one at a time: start timeout, end watchdog, or the clock end
+  /**
+   * Held only to keep the utterance alive while it speaks: some Chrome versions have been reported
+   * to garbage-collect an utterance mid-speech and then never fire its `end` event (task 13b).
+   */
+  utterance?: UtteranceLike;
 }
 
 /**
@@ -149,19 +156,26 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
     refresh();
   }
 
+  /** (Re)arms the end watchdog from the current origin; called on start and on every resync. */
+  function watch(line: Line) {
+    clearTimeout(line.timer);
+    line.timer = setTimeout(() => fail(line), Math.max(0, line.anchor + endDeadline(line.timeline.duration) - clock.now()));
+  }
+
   function speakAloud(line: Line, voice: SpeechSynthesisVoice, { synth, Utterance }: NonNullable<typeof api>) {
     line.audio = true;
     line.anchor = Infinity;
-    line.timer = setTimeout(() => fail(line), START_TIMEOUT_MS); // cleared by start, mute or settle
+    line.timer = setTimeout(() => fail(line), START_TIMEOUT_MS); // replaced on start; cleared by mute or settle
     const utterance = new Utterance(line.text);
+    line.utterance = utterance;
     utterance.voice = voice;
     utterance.lang = voice.lang;
     utterance.rate = 1;
     utterance.onstart = () => {
       if (!live(line)) return;
-      clearTimeout(line.timer);
       line.started = true;
       line.anchor = clock.now();
+      watch(line); // replaces the start timeout
     };
     // Our own cancel() never reaches here (the line is settled or muted first), so an
     // "interrupted" or "canceled" error comes from outside: go on muted, but keep sound on.
@@ -176,6 +190,7 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
       if (!live(line) || !line.started || e.name !== 'word') return;
       const now = clock.now();
       line.anchor = now - resync(line.timeline, now - line.anchor, wordIndexAt(line.text, e.charIndex));
+      watch(line); // the deadline follows the origin
     };
     utterance.onend = () => {
       if (live(line)) settle(line);

@@ -117,6 +117,19 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - `setOn(true)` after a failure → the next line is spoken;
     - `cancel()` resolves `done` at once.
   - _Design §3.2, §6; Requirements: 1.6, 1.8, 2.3, 2.4_
+  - Deviations from this Done-when, approved with task 13: an `interrupted` or `canceled` error the app did not cause mutes that line but keeps sound on; a line with no words never becomes an utterance.
+
+- [x] 13b. WebSpeechOutput: end watchdog and utterance reference (owner decision after task 13)
+  - Watchdog: a spoken line that started but gets no `end` by `origin + max(2 × duration, duration + 5 s)` calls `fail(line)`, so the session is muted with reason `failed`. The deadline follows the origin when boundary events move it.
+  - Each `Line` keeps a reference to its utterance, with a comment: some Chrome versions have been reported to garbage-collect an utterance mid-speech and never fire its `end` event.
+  - **Done when:** unit tests with fake timers show:
+    - a started line with no `end` fails exactly at the deadline (`duration + 5 s` for a short line, `2 × duration` for a long one);
+    - a boundary that moves the origin later moves the deadline with it;
+    - an `end` before the deadline, sound off, and `cancel()` each stop the watchdog;
+    - mutations of the deadline formula and of the origin-following are caught.
+
+    The utterance reference has no behavioral test, because garbage collection can't be forced in the test environment; the watchdog is the backstop for that case.
+  - _Design §3.2, §6; Requirements: 1.6_
 
 ### Copy and controls
 - [ ] 14. Sound copy and the ghost-voice privacy paragraph
