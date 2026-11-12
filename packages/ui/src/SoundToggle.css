@@ -1,9 +1,9 @@
+/*
+ * The button and its reason are placed by the header (AppShell): `display: contents` makes them
+ * header items, so the button sits with the language switch and the reason gets a row of its own.
+ */
 .ge-sound {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  max-width: 100%;
+  display: contents;
 }
 
 /* Same look as the language buttons: target >= 24 px (WCAG 2.5.8), accent border 13.0:1 on the surface. */
@@ -25,19 +25,65 @@
   font-weight: 700;
 }
 
-/* No speech API: a dashed border marks it unavailable; the text keeps full contrast. */
-.ge-sound-button[aria-disabled='true'] {
+/*
+ * Any reason (no voice, failed, no API): unavailable. A dashed border and no fill, so it never looks
+ * "on" (fill) or "off" (solid border); the difference is the border's shape, not its color.
+ * Comes after [aria-pressed='true'] on purpose: same specificity, so this wins.
+ */
+.ge-sound-button[data-reason] {
   border-style: dashed;
+  background: transparent;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.ge-sound-button[aria-disabled='true'] {
   cursor: not-allowed;
 }
 
+.ge-sound-short {
+  display: none;
+}
+
 /*
- * --text-muted: 10.85:1 on --surface, 9.38:1 or more on the scene gradient. Empty unless there is
- * a reason, but never display:none: a live region must stay in the accessibility tree, or some
- * screen readers miss the text when it appears.
+ * The reason's row: every reason is stacked in one grid cell; only the status is visible, so the
+ * row's height never changes when a reason comes or goes (task 19b). Last row of the header.
  */
-.ge-sound-status {
-  margin: 0;
-  color: var(--text-muted);
+.ge-sound-reason {
+  display: grid;
+  flex-basis: 100%;
+  order: 1;
   font-size: 0.9375rem;
+  text-align: end;
+}
+
+.ge-sound-reason > * {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.ge-sound-sizer {
+  visibility: hidden;
+}
+
+/* --text-muted: 10.85:1 on --surface (the header). Never display:none: a live region must stay in the tree. */
+.ge-sound-status {
+  color: var(--text-muted);
+}
+
+/* Narrow screens (task 19b): the short label, so sound and language fit in one row at 320 px. */
+@media (max-width: 30rem) {
+  .ge-sound-button {
+    min-height: 2.25rem;
+    padding: 0.125rem 0.75rem;
+  }
+  .ge-sound-full {
+    display: none;
+  }
+  .ge-sound-short {
+    display: inline;
+  }
+  .ge-sound-reason {
+    text-align: start;
+  }
 }

@@ -10,6 +10,13 @@
   width: 150px;
 }
 
+/* Narrow screens (task 19b): a smaller ghost, so the answer field fits at 320x700. */
+@media (max-width: 30rem) {
+  .gi-ghost {
+    width: 120px;
+  }
+}
+
 .gi-panel,
 .ge-confirm,
 .ge-feedback {

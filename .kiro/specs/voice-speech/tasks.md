@@ -167,6 +167,14 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
 
 - [x] 19. ghost-interview: the ghost speaks **[Browser + axe]**
   - Done with additions the owner asked for: `VoiceOutput.setLocale` (the "no-voice" reason follows a language switch with no line playing, the open point from task 11), `e2e/voice-output.spec.ts` (3 tests: the page follows the fake's events, not its estimate; sound off mid-line; the language-switch reason), and an `en-only` variant plus a manual mode in the e2e fake. Task 20 extends `voice-output.spec.ts` with the rest.
+
+- [x] 19b. Sound control polish **[Browser + axe]** (owner request after task 19)
+  - No layout shift: hidden copies of every reason share the status's grid cell, so the reason row is always as tall as the longest reason; it is the header's last row.
+  - Any reason makes the button look unavailable (dashed border, no fill); `aria-pressed` keeps the user's choice and the status text is unchanged for screen readers.
+  - Compact header below 30rem: sound (short visible label "Voice" / "Voz", full accessible name) and language buttons in one row, a shorter Preview text, smaller paddings, and a 120 px ghost.
+  - Reasons shortened to one line at 320 px.
+  - **Done when:** e2e shows the header, ghost, captions and answer field don't move when a reason appears or goes, at 320 and 1280 px; the button is dashed and unfilled with a reason; at 320x700 with a reason the answer field is fully visible with sound and language in one row, EN and ES; component tests show one polite status announced once; the Browser + axe walk-through passes.
+  - _Requirements: 1.4, 1.6, 2.1, 11.2; spec a 11.5_ · Skills: `a11y-review`, `ghost-persona`, `testing-strategy`
   - Create one `WebSpeechOutput` for the page, call `unlock()` in the privacy `onAccept` before dispatching, put `SoundToggle` in the shell, and pass `line.origin` to `useGhostPose`.
   - **Done when:** a Playwright MCP keyboard walk-through, with the task 18 fake, shows:
     - no utterance before Accept, and the question spoken after it;
@@ -176,7 +184,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - no console errors, and axe reports zero violations on the answering screen with the sound control on, off and with a reason, in EN and ES × reduced motion on and off.
   - _Design §5; Requirements: 1, 2, 3_ · Skills: `a11y-review`, `ghost-svg-animation`, `testing-strategy`
 
-- [ ] 20. End-to-end test of the ghost's voice
+- [x] 20. End-to-end test of the ghost's voice
+  - Delivered inside tasks 19 and 19b (`e2e/voice-output.spec.ts`, owner decision): en-US after Accept and es-MX in Spanish, the marker following boundary events, no voices and no API muted with their reasons, sound off mid-line, axe with reduced motion on and off on the es-MX, no-voices and no-API states, and the network guard in every test. The full axe matrix (every state × EN/ES × 320/1280 px × reduced motion) ran in the task 19 and 19b Playwright MCP walk-throughs, not in `pnpm e2e`.
   - `e2e/voice-output.spec.ts`.
   - **Done when:** `pnpm e2e` passes and covers:
     - an utterance in en-US after Accept, and in es-MX after switching to ES;

@@ -14,7 +14,8 @@ export const kitMessages = defineCatalog(
     'shell.skipLink': 'Skip to main content',
     'shell.privacy': 'Privacy notice',
     'shell.preview.badge': 'Preview',
-    'shell.preview.detail': 'Keyboard only for now. Voice and Morse are coming.',
+    // Short, so the Preview line fits next to its badge at 320 px (task 19b). "For now" says more is coming.
+    'shell.preview.detail': 'Keyboard only for now.',
     // Language switch: each language is named in itself, so both catalogs share these two.
     'language.label': 'Language',
     'language.en': 'English',
@@ -26,11 +27,13 @@ export const kitMessages = defineCatalog(
     'ghost.label.approving': 'The ghost examiner, looking satisfied.',
     'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
     'transcript.heading': 'Transcript',
-    // Sound control (spec b Req 1.4, 1.6, 2.1). Plain status text: what happened and what still works.
+    // Sound control (spec b Req 1.4, 1.6, 2.1). Each reason fits one line at 320 px (task 19b): what
+    // happened, and what to do when there is something to do. The captions on screen show the rest.
     'sound.label': 'Ghost voice',
-    'sound.noVoice': 'This browser has no voice for this language, so the ghost speaks with captions only.',
-    'sound.failed': 'The voice stopped working, so it is off. Captions continue. You can turn it on again.',
-    'sound.noApi': "This browser can't speak aloud, so the ghost speaks with captions only.",
+    'sound.short': 'Voice', // visible on narrow screens; the accessible name stays sound.label
+    'sound.noVoice': 'No voice for this language.',
+    'sound.failed': 'The voice failed. Turn it on again.',
+    'sound.noApi': "This browser can't speak aloud.",
 
     // Privacy notice (Req 10.2, steering accessibility-ethics.md). Plain and honest; no jokes.
     'privacy.title': 'Privacy notice',
@@ -91,7 +94,7 @@ export const kitMessages = defineCatalog(
     'shell.skipLink': 'Saltar al contenido principal',
     'shell.privacy': 'Aviso de privacidad',
     'shell.preview.badge': 'Vista previa',
-    'shell.preview.detail': 'Por ahora, solo teclado. Pronto llegan la voz y el Morse.',
+    'shell.preview.detail': 'Por ahora, solo teclado.',
     'language.label': 'Idioma',
     'language.en': 'English',
     'language.es': 'Español',
@@ -102,9 +105,10 @@ export const kitMessages = defineCatalog(
     'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
     'transcript.heading': 'Transcripción',
     'sound.label': 'Voz del fantasma',
-    'sound.noVoice': 'Este navegador no tiene voz para este idioma, así que el fantasma habla solo con subtítulos.',
-    'sound.failed': 'La voz dejó de funcionar, así que está apagada. Los subtítulos siguen. Puedes volver a encenderla.',
-    'sound.noApi': 'Este navegador no puede hablar en voz alta, así que el fantasma habla solo con subtítulos.',
+    'sound.short': 'Voz',
+    'sound.noVoice': 'No hay voz para este idioma.',
+    'sound.failed': 'La voz falló. Vuelve a encenderla.',
+    'sound.noApi': 'Este navegador no puede hablar.',
 
     'privacy.title': 'Aviso de privacidad',
     'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes.',

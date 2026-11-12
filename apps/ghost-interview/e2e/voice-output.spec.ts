@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { installFakeSpeech, speechLog } from './fakes/speech-synthesis';
 
@@ -35,8 +36,22 @@ async function acceptPrivacy(page: Page) {
   await expect(dialog).toBeHidden();
 }
 
-test.beforeEach(async ({ page }) => {
+// Req 12.4 (spec a), task 20: in demo mode nothing leaves the site's origin, voice or not.
+let foreign: string[] = [];
+test.beforeEach(async ({ page, baseURL }) => {
+  foreign = [];
+  const origin = new URL(baseURL!).origin;
+  await page.route(
+    (url) => (url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== origin,
+    (route) => {
+      foreign.push(route.request().url());
+      return route.abort('blockedbyclient');
+    },
+  );
   await page.clock.install();
+});
+test.afterEach(() => {
+  expect(foreign).toEqual([]);
 });
 
 test('the mouth and captions follow the voice events, not the text estimate', async ({ page }) => {
@@ -110,9 +125,131 @@ test('after a language switch with no line playing, the sound control says Spani
   await expect(status).toHaveText('');
 
   await page.getByRole('button', { name: 'Español' }).press('Enter');
-  await expect(status).toHaveText('Este navegador no tiene voz para este idioma, así que el fantasma habla solo con subtítulos.');
+  await expect(status).toHaveText('No hay voz para este idioma.');
   expect(await spoken(page)).toHaveLength(1); // nothing new was spoken to find that out
 
   await page.getByRole('button', { name: 'English' }).press('Enter');
   await expect(status).toHaveText('');
 });
+
+// ---- Task 19b: the sound control's layout -------------------------------------------------------
+
+/** Page-coordinate boxes (top, height, left) of what must never move when a reason comes or goes. */
+const layout = (page: Page) =>
+  page.evaluate(() =>
+    Object.fromEntries(
+      ['header', 'svg[role="img"]', '.ge-captions', '.ge-keyboard-field'].map((selector) => {
+        const r = document.querySelector(selector)!.getBoundingClientRect();
+        return [selector, [Math.round(r.top + window.scrollY), Math.round(r.height), Math.round(r.left)]];
+      }),
+    ),
+  );
+
+/** How the sound button looks (border shape and fill), and whether the reason copies stay invisible. */
+const look = (page: Page) =>
+  page.evaluate(() => {
+    const button = getComputedStyle(document.querySelector('.ge-sound-button')!);
+    const copies = [...document.querySelectorAll('.ge-sound-sizer')].map((s) => getComputedStyle(s).visibility);
+    return {
+      border: button.borderTopStyle,
+      filled: button.backgroundColor !== 'rgba(0, 0, 0, 0)',
+      hiddenCopies: copies.length === 3 && copies.every((v) => v === 'hidden'),
+    };
+  });
+
+for (const width of [320, 1280]) {
+  test(`at ${width} px, nothing moves when a sound reason appears or goes away`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await installFakeSpeech(page, { manual: true });
+    await page.goto('');
+    await acceptPrivacy(page);
+    await page.clock.runFor(500); // the question waits for the voice to start
+    const status = page.locator('.ge-sound-status');
+    await expect(status).toHaveText('');
+    const before = await layout(page);
+    expect(await look(page)).toEqual({ border: 'solid', filled: true, hiddenCopies: true }); // on
+
+    await page.clock.runFor(1600); // no start within 2 s: the voice failed
+    await expect(status).toHaveText('The voice failed. Turn it on again.');
+    expect(await layout(page)).toEqual(before);
+    expect(await look(page)).toEqual({ border: 'dashed', filled: false, hiddenCopies: true }); // unavailable
+
+    await page.getByRole('button', { name: 'Ghost voice' }).press('Enter'); // sound on again: the reason goes
+    await expect(status).toHaveText('');
+    expect(await layout(page)).toEqual(before);
+    expect(await look(page)).toEqual({ border: 'solid', filled: true, hiddenCopies: true });
+  });
+}
+
+for (const lang of ['en', 'es'] as const) {
+  test(`at 320x700 in ${lang}, with a reason showing, the header is compact and the answer field fits`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await installFakeSpeech(page, { manual: true });
+    await page.goto('');
+    if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
+    await page.getByRole('button', { name: lang === 'es' ? 'Empezar' : 'Start' }).press('Enter');
+    await page.getByRole('button', { name: lang === 'es' ? 'Entendido, empezar' : 'I understand, start' }).press('Enter');
+    await page.clock.runFor(2100); // the voice never starts: failed
+    await expect(page.locator('.ge-sound-status')).toHaveText(
+      lang === 'es' ? 'La voz falló. Vuelve a encenderla.' : 'The voice failed. Turn it on again.',
+    );
+    await expect(page.locator('.ge-keyboard-field')).toBeFocused();
+
+    const seen = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      return {
+        scrollX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        scrollY: window.scrollY,
+        field: { top: box('.ge-keyboard-field').top, bottom: box('.ge-keyboard-field').bottom },
+        soundTop: box('.ge-sound-button').top,
+        languageTops: [...document.querySelectorAll('.ge-language-button')].map((b) => b.getBoundingClientRect().top),
+      };
+    });
+    expect(seen.scrollX).toBe(false);
+    expect(seen.scrollY).toBe(0); // focusing the field did not need to scroll
+    expect(seen.field.top).toBeGreaterThanOrEqual(0);
+    expect(seen.field.bottom).toBeLessThanOrEqual(700);
+    expect(seen.languageTops).toEqual([seen.soundTop, seen.soundTop]); // sound and language buttons in one row
+  });
+}
+
+// ---- Task 20 coverage: the voice per language, no voices, no API, and axe on those states --------
+
+const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const STATES = [
+  { variant: 'two-voices', lang: 'es', voice: 'es-MX:Fake Español', reason: '' },
+  { variant: 'no-voices', lang: 'en', voice: undefined, reason: 'No voice for this language.' },
+  { variant: 'no-api', lang: 'en', voice: undefined, reason: "This browser can't speak aloud." },
+] as const;
+
+for (const { variant, lang, voice, reason } of STATES) {
+  test(`${variant} in ${lang}: the right voice or a muted line with its reason, no errors, no axe violations`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('pageerror', (e) => errors.push(e.message));
+    await installFakeSpeech(page, { variant, manual: true });
+    await page.goto('');
+    if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
+    await page.getByRole('button', { name: lang === 'es' ? 'Empezar' : 'Start' }).press('Enter');
+    await page.getByRole('button', { name: lang === 'es' ? 'Entendido, empezar' : 'I understand, start' }).press('Enter');
+
+    if (voice) {
+      expect((await spoken(page)).map((e) => `${e.lang}:${e.voice}`)).toEqual([voice]);
+      await fake(page).start();
+      await fake(page).end();
+    } else {
+      expect(await speechLog(page).catch(() => [])).toEqual([]); // nothing reaches a speech API
+      await page.clock.runFor(8000); // the muted question plays to its end on the clock
+    }
+    await expect(page.locator('.ge-transcript-list li')).toHaveCount(2); // the answering screen, in either language
+    await expect(page.locator('.ge-sound-status')).toHaveText(reason);
+
+    await page.clock.resume(); // axe needs real timers
+    for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+      await page.emulateMedia({ reducedMotion });
+      const { violations } = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+      expect(violations.map((v) => `${reducedMotion}: ${v.id}`)).toEqual([]);
+    }
+    expect(errors).toEqual([]);
+  });
+}

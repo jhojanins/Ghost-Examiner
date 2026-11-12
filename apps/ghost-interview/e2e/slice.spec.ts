@@ -77,7 +77,7 @@ test('slice: keyboard only, confirmation before feedback, captions and transcrip
   // Intro, with the Preview label.
   await expect(page.getByRole('heading', { level: 1, name: 'Ghost Interview' })).toBeVisible();
   await expect(page.getByText('Preview', { exact: true })).toBeVisible();
-  await expect(page.getByText('Keyboard only for now. Voice and Morse are coming.')).toBeVisible();
+  await expect(page.getByText('Keyboard only for now.', { exact: true })).toBeVisible();
   await expectNoAxeViolations(page, 'intro');
 
   // Start -> privacy dialog; the greeting plays behind it, in the captions.

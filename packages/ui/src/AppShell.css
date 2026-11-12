@@ -50,6 +50,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end; /* stays at the right edge when a full-width row (the sound reason) is inside */
   gap: 0.75rem;
   margin-left: auto;
 }
@@ -71,4 +72,36 @@
   max-width: 60rem;
   margin: 0 auto;
   padding: 1.5rem;
+}
+
+/*
+ * Narrow screens (task 19b): a compact header, so the answer field fits at 320x700 with a sound
+ * reason showing. Sound and language share one row (the sound button shows its short label),
+ * privacy goes on the next, the reason row last. Targets stay >= 24 px (WCAG 2.5.8).
+ */
+@media (max-width: 30rem) {
+  .ge-header {
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .ge-title {
+    font-size: 1.25rem;
+  }
+  /* Badge and its short text on one line in EN and ES; it still wraps at larger text sizes. */
+  .ge-preview {
+    gap: 0.25rem 0.5rem;
+    font-size: 0.9375rem;
+  }
+  .ge-header-actions {
+    justify-content: flex-start;
+    gap: 0.5rem;
+    margin-left: 0;
+  }
+  .ge-link-button {
+    min-height: 2rem;
+    padding: 0.25rem 0;
+  }
+  .ge-main {
+    padding: 1rem;
+  }
 }

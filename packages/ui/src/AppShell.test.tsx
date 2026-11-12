@@ -13,8 +13,8 @@ const shell = (overrides: Partial<Parameters<typeof AppShell>[0]> = {}) =>
 
 describe('AppShell', () => {
   it.each([
-    ['en', 'Preview', 'Keyboard only for now. Voice and Morse are coming.'],
-    ['es', 'Vista previa', 'Por ahora, solo teclado. Pronto llegan la voz y el Morse.'],
+    ['en', 'Preview', 'Keyboard only for now.'],
+    ['es', 'Vista previa', 'Por ahora, solo teclado.'],
   ] as const)('shows the Preview badge and its explanation only when preview is true (%s)', (locale, badge, detail) => {
     shell({ locale, preview: true });
     expect(screen.getByText(badge)).toBeTruthy();
@@ -30,7 +30,7 @@ describe('AppShell', () => {
     shell({ preview: true, previewNote: 'Work in progress: nothing to answer here yet.' });
     expect(screen.getByText('Preview')).toBeTruthy();
     expect(screen.getByText('Work in progress: nothing to answer here yet.')).toBeTruthy();
-    expect(screen.queryByText('Keyboard only for now. Voice and Morse are coming.')).toBeNull();
+    expect(screen.queryByText('Keyboard only for now.')).toBeNull();
   });
 
   it('has a skip link that targets <main>, and main holds the screen content', () => {
