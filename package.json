@@ -6,7 +6,8 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test -c apps/ghost-interview/playwright.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

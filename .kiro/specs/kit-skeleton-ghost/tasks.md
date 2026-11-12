@@ -146,7 +146,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** with the dev server running in the background, a Playwright MCP keyboard-only walk-through completes greeting → privacy → question → typed answer → confirm → feedback → closing in EN, switches to ES mid-session without losing progress, shows the Preview label, and logs no console errors. It also presses Esc on the privacy dialog, sees the intro screen with Start, and reaches the question after Start → Accept. Report includes the snapshot excerpts.
   - _Requirements: 11.1, 11.3, 11.4, 4.6, 9.2_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 28. Slice end-to-end test with network and axe checks
+- [x] 28. Slice end-to-end test with network and axe checks
   - `apps/ghost-interview/e2e/slice.spec.ts` (Chromium), `webServer` with `vite preview`.
   - **Done when:** `pnpm e2e` passes and covers: the keyboard-only flow, typing an answer and submitting it shows the confirmation view with that exact text (catches a keyboard adapter that was never `start()`ed, since `submit()` then returns `ok` but emits nothing), confirmation before feedback, captions and transcript per line, the request allowlist (any foreign origin fails the test), and axe (WCAG 2.2 AA tags) with zero violations on intro, privacy dialog, answering, confirming and feedback screens in EN with default motion.
   - _Requirements: 12.2, 12.3 (phase 1), 12.4_ · Skills: `testing-strategy`, `a11y-review`
