@@ -26,7 +26,7 @@ A task is done only when all of these pass. If a step fails, fix the problem and
 ## Scope rules
 - **Traceability**: every file or function added must trace to a requirement in the active spec. If it doesn't, don't add it; tell the owner instead.
 - **Small tasks**: each task in `tasks.md` is one logical unit with its own success criterion. Split any task that is bigger.
-- **Mutation checks and commits**: after mutation checks, restore each file and confirm it matches the original (`diff` against the backup) before committing; run `git commit` as its own step, never in the same batch as a script that edits files.
+- **Mutation checks and commits**: after mutation checks, restore each file and confirm it matches the original (`diff` against the backup) before committing. Every commit goes in its own message, after the edits are confirmed (for example with `git diff`); never in the same batch as a file edit or a script that edits files. No exceptions.
 
 Production deploys are never part of "done" without the owner's explicit approval in the conversation.
 
