@@ -196,7 +196,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - the network guard stays on.
   - _Design §8; Requirements: 12.3, 12.4_ · Skills: `testing-strategy`, `a11y-review`
 
-- [ ] 21. Owner check, phase 1 **[Owner]**
+- [x] 21. Owner check, phase 1 **[Owner]** (done for Brave only; Chrome and Safari still pending)
   - **Done when:** the owner confirms, in Chrome and in Safari, that:
     - the ghost speaks the question aloud in EN and in ES;
     - the mouth and caption marker follow the audio;
