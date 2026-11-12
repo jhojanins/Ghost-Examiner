@@ -171,7 +171,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** after the owner approves the push, the workflow run on `main` is green (`gh run list --limit 1` shows success).
   - _Requirements: 13.4_
 
-- [ ] 33. README
+- [x] 33. README
   - What it is; `packages/` = the skeleton, `apps/` = the two apps; how to run; demo mode; accessibility and privacy summary; Kiro usage pointer; license.
   - **Done when:** the README states the skeleton/apps split in its first screen of text, every command in it runs as written, and the `kiroween-checklist` README items are checked.
   - _Steering `structure.md`_ · Skills: `kiroween-checklist`
