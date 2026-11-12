@@ -297,7 +297,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §4; Requirements: 4.4, 4.5, 5.1 to 5.5, 9.5, 11.2_ · Skills: `a11y-review`, `ghost-persona`
 
 ### Wiring and end-to-end
-- [ ] 33. ghost-interview: voice answers **[Browser + axe]**
+- [x] 33. ghost-interview: voice answers **[Browser + axe]**
+  - Notes: "Answer again" after a spoken answer focuses the voice button (Edit and typed retry go to the text field); the Preview note comes from `view.preview`; the app renders nothing until `unavailableInputs` resolves; the slice e2e installs the recognition fake. Verified with a fake recognizer only, not a real microphone.
   - Register the page's `VoiceAdapter`, set `preview: false`, await `unavailableInputs` before the first session, take `previewNote` from `view.preview`, and move focus to the voice button after Retry on a voice answer.
   - **Done when:** a Playwright MCP keyboard walk-through, with fake recognition, shows:
     - a spoken answer appears live, then the confirmation view shows it with method "Voice", then feedback;

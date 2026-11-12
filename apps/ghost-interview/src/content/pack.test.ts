@@ -1,4 +1,5 @@
 import { createDemoProvider, createKeyboardAdapter, createLlmEvaluator, validatePack, type ConfirmedAnswer } from '@ghost-examiner/core';
+import { createVoiceAdapter, systemClock } from '@ghost-examiner/web';
 import { describe, expect, it } from 'vitest';
 import { config } from '../config';
 import { pack } from './pack';
@@ -11,12 +12,15 @@ const evaluate = (text: string, locale: 'en' | 'es') =>
   );
 
 describe('ghost-interview pack', () => {
-  it('is valid for this Preview build: one question, keyboard only, a warning and no error', () => {
-    expect(config.preview).toBe(true);
+  it('is valid for this build: one question, keyboard and voice, no Preview', () => {
+    expect(config.preview).toBe(false);
     expect(pack.questions).toHaveLength(1);
     expect(pack.questions[0].keyPoints).toHaveLength(3);
+    const voice = createVoiceAdapter({ Recognition: undefined, clock: systemClock, languages: [] });
+    expect(validatePack(pack, [createKeyboardAdapter(), voice], { preview: config.preview })).toEqual([]);
+    // Keyboard alone is an error here; a browser without voice gets a runtime Preview session instead.
     const issues = validatePack(pack, [createKeyboardAdapter()], { preview: config.preview });
-    expect(issues.map((i) => i.severity)).toEqual(['warning']);
+    expect(issues.map((i) => i.severity)).toEqual(['error']);
   });
 
   it.each([

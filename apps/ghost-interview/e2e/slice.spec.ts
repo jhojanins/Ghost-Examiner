@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { installFakeRecognition } from './fakes/speech-recognition';
 import { installFakeSpeech } from './fakes/speech-synthesis';
 
 // WCAG 2.2 AA (testing-strategy skill).
@@ -54,7 +55,12 @@ async function tabTo(page: Page, target: Locator, max = 20) {
 }
 
 // Fake speech in every test, so results never depend on the host's voices (spec b task 18).
-test.beforeEach(({ page }) => installFakeSpeech(page));
+// Fake speech and recognition in every test, so results never depend on the host's voices or on
+// whether its browser can recognize speech (spec b tasks 18 and 33).
+test.beforeEach(async ({ page }) => {
+  await installFakeSpeech(page);
+  await installFakeRecognition(page);
+});
 
 const transcriptItems = (page: Page) => page.getByRole('region', { name: 'Transcript' }).getByRole('listitem');
 const captions = (page: Page) => page.locator('.ge-captions');
@@ -74,10 +80,11 @@ test('slice: keyboard only, confirmation before feedback, captions and transcrip
   const errors = watchErrors(page);
   await page.goto('');
 
-  // Intro, with the Preview label.
+  // Intro. Not a Preview build since voice input landed (spec b Req 10.1), and this browser can
+  // recognize speech (the fake), so not a Preview session either.
   await expect(page.getByRole('heading', { level: 1, name: 'Ghost Interview' })).toBeVisible();
-  await expect(page.getByText('Preview', { exact: true })).toBeVisible();
-  await expect(page.getByText('Keyboard only for now.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Preview', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Keyboard only for now.', { exact: true })).toHaveCount(0);
   await expectNoAxeViolations(page, 'intro');
 
   // Start -> privacy dialog; the greeting plays behind it, in the captions.

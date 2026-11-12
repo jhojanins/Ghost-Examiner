@@ -4,6 +4,7 @@ import {
   createLlmEvaluator,
   kitMessages,
   type Feedback,
+  type InputMethodId,
   type KeyboardAdapter,
   type Locale,
 } from '@ghost-examiner/core';
@@ -22,8 +23,18 @@ import {
   useGhostPose,
   useSession,
   useStore,
+  VoiceInput,
 } from '@ghost-examiner/ui';
-import { browserLocale, createSession, createWebSpeechOutput, systemClock, type SessionHandle } from '@ghost-examiner/web';
+import {
+  browserLocale,
+  createSession,
+  createVoiceAdapter,
+  createWebSpeechOutput,
+  systemClock,
+  unavailableInputs,
+  type RecognitionCtor,
+  type SessionHandle,
+} from '@ghost-examiner/web';
 import { useEffect, useId, useRef, useState } from 'react';
 import { config } from './config';
 import { pack } from './content/pack';
@@ -45,20 +56,38 @@ const GHOST_SEED = 7; // fixed blink pattern; any number works
  * The ghost's voice: one per page (spec b design §5), so the sound setting survives "Practice
  * again". Feature-detected: without the speech API every line plays muted (Req 1.2).
  */
+const LANGUAGES = navigator.languages?.length ? navigator.languages : [navigator.language];
 const speech = createWebSpeechOutput({
   synth: globalThis.speechSynthesis,
   Utterance: globalThis.SpeechSynthesisUtterance,
   clock: systemClock,
-  languages: navigator.languages?.length ? navigator.languages : [navigator.language],
+  languages: LANGUAGES,
 });
 
-/** Demo mode: keyboard input, the demo evaluator, the ghost's voice (muted until consent). */
-function startSession(locale: Locale, id = 1): AppSession {
+/**
+ * Voice answers: one adapter per page too (spec b design §5), so a browser that turned out unable to
+ * recognize speech (Brave) stays "unavailable" for "Practice again". Feature-detected: TypeScript's
+ * DOM lib doesn't declare the recognizer, so the globals are read through a narrow type.
+ */
+const recognizers = globalThis as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
+const voice = createVoiceAdapter({
+  Recognition: recognizers.SpeechRecognition ?? recognizers.webkitSpeechRecognition,
+  clock: systemClock,
+  languages: LANGUAGES,
+});
+
+/**
+ * Demo mode: keyboard and voice input, the demo evaluator, the ghost's voice (muted until consent).
+ * `unavailable` comes from `unavailableInputs`, so a browser without speech recognition gets a
+ * Preview session (spec b Req 10.4).
+ */
+function startSession(locale: Locale, id: number, unavailable: readonly InputMethodId[]): AppSession {
   const keyboard = createKeyboardAdapter();
   const provider = createDemoProvider();
   const handle = createSession({
     pack,
-    adapters: [keyboard],
+    adapters: [keyboard, voice],
+    unavailable,
     preview: config.preview,
     evaluator: createLlmEvaluator(provider),
     speech,
@@ -67,8 +96,21 @@ function startSession(locale: Locale, id = 1): AppSession {
   return { id, handle, keyboard, demo: provider.isDemo, locale };
 }
 
+/** Starts a session once the browser has said which inputs it can use (a microtask: feature detection). */
+function whenReady(locale: Locale, id: number, start: (session: AppSession) => void) {
+  void unavailableInputs([voice]).then((unavailable) => start(startSession(locale, id, unavailable)));
+}
+
 export function App() {
-  const [session, setSession] = useState(() => startSession(browserLocale()));
+  const [session, setSession] = useState<AppSession>();
+  useEffect(() => {
+    let current = true;
+    whenReady(browserLocale(), 1, (next) => current && setSession(next));
+    return () => {
+      current = false;
+    };
+  }, []);
+  if (!session) return null;
   const { handle } = session;
   if ('blocked' in handle) return <Blocked locale={session.locale} />;
   return (
@@ -77,7 +119,7 @@ export function App() {
       handle={handle}
       keyboard={session.keyboard}
       demo={session.demo}
-      onRestart={(locale) => setSession(startSession(locale, session.id + 1))}
+      onRestart={(locale) => whenReady(locale, session.id + 1, setSession)}
     />
   );
 }
@@ -110,6 +152,7 @@ interface SessionProps {
 function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
   const { view, dispatch } = useSession(handle);
   const { state, line, transcript } = view;
+  const voiceView = useStore(voice);
   const { phase, locale } = state;
   const m = messages[locale];
   const introHeadingId = useId();
@@ -139,6 +182,10 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
   // Focus on phase change (design §5.1): the answer field when answering starts (after the
   // privacy notice, or back from Edit / Answer again), the heading at the end. ConfirmAnswer and
   // FeedbackPanel move focus to their own headings.
+  // Back from confirmation: Edit goes to the text field with the text (Req 7.3); Answer again after a
+  // spoken answer goes to the voice button (spec b Req 6.3), after a typed one to the text field.
+  const [lastMethod, setLastMethod] = useState<InputMethodId>();
+  if (state.candidate && state.candidate.method !== lastMethod) setLastMethod(state.candidate.method);
   const answerArea = useRef<HTMLDivElement>(null);
   const summaryHeading = useRef<HTMLHeadingElement>(null);
   const previousPhase = useRef(phase);
@@ -146,11 +193,13 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
     const from = previousPhase.current;
     previousPhase.current = phase;
     if (from === phase) return;
-    if ((from === 'privacy' && phase === 'asking') || (from === 'confirming' && phase === 'answering')) {
+    const retryByVoice = from === 'confirming' && phase === 'answering' && state.draft === undefined && lastMethod === 'voice';
+    if (retryByVoice) answerArea.current?.querySelector<HTMLElement>('.ge-voice-button')?.focus();
+    else if ((from === 'privacy' && phase === 'asking') || (from === 'confirming' && phase === 'answering')) {
       answerArea.current?.querySelector('textarea')?.focus();
     }
     if (phase === 'summary') summaryHeading.current?.focus();
-  }, [phase]);
+  }, [phase, lastMethod, state.draft]);
 
   let panel;
   if (phase === 'intro' || phase === 'privacy') {
@@ -171,6 +220,13 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
     panel = (
       <div ref={answerArea} className="gi-panel">
         <KeyboardInput locale={locale} onSubmit={keyboard.submit} draft={state.draft} />
+        <VoiceInput
+          locale={locale}
+          voice={voiceView}
+          onListen={voice.listen}
+          onStop={voice.stopListening}
+          onPrivacy={() => setReadOnlyPrivacy(true)}
+        />
       </div>
     );
   } else if (phase === 'confirming' && state.candidate) {
@@ -205,7 +261,9 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
     <AppShell
       title={m.title}
       locale={locale}
-      preview={config.preview}
+      // A Preview build, or a Preview session in a browser without speech recognition (spec b Req 10.4, 10.5).
+      preview={config.preview || view.preview !== undefined}
+      previewNote={view.preview ? kitMessages[locale]['shell.preview.missing.voice'] : undefined}
       soundControl={<SoundToggle locale={locale} sound={sound} onChange={speech.setOn} />}
       languageSwitch={<LanguageSwitch locale={locale} onChange={(next) => dispatch({ type: 'locale-changed', locale: next })} />}
       onPrivacy={() => setReadOnlyPrivacy(true)}
