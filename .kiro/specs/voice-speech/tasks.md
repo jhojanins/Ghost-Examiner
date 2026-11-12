@@ -84,7 +84,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §4; Requirements: 3.6_ · Skills: `a11y-review`
 
 ### packages/web: WebSpeechOutput
-- [ ] 10. WebSpeechOutput: store, feature detection, unlock
+- [x] 10. WebSpeechOutput: store, feature detection, unlock
   - `createWebSpeechOutput` with `SoundView`, `subscribe`, `setOn`, `unlock`. No API → every line plays on the clock with `reason: 'no-api'`. Before `unlock`, lines play on the clock.
   - **Done when:** unit tests show:
     - with no `synth`, `speak` behaves like `SilentOutput` and the view has `reason: 'no-api'`;
