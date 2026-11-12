@@ -42,7 +42,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - an empty timeline returns `elapsed`.
   - _Design §2.3; Requirements: 3.2, 3.3_ · Skills: `ghost-svg-animation`, `testing-strategy`
 
-- [ ] 4. `pickVoice` with property P10
+- [x] 4. `pickVoice` with property P10
   - **Done when:**
     - P10 passes: deterministic and independent of input order; returns a local voice of the requested language, or `undefined` exactly when none exists; the preferred region wins;
     - an example shows `es_MX` (Android style) is normalized and matched;
