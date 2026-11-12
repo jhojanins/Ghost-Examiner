@@ -308,7 +308,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 | `--accent` | interview `#7ff5d4`, defense `#ffd27a` | Focus ring, current-caption underline, links, primary button fill |
 | `--on-accent` | `#0b1020` | Text on accent-filled buttons |
 | `--error` | `#ffb4a8` | Inline error text |
-| `--panel-edge` | `#6b7ba3` | Caption panel border (spec b task 33b) |
+| `--panel-edge` | `#6b7ba3` | Border of the caption, transcript, confirmation and feedback panels (spec b tasks 33b, 35b) |
 
 #### Contrast check (computed with the WCAG 2.x formula)
 | Pair | Ratio | Needs |

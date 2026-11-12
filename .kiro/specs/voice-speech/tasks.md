@@ -337,6 +337,12 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - every command in it still runs as written.
   - _Steering `structure.md`; Requirements: 9.1, 10.4_ · Skills: `kiroween-checklist`
 
+- [x] 35b. Panel edges (owner request after task 35)
+  - The transcript, confirmation and feedback panels get the same 1 px `--panel-edge` border as the caption panel (task 33b); their fill was within 1.13:1 of the page gradient.
+  - The pixel-contrast helper moved to `e2e/edge-contrast.ts`, shared by the 33b and 35b tests.
+  - **Done when:** e2e finds at least 3:1 across each panel's left edge at 320 and 1280 px (1.02 to 1.13:1 before the fix); removing any one panel's border fails only that panel.
+  - _Requirements: spec a 4.1, 7.1; owner request_ · Skills: `a11y-review`, `testing-strategy`
+
 - [ ] 36. Owner check, phase 2 **[Owner]**
   - **Done when:** the owner confirms, in Chrome and in Safari, that:
     - a spoken answer in EN and in ES appears live, reaches confirmation, and gives feedback;

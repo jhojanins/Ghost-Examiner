@@ -3,6 +3,8 @@
   max-width: 42rem;
   padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
+  /* The page gradient is within 1.2:1 of --surface: the edge shows where the panel ends (task 35b). */
+  border: 1px solid var(--panel-edge);
   background: var(--surface);
 }
 
