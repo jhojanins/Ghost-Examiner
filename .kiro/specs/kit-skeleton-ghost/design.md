@@ -370,7 +370,7 @@ No redirects (no client-side routing) and no functions yet (spec e).
 Step-by-step for the owner: create a Netlify account and import the GitHub repo; base directory empty, build command and publish directory read from `netlify.toml`; set the production branch to `release`; in branch deploy settings, add `main`; where to find the branch-deploy URL (`main--<site>.netlify.app`). It also states the cost: importing a site usually starts one production build of the selected branch (15 credits), so that import is an approved production deploy.
 
 ### .github/workflows/ci.yml
-On push and pull request: checkout, pnpm, Node 24, `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (Req 13.4). End-to-end tests run locally in phase 1.
+On push and pull request: checkout, pnpm, Node 24, `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (Req 13.4), `pnpm build`. Since spec (b) task 35c also `pnpm exec playwright install --with-deps chromium` and `pnpm e2e`.
 
 ## 8. Error handling
 | Case | Behavior |

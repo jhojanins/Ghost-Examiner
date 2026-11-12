@@ -343,6 +343,12 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - **Done when:** e2e finds at least 3:1 across each panel's left edge at 320 and 1280 px (1.02 to 1.13:1 before the fix); removing any one panel's border fails only that panel.
   - _Requirements: spec a 4.1, 7.1; owner request_ · Skills: `a11y-review`, `testing-strategy`
 
+- [x] 35c. CI runs the e2e tests (owner request after task 35)
+  - Two steps after the build in `ci.yml`: `pnpm exec playwright install --with-deps chromium`, then `pnpm e2e`. Chromium follows `@playwright/test` pinned in the lockfile; no new action, so nothing new to pin by SHA. No cache: the job caches nothing else, and Playwright's CI guide advises against caching browsers.
+  - If an e2e test behaves differently in CI (fonts, rendering), report it to the owner; don't weaken the test.
+  - **Done when:** the workflow parses with the steps in order (checked locally), and the owner reports a green CI run. The agent cannot see CI results.
+  - _Requirements: spec a 13.4; owner request_ · Skills: `testing-strategy`
+
 - [ ] 36. Owner check, phase 2 **[Owner]**
   - **Done when:** the owner confirms, in Chrome and in Safari, that:
     - a spoken answer in EN and in ES appears live, reaches confirmation, and gives feedback;

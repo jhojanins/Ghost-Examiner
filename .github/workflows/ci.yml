@@ -1,7 +1,7 @@
-# CI (Req 13.4, design §7): typecheck, lint, unit and property tests, and the site build, on every
-# push and pull request. pnpm is installed the way Netlify installs it: Node 24 plus Corepack,
-# which reads the exact pnpm version from "packageManager" in package.json. So a green run also
-# tests the install path of the Netlify build (docs/DEPLOY.md).
+# CI (Req 13.4, design §7): typecheck, lint, unit and property tests, the site build and the e2e
+# tests (spec b task 35c), on every push and pull request. pnpm is installed the way Netlify
+# installs it: Node 24 plus Corepack, which reads the exact pnpm version from "packageManager" in
+# package.json. So a green run also tests the install path of the Netlify build (docs/DEPLOY.md).
 name: CI
 
 on:
@@ -53,3 +53,11 @@ jobs:
 
       - name: Build the site
         run: pnpm build
+      # Task 35c: the e2e tests (axe, network guard, fake speech APIs). The Chromium build matches
+      # @playwright/test pinned in the lockfile. No cache: Playwright's CI guide advises against
+      # caching browsers (restoring takes about as long as downloading, and the Linux system
+      # dependencies that --with-deps installs can't be cached), and this job caches nothing else.
+      - name: Install Chromium for the e2e tests
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm e2e
