@@ -8,6 +8,8 @@ export type { FeedbackPanelProps } from './FeedbackPanel';
 export { FeedbackPanel } from './FeedbackPanel';
 export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';
+export type { GhostSessionView } from './ghost-state';
+export { ghostState } from './ghost-state';
 export type { KeyboardInputProps } from './KeyboardInput';
 export { KeyboardInput } from './KeyboardInput';
 export type { LanguageSwitchProps } from './LanguageSwitch';

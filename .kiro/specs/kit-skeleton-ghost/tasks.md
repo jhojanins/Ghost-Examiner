@@ -130,7 +130,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** a component test with a fake handle re-renders on `subscribe` notifications and not otherwise, and `dispatch` reaches the handle.
   - _Requirements: 5.1_
 
-- [ ] 26. Ghost state mapping
+- [x] 26. Ghost state mapping
   - Session view + playback → `GhostState` per design §5.2.
   - **Done when:** a unit test covers each row of the design's mapping table.
   - _Requirements: 3.4_
