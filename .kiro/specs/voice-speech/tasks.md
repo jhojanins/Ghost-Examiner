@@ -328,7 +328,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - the network guard stays on.
   - _Design §8; Requirements: 12.3, 12.4_ · Skills: `testing-strategy`, `a11y-review`
 
-- [ ] 35. README: voice status and privacy
+- [x] 35. README: voice status and privacy
+  - Owner wording (after task 33): what voice does today, Brave and similar browsers fall back to typing, the browser may send speech to its maker, the app never records or stores audio, what is still pending; nothing is described as tested with a real microphone (the README says it hasn't been).
   - **Done when:**
     - the README no longer says "keyboard only";
     - it names voice input and the ghost's voice with their browser support (no `SpeechRecognition` in Firefox → Preview session);
