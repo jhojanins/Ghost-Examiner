@@ -1,6 +1,6 @@
 import type { Timeline, Viseme } from '../speech/timeline';
 
-export type Expression = 'neutral' | 'thinking' | 'approving' | 'skeptical'; // phase 2 adds 3
+export type Expression = 'neutral' | 'attentive' | 'thinking' | 'approving' | 'skeptical' | 'amused' | 'surprised';
 export type GhostActivity = 'idle' | 'speaking' | 'listening' | 'thinking' | 'reacting';
 export interface GhostState {
   activity: GhostActivity;

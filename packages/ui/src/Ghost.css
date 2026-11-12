@@ -58,6 +58,39 @@
   transform: rotate(-6deg);
 }
 
+/*
+ * Phase 2 (task 35), kept subtle: the examiner stays calm and a little serious.
+ * Attentive (listening): brows a touch up, eyes a touch wider. Less than approving.
+ */
+.ge-ghost[data-expression='attentive'] .ge-brow {
+  transform: translateY(-5px);
+}
+.ge-ghost[data-expression='attentive'] .ge-eye {
+  transform: scale(1.05, 1.15);
+}
+/* Quietly amused: level brows a little up, relaxed eyes, the mouth a little off-center. No smile. */
+.ge-ghost[data-expression='amused'] .ge-brow {
+  transform: translateY(-4px);
+}
+.ge-ghost[data-expression='amused'] .ge-eye {
+  transform: scaleY(0.75);
+}
+.ge-ghost[data-expression='amused'] .ge-mouth {
+  transform: translateX(3px) rotate(-3deg);
+}
+/*
+ * Surprised: level brows raised high, small round pupils (approving has large ones), the mouth a
+ * little narrower. Inner-lifted brows were tried first and read as worried.
+ */
+.ge-ghost[data-expression='surprised'] .ge-brow {
+  transform: translateY(-14px);
+}
+.ge-ghost[data-expression='surprised'] .ge-eye {
+  transform: scale(0.8, 0.8);
+}
+.ge-ghost[data-expression='surprised'] .ge-mouth {
+  transform: scaleX(0.8);
+}
 /* Reduced motion (design §5.3): expression changes stay, with transitions capped at 150 ms. */
 @media (prefers-reduced-motion: reduce) {
   .ge-ghost .ge-brow,

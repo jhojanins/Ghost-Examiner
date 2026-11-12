@@ -182,7 +182,8 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - _Requirements: 13.3_ · Skills: `kiroween-checklist`
 
 ## Phase 2: after the slice (same spec)
-- [ ] 35. Expressions `attentive`, `amused`, `surprised`
+- [x] 35. Expressions `attentive`, `amused`, `surprised`
+  - Done with transforms on the existing brow, eye and mouth groups, like phase 1. A component test reads `Ghost.css` (a `?raw` import; the ui Vitest project keeps raw CSS text) and checks that every expression but neutral moves brows and eyes, each in its own way. `surprised` first had inner-lifted brows, which read as worried in the screenshots; it now has level brows and small pupils.
   - Types, SVG brow and eye shapes, labels; listening uses `attentive`.
   - **Done when:** the Ghost component tests cover all 7 expressions and the mapping test uses `attentive` for answering and confirming.
   - _Requirements: 3.2, 3.4_ · Skills: `ghost-svg-animation`, `a11y-review`

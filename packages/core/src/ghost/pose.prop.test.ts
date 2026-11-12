@@ -6,7 +6,7 @@ import { ghostPose, type GhostState } from './pose';
 const state: fc.Arbitrary<GhostState> = fc.record(
   {
     activity: fc.constantFrom('idle', 'speaking', 'listening', 'thinking', 'reacting'),
-    expression: fc.constantFrom('neutral', 'thinking', 'approving', 'skeptical'),
+    expression: fc.constantFrom('neutral', 'attentive', 'thinking', 'approving', 'skeptical', 'amused', 'surprised'),
     seed: fc.integer(),
     speech: fc.record({
       timeline: fc.tuple(fc.string(), fc.constantFrom('en', 'es') as fc.Arbitrary<'en' | 'es'>).map(([t, l]) => buildTimeline(t, l)),

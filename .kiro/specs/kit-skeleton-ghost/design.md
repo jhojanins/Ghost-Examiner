@@ -195,7 +195,7 @@ export function buildTimeline(text: string, locale: Locale): Timeline;
 
 ### 3.6 Ghost pose (Req 3)
 ```ts
-export type Expression = 'neutral' | 'thinking' | 'approving' | 'skeptical'; // phase 2 adds 3
+export type Expression = 'neutral' | 'attentive' | 'thinking' | 'approving' | 'skeptical' | 'amused' | 'surprised'; // phase 2 (task 35) added attentive, amused, surprised
 export type GhostActivity = 'idle' | 'speaking' | 'listening' | 'thinking' | 'reacting';
 export interface GhostState { activity: GhostActivity; expression: Expression; speech?: { timeline: Timeline; startedAt: number }; seed: number }
 export interface GhostPose { activity: GhostActivity; expression: Expression; viseme: Viseme; blink: boolean } // phase 2 adds float
@@ -284,7 +284,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 | Session | Ghost activity / expression |
 |---|---|
 | a line is playing | speaking / neutral (or the feedback reaction while saying the summary) |
-| answering, confirming | listening / neutral |
+| answering, confirming | listening / attentive (phase 2) |
 | evaluating | thinking / thinking |
 | feedback, after the line | reacting / `feedback.reaction` |
 | intro, summary, no line | idle / neutral |
@@ -292,7 +292,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 ### 5.3 SVG and visual design
 - `viewBox="0 0 240 280"`. Groups with stable ids: `ghost-body` (rounded top, three-lobe hem), `brows`, `eye-left`, `eye-right`, `glasses` (round frames with a bridge), `mouth`, `bowtie`, `clipboard` (held at the lower right), `hands`. Coordinates rounded to 1 decimal. Hand-drawn in this repo; no copied assets.
 - Mouth: four pre-drawn `<path>`s, one per viseme; only the active one is visible.
-- Expressions change brow rotation and eye shape: `neutral` flat brows; `thinking` one brow raised, eyes up; `approving` brows up, eyes curved; `skeptical` one brow down, eyes narrowed. 200 ms transitions on `transform` only, on `<g>` with `transform-box: fill-box`.
+- Expressions change brow rotation and eye shape: `neutral` flat brows; `thinking` one brow raised, eyes up; `approving` brows up, eyes curved; `skeptical` one brow down, eyes narrowed. Phase 2, all subtle: `attentive` brows a touch up, eyes a touch wider; `amused` level brows a little up, relaxed (narrower) eyes, mouth a little off-center, no smile; `surprised` level brows high, small round pupils, narrower mouth. 200 ms transitions on `transform` only, on `<g>` with `transform-box: fill-box`.
 - Phase 2 applies the float to a wrapper `<div>`, not the `<svg>`.
 - Matches the owner's Devpost thumbnail (Req 3.11). Distinct from Kiro's mascot: glasses, bow tie, clipboard, mint-white palette, no purple anywhere.
 - Ghost colors: body `linearGradient` `#ffffff` → `#e3fbf4` → `#a9e8d6`; glasses `#e8a13a`; bow tie `#e8892f`; eyes, brows, mouth and outlines `#0b1020`.

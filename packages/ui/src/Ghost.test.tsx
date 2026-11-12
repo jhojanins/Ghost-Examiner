@@ -2,23 +2,30 @@ import type { Expression, GhostPose, Locale, Viseme } from '@ghost-examiner/core
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Ghost } from './Ghost';
+import css from './Ghost.css?raw';
 
 afterEach(cleanup);
 
-const EXPRESSIONS: Expression[] = ['neutral', 'thinking', 'approving', 'skeptical'];
+const EXPRESSIONS: Expression[] = ['neutral', 'attentive', 'thinking', 'approving', 'skeptical', 'amused', 'surprised'];
 const VISEMES: Viseme[] = ['rest', 'A', 'O', 'MBP'];
 const LABELS: Record<Locale, Record<Expression, string>> = {
   en: {
     neutral: 'The ghost examiner, looking calm.',
+    attentive: 'The ghost examiner, listening closely.',
     thinking: 'The ghost examiner, thinking.',
     approving: 'The ghost examiner, looking satisfied.',
     skeptical: 'The ghost examiner, looking skeptical.',
+    amused: 'The ghost examiner, looking quietly amused.',
+    surprised: 'The ghost examiner, looking surprised.',
   },
   es: {
     neutral: 'El examinador fantasma, tranquilo.',
+    attentive: 'El examinador fantasma, escuchando con atención.',
     thinking: 'El examinador fantasma, pensando.',
     approving: 'El examinador fantasma, satisfecho.',
     skeptical: 'El examinador fantasma, con cara de duda.',
+    amused: 'El examinador fantasma, con un gesto divertido.',
+    surprised: 'El examinador fantasma, sorprendido.',
   },
 };
 // Design §5.3 / Req 3.11: body gradient, glasses, bow tie, features and outlines. No purple, nothing else.
@@ -50,6 +57,22 @@ describe('Ghost', () => {
       }
     }
   }
+
+  it('gives every expression but neutral its own look in Ghost.css, on brows and eyes', () => {
+    /** Each expression's rules, as "part: transform" pairs, from the stylesheet text. */
+    const rules = (expression: Expression) =>
+      [...css.matchAll(new RegExp(`\\[data-expression='${expression}'\\] \\.ge-([a-z-]+) \\{\\s*transform: ([^;]+);`, 'g'))]
+        .map(([, part, transform]) => `${part}: ${transform}`)
+        .sort()
+        .join('; ');
+    expect(rules('neutral')).toBe(''); // neutral is the drawing itself
+    const looks = EXPRESSIONS.filter((e) => e !== 'neutral').map((e) => [e, rules(e)] as const);
+    for (const [expression, look] of looks) {
+      expect(look, expression).toMatch(/brow/);
+      expect(look, expression).toMatch(/eye/);
+    }
+    expect(new Set(looks.map(([, look]) => look)).size).toBe(looks.length);
+  });
 
   it('has one pre-drawn mouth path per phase 1 viseme', () => {
     render(<Ghost pose={pose()} locale="en" />);

@@ -25,9 +25,12 @@ export const kitMessages = defineCatalog(
 
     // Ghost accessible name per expression (Req 3.5). Describes the expression, never the user.
     'ghost.label.neutral': 'The ghost examiner, looking calm.',
+    'ghost.label.attentive': 'The ghost examiner, listening closely.',
     'ghost.label.thinking': 'The ghost examiner, thinking.',
     'ghost.label.approving': 'The ghost examiner, looking satisfied.',
     'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
+    'ghost.label.amused': 'The ghost examiner, looking quietly amused.',
+    'ghost.label.surprised': 'The ghost examiner, looking surprised.',
     'transcript.heading': 'Transcript',
     // Sound control (spec b Req 1.4, 1.6, 2.1). Each reason fits one line at 320 px (task 19b): what
     // happened, and what to do when there is something to do. The captions on screen show the rest.
@@ -122,9 +125,12 @@ export const kitMessages = defineCatalog(
     'language.es': 'Español',
 
     'ghost.label.neutral': 'El examinador fantasma, tranquilo.',
+    'ghost.label.attentive': 'El examinador fantasma, escuchando con atención.',
     'ghost.label.thinking': 'El examinador fantasma, pensando.',
     'ghost.label.approving': 'El examinador fantasma, satisfecho.',
     'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
+    'ghost.label.amused': 'El examinador fantasma, con un gesto divertido.',
+    'ghost.label.surprised': 'El examinador fantasma, sorprendido.',
     'transcript.heading': 'Transcripción',
     'sound.label': 'Voz del fantasma',
     'sound.short': 'Voz',

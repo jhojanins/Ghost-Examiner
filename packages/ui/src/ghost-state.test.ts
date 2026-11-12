@@ -45,8 +45,8 @@ describe('ghostState (design §5.2)', () => {
     },
   );
 
-  it.each<Phase>(['answering', 'confirming'])('%s, no line playing → listening / neutral', (phase) => {
-    expect(ghostState(view(at(phase), finished), SEED)).toEqual({ activity: 'listening', expression: 'neutral', seed: SEED });
+  it.each<Phase>(['answering', 'confirming'])('%s, no line playing → listening / attentive', (phase) => {
+    expect(ghostState(view(at(phase), finished), SEED)).toEqual({ activity: 'listening', expression: 'attentive', seed: SEED });
   });
 
   it('evaluating → thinking / thinking', () => {

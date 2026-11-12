@@ -12,7 +12,7 @@ export interface GhostSessionView {
  * | Session                      | Activity / expression                              |
  * |------------------------------|----------------------------------------------------|
  * | a line is playing            | speaking / neutral (feedback reaction for summary) |
- * | answering, confirming        | listening / neutral                                |
+ * | answering, confirming        | listening / attentive                              |
  * | evaluating                   | thinking / thinking                                |
  * | feedback, after the line     | reacting / feedback.reaction                       |
  * | intro, summary, no line      | idle / neutral                                     |
@@ -35,7 +35,7 @@ export function ghostState(view: GhostSessionView, seed: number): GhostState {
   switch (state.phase) {
     case 'answering':
     case 'confirming':
-      return { activity: 'listening', expression: 'neutral', seed };
+      return { activity: 'listening', expression: 'attentive', seed };
     case 'evaluating':
       return { activity: 'thinking', expression: 'thinking', seed };
     case 'feedback':
