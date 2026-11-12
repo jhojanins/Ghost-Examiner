@@ -4,6 +4,11 @@
   margin: 1rem auto 0;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
+  /*
+   * --surface is within 1.2:1 of the fixed page gradient everywhere, so without an edge the panel
+   * vanishes wherever it sits over the matching band (task 33b, seen in a Preview session).
+   */
+  border: 1px solid var(--panel-edge);
   background: var(--surface);
   color: var(--text);
   font-size: 1.25rem;

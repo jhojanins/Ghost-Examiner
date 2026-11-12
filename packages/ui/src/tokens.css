@@ -8,6 +8,8 @@
   --accent: #7ff5d4; /* ghost-interview; ghost-defense sets #ffd27a */
   --on-accent: #0b1020;
   --error: #ffb4a8;
+  /* A panel's edge: 4.5:1 on --bg-start, 3.5:1 on --bg-end, 4.1:1 on --surface (task 33b). */
+  --panel-edge: #6b7ba3;
   color-scheme: dark;
 }
 

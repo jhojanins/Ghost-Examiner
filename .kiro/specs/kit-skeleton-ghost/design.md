@@ -308,6 +308,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 | `--accent` | interview `#7ff5d4`, defense `#ffd27a` | Focus ring, current-caption underline, links, primary button fill |
 | `--on-accent` | `#0b1020` | Text on accent-filled buttons |
 | `--error` | `#ffb4a8` | Inline error text |
+| `--panel-edge` | `#6b7ba3` | Caption panel border (spec b task 33b) |
 
 #### Contrast check (computed with the WCAG 2.x formula)
 | Pair | Ratio | Needs |
@@ -320,6 +321,7 @@ Focus on phase change: the newly shown panel's heading (tabindex `-1`) gets focu
 | `--on-accent` on interview accent | 14.4:1 | 4.5:1 |
 | `--on-accent` on defense accent | 13.3:1 | 4.5:1 |
 | `--error` on `--bg-end` | 8.7:1 | 4.5:1 |
+| `--panel-edge` on `--bg-end` / `--surface` | 3.5:1 / 4.1:1 | 3:1 (to show the panel's edge) |
 | Ghost body (darkest stop `#a9e8d6`) on `--bg-end` | 10.8:1 | 3:1 |
 | Features `#0b1020` on body (darkest stop) | 13.7:1 | 3:1 |
 | Glasses `#e8a13a` on body | 1.6:1 to 2.2:1 | fixed by the outline above |

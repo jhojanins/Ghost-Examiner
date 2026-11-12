@@ -308,6 +308,12 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - no console errors, and axe reports zero violations on idle, listening, error, confirmation and the Preview session, in EN and ES × reduced motion on and off.
   - _Design §5; Requirements: 4, 5, 6.1 to 6.3, 10.1, 10.5_ · Skills: `a11y-review`, `testing-strategy`
 
+- [x] 33b. Question panel edge (owner request after task 33)
+  - Cause: `--surface` is within 1.2:1 of the fixed page gradient everywhere, so the caption panel vanished wherever it sat over the band that matches it; the Preview header is taller and pushed it there. Not a Preview-only bug: scrolling moves the band too.
+  - Fix: a 1 px `--panel-edge` border (`#6b7ba3`: 4.5:1 on `--bg-start`, 3.5:1 on `--bg-end`, 4.1:1 on `--surface`). The other panels (transcript, confirmation, feedback) share the cause and are left for the visual polish pass.
+  - **Done when:** e2e reads the rendered pixels across the panel's left edge at 1280 px and finds at least 3:1 in a voice session and in a Preview session (1.01:1 before the fix).
+  - _Requirements: spec a 4.1 (the captions area); owner request_ · Skills: `a11y-review`, `testing-strategy`
+
 - [ ] 34. End-to-end test of voice answers
   - An e2e fake for `SpeechRecognition` (an init script the test drives through `page.evaluate`), and `e2e/voice-input.spec.ts`.
   - **Done when:** `pnpm e2e` passes and covers:

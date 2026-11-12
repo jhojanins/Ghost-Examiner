@@ -117,6 +117,51 @@ test('no speech recognition at all (Firefox-like): a Preview session that says w
   await expect(confirmation(page)).toBeVisible();
 });
 
+/**
+ * The strongest contrast between the page just left of the question panel and the pixels across its
+ * left edge, as rendered: a 12 px strip at the panel's middle row, decoded in the page with a canvas.
+ */
+async function panelEdgeContrast(page: Page): Promise<number> {
+  const box = (await page.locator('.ge-captions').boundingBox())!;
+  const y = Math.round(box.y + box.height / 2);
+  const png = await page.screenshot({ clip: { x: Math.round(box.x) - 6, y, width: 12, height: 1 } });
+  return page.evaluate(async (src) => {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    [canvas.width, canvas.height] = [img.width, img.height];
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, img.width, 1).data;
+    const lum = (i: number) => {
+      const [r, g, b] = [data[i], data[i + 1], data[i + 2]].map((v) => {
+        const c = v / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const outside = lum(0);
+    let best = 1;
+    for (let i = 4; i < data.length; i += 4) {
+      const [hi, lo] = [Math.max(outside, lum(i)), Math.min(outside, lum(i))];
+      best = Math.max(best, (hi + 0.05) / (lo + 0.05));
+    }
+    return best;
+  }, `data:image/png;base64,${png.toString('base64')}`);
+}
+
+// Task 33b: the panel's fill is close to the fixed page gradient, so where the panel sits decided
+// whether its edge showed; the Preview header pushes it down to where they match. 3:1 as in WCAG 1.4.11.
+for (const variant of ['working', 'none'] as const) {
+  test(`at 1280 px the question panel has a visible edge (${variant === 'none' ? 'Preview session' : 'voice session'})`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await answering(page, variant);
+    await expect(page.getByText('Preview', { exact: true })).toHaveCount(variant === 'none' ? 1 : 0);
+    expect(await panelEdgeContrast(page)).toBeGreaterThanOrEqual(3);
+  });
+}
+
 /** Page-coordinate boxes of everything that must stay put when a voice message comes or goes. */
 const layout = (page: Page) =>
   page.evaluate(() =>
