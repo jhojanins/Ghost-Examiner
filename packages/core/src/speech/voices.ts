@@ -12,6 +12,25 @@ export interface VoiceInfo {
 const normalize = (tag: string) => tag.toLowerCase().replace(/_/g, '-');
 const primary = (tag: string) => normalize(tag).split('-')[0];
 
+/** Speech recognition language when the browser prefers no region (neutral Latin American Spanish, ghost-persona). */
+const DEFAULT_SPEECH_LANG: Record<Locale, string> = { en: 'en-US', es: 'es-MX' };
+
+/** "ES_mx" → "es-MX": lowercase language, uppercase two-letter region, other subtags as they are. */
+const bcp47 = (tag: string) =>
+  normalize(tag)
+    .split('-')
+    .map((part, i) => (i > 0 && part.length === 2 ? part.toUpperCase() : part))
+    .join('-');
+
+/**
+ * The language tag to listen in (spec b design §2.2, Req 4.6): the first preferred browser tag of
+ * `locale`'s language, so a user in Argentina is heard as es-AR, else en-US or es-MX.
+ */
+export function speechLang(locale: Locale, preferred: readonly string[]): string {
+  const tag = preferred.find((t) => primary(t) === locale);
+  return tag ? bcp47(tag) : DEFAULT_SPEECH_LANG[locale];
+}
+
 /** Plain code-unit order, so the result never depends on the runtime's locale. */
 const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 

@@ -214,7 +214,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - a type test shows `{ type: 'partial', text }` is an `InputEvent` and `setLocale` is optional on `InputAdapter`.
   - _Design §2.1; Requirements: 4.6, 7.1_
 
-- [ ] 23. `speechLang`
+- [x] 23. `speechLang`
   - **Done when:** examples pass: `es-AR` preferred → `es-AR`; nothing preferred → `es-MX` and `en-US`; `en_GB` → `en-GB`.
   - _Design §2.2; Requirements: 4.6_
 

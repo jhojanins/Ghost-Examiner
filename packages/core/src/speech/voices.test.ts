@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickVoice, type VoiceInfo } from './voices';
+import { pickVoice, speechLang, type VoiceInfo } from './voices';
 
 const voice = (name: string, lang: string, extra: Partial<VoiceInfo> = {}): VoiceInfo => ({
   name,
@@ -59,5 +59,30 @@ describe('pickVoice', () => {
 
   it('returns undefined for an empty voice list', () => {
     expect(pickVoice([], 'en', ['en-US'])).toBeUndefined();
+  });
+});
+
+describe('speechLang (spec b design §2.2, Req 4.6)', () => {
+  it('uses the first preferred tag of the language', () => {
+    expect(speechLang('es', ['es-AR'])).toBe('es-AR');
+    expect(speechLang('es', ['en-US', 'es-AR', 'es-MX'])).toBe('es-AR');
+    expect(speechLang('en', ['es-AR', 'en-GB'])).toBe('en-GB');
+  });
+
+  it('falls back to es-MX and en-US when nothing preferred matches', () => {
+    expect(speechLang('es', [])).toBe('es-MX');
+    expect(speechLang('en', [])).toBe('en-US');
+    expect(speechLang('es', ['en-GB', 'fr-FR'])).toBe('es-MX');
+  });
+
+  it('returns well-formed BCP 47 tags: dashes, lowercase language, uppercase region', () => {
+    expect(speechLang('en', ['en_GB'])).toBe('en-GB');
+    expect(speechLang('es', ['ES-mx'])).toBe('es-MX');
+    expect(speechLang('es', ['es-419'])).toBe('es-419');
+    expect(speechLang('es', ['es'])).toBe('es');
+  });
+
+  it('matches the primary subtag exactly ("eso" is not Spanish)', () => {
+    expect(speechLang('es', ['eso-XX', 'es-CO'])).toBe('es-CO');
   });
 });
