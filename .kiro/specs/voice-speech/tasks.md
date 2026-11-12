@@ -29,7 +29,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - an off-by-one mutation of `from` is caught.
   - _Design §2.3; Requirements: 3.3_ · Skills: `ghost-svg-animation`, `testing-strategy`
 
-- [ ] 2. `wordIndexAt` with property P11
+- [x] 2. `wordIndexAt` with property P11
   - **Done when:**
     - P11 passes: a character inside a token maps to that token, the index stays in range and never decreases, and the `tokenize` texts equal the `buildTimeline` word texts;
     - examples cover whitespace positions (next token), positions past the end (last token) and an empty line (`-1`).
