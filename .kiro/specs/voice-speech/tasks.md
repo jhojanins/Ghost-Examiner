@@ -314,7 +314,10 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - **Done when:** e2e reads the rendered pixels across the panel's left edge at 1280 px and finds at least 3:1 in a voice session and in a Preview session (1.01:1 before the fix).
   - _Requirements: spec a 4.1 (the captions area); owner request_ · Skills: `a11y-review`, `testing-strategy`
 
-- [ ] 34. End-to-end test of voice answers
+- [x] 34. End-to-end test of voice answers
+  - Already covered by task 33: the fake recognizer and `voice-input.spec.ts`; a voice answer with live words, then confirm, then feedback; no `SpeechRecognition` → the Preview label with the reason, then a typed answer; the network guard (every test in the file blocks and records foreign requests and fails on any).
+  - Added here: Edit after a spoken answer prefills and focuses the field, and the edit is confirmed as typed; an empty voice answer shows "I didn't catch any words…", no confirmation, voice ready again; axe in EN and ES × reduced motion on and off on answering, listening with words, confirmation, feedback, empty answer and the Preview session, with no console errors.
+  - Found: after Edit the caret is at the start of the prefilled text (spec a behavior, unchanged).
   - An e2e fake for `SpeechRecognition` (an init script the test drives through `page.evaluate`), and `e2e/voice-input.spec.ts`.
   - **Done when:** `pnpm e2e` passes and covers:
     - a voice answer with live captions, then confirm, then feedback;

@@ -1,10 +1,12 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { installFakeRecognition, recognitionLog, type FakeRecognitionVariant } from './fakes/speech-recognition';
 import { installFakeSpeech } from './fakes/speech-synthesis';
 
 /**
  * Voice answers in the app (spec b task 33). Fake speech recognition and a manual fake voice, with
- * the page clock installed: no microphone, no network, no timing. Task 34 adds the rest.
+ * the page clock installed: no microphone, no network, no timing. Task 34 fills the gaps (Edit,
+ * empty answer, the axe matrix); task 33b adds the panel edge check.
  */
 const QUESTION = 'Tell me about a time you solved a difficult problem.';
 
@@ -116,6 +118,99 @@ test('no speech recognition at all (Firefox-like): a Preview session that says w
   await page.getByRole('textbox', { name: 'Your answer' }).press('Control+Enter');
   await expect(confirmation(page)).toBeVisible();
 });
+
+// Task 34: the gaps between the tests above and the task's Done-when.
+
+test('Edit after a spoken answer: the words prefill the text field, focused, and the edit goes to confirmation', async ({ page }) => {
+  await answering(page);
+  await voiceButton(page).press('Enter');
+  await recognition(page).result([['I fixed the build on Friday', true]]);
+  await voiceButton(page).press('Enter');
+  await confirmation(page).getByRole('button', { name: 'Edit' }).press('Enter');
+
+  const field = page.getByRole('textbox', { name: 'Your answer' });
+  await expect(field).toHaveValue('I fixed the build on Friday');
+  await expect(field).toBeFocused();
+  // Replace the words (select all works the same on every platform; the caret itself starts at 0).
+  await field.press('ControlOrMeta+a');
+  await field.pressSequentially('I fixed the build in one hour.');
+  await field.press('Control+Enter');
+  await expect(confirmation(page).locator('blockquote')).toHaveText('I fixed the build in one hour.');
+  await expect(confirmation(page).getByText('How you answered: Typed')).toBeVisible();
+});
+
+test('an empty voice answer: the message, no confirmation, and voice ready again', async ({ page }) => {
+  await answering(page);
+  await voiceButton(page).press('Enter');
+  await expect(status(page)).toHaveText('Listening…');
+  await voiceButton(page).press('Enter'); // stop with no words
+  await expect(status(page)).toHaveText("I didn't catch any words. Try again, or type your answer.");
+  await expect(confirmation(page)).toHaveCount(0);
+  await expect(voiceButton(page)).toHaveText('Start speaking');
+  await expect(voiceButton(page)).toBeFocused();
+  await expect(voiceButton(page)).not.toHaveAttribute('aria-disabled', 'true');
+});
+
+const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const ES = { start: 'Empezar', accept: 'Entendido, empezar', confirm: 'Confirmar', heading: 'Anoté esto. ¿Es lo que quisiste decir?' };
+
+for (const lang of ['en', 'es'] as const) {
+  test(`axe in ${lang}, reduced motion on and off: answering, listening, empty, confirmation, feedback, Preview session`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('pageerror', (e) => errors.push(e.message));
+    const found: string[] = [];
+    const check = async (screen: string) => {
+      for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+        await page.emulateMedia({ reducedMotion });
+        const { violations } = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+        found.push(...violations.map((v) => `${screen} ${reducedMotion}: ${v.id} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`));
+      }
+    };
+    const open = async (variant: FakeRecognitionVariant) => {
+      await installFakeSpeech(page, { manual: true });
+      await installFakeRecognition(page, variant);
+      await page.goto('');
+      if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
+      await page.getByRole('button', { name: lang === 'es' ? ES.start : 'Start' }).press('Enter');
+      await page.getByRole('button', { name: lang === 'es' ? ES.accept : 'I understand, start' }).press('Enter');
+      await page.evaluate(() => {
+        window.__fakeSpeech!.control.start();
+        window.__fakeSpeech!.control.end();
+      });
+      await expect(page.locator('.ge-transcript-list li')).toHaveCount(2);
+    };
+    const region = (en: string, es: string) => page.getByRole('region', { name: lang === 'es' ? es : en });
+
+    await open('working');
+    await page.clock.resume(); // axe needs real timers
+    await check('answering');
+    await voiceButton(page).press('Enter');
+    await recognition(page).result([[lang === 'es' ? 'Arreglé la compilación' : 'I fixed the build', true], [lang === 'es' ? ' el viernes' : ' on Friday', false]]);
+    await expect(page.locator('.ge-voice-interim')).not.toBeEmpty();
+    await check('listening with words');
+    await voiceButton(page).press('Enter');
+    const confirm = region('I noted this. Is that what you meant?', ES.heading);
+    await expect(confirm).toBeVisible();
+    await check('confirmation');
+    await confirm.getByRole('button', { name: lang === 'es' ? ES.confirm : 'Confirm' }).press('Enter');
+    await expect(region('Practice feedback', 'Comentarios de práctica')).toBeVisible();
+    await check('feedback');
+
+    await open('working');
+    await voiceButton(page).press('Enter');
+    await voiceButton(page).press('Enter'); // nothing said
+    await expect(status(page)).toHaveText(lang === 'es' ? 'No escuché ninguna palabra. Inténtalo de nuevo o escribe tu respuesta.' : "I didn't catch any words. Try again, or type your answer.");
+    await check('empty answer');
+
+    await open('none');
+    await expect(page.getByText(lang === 'es' ? 'Vista previa' : 'Preview', { exact: true })).toBeVisible();
+    await check('Preview session');
+
+    expect(found).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+}
 
 /**
  * The strongest contrast between the page just left of the question panel and the pixels across its
