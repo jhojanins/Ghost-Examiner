@@ -46,6 +46,18 @@ export const kitMessages = defineCatalog(
     'keyboard.submit': 'Submit answer',
     'keyboard.empty': 'The answer is empty. Type a few words, then submit.',
 
+    // Confirmation step (Req 7). Wording from the ghost-persona phrase bank.
+    'confirm.heading': 'I noted this. Is that what you meant?',
+    'confirm.method': 'How you answered: {method}',
+    'confirm.confirm': 'Confirm',
+    'confirm.edit': 'Edit',
+    'confirm.retry': 'Answer again',
+    // One label per input method. Gestures are experimental and never called sign language.
+    'method.keyboard': 'Typed',
+    'method.voice': 'Spoken',
+    'method.morse': 'Morse code',
+    'method.sign': 'Gestures (experimental)',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -87,6 +99,16 @@ export const kitMessages = defineCatalog(
     'keyboard.hint': 'Presiona Ctrl+Enter (⌘+Enter en Mac) para enviar.',
     'keyboard.submit': 'Enviar respuesta',
     'keyboard.empty': 'La respuesta está vacía. Escribe unas palabras y luego envíala.',
+
+    'confirm.heading': 'Anoté esto. ¿Es lo que quisiste decir?',
+    'confirm.method': 'Cómo respondiste: {method}',
+    'confirm.confirm': 'Confirmar',
+    'confirm.edit': 'Editar',
+    'confirm.retry': 'Responder de nuevo',
+    'method.keyboard': 'Escrito',
+    'method.voice': 'Hablado',
+    'method.morse': 'Código Morse',
+    'method.sign': 'Gestos (experimental)',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

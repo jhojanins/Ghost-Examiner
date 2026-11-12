@@ -117,7 +117,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show a visible label tied to the textarea, paste works, Ctrl+Enter and Cmd+Enter submit, an empty submit shows the inline error linked by `aria-describedby` and keeps focus, and the `draft` prop prefills the text.
   - _Requirements: 6.2, 6.3, 6.4, 7.3_ · Skills: `a11y-review`
 
-- [ ] 23. ConfirmAnswer
+- [x] 23. ConfirmAnswer
   - **Done when:** component tests show the heading receives focus on mount, the answer text and the method label ("Typed" / "Escrito") render, and Confirm, Edit and Retry call their handlers.
   - _Requirements: 7.1, 7.2_ · Skills: `a11y-review`, `ghost-persona`
 
