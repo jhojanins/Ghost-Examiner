@@ -200,6 +200,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** P7 covers `float === 0` under reduced motion; a component test shows the toggle sets `aria-pressed` and stops both floating and blinking; a Playwright MCP check confirms the toggle is reachable by keyboard.
   - _Requirements: 3.6, 3.7, 3.10_ · Skills: `ghost-svg-animation`, `a11y-review`
 
-- [ ] 38. Full axe matrix
+- [x] 38. Full axe matrix
+  - `e2e/axe-matrix.spec.ts`: the typed slice (intro, privacy notice, answering, confirming, feedback, end) and the ghost-defense shell with its privacy notice, EN and ES × `no-preference` and `reduce`, with no console errors. A second Playwright web server builds and serves ghost-defense on port 4174. The voice screens were already covered by spec (b) tasks 33 and 34.
   - **Done when:** `pnpm e2e` runs axe with zero violations on every slice screen and the ghost-defense shell in EN and ES, each with `reducedMotion` `reduce` and `no-preference`.
   - _Requirements: 12.3_ · Skills: `testing-strategy`, `a11y-review`
