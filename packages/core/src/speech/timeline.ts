@@ -44,11 +44,20 @@ function pauseAfter(token: string): number {
 }
 
 /**
+ * The words of a line, split on whitespace, with each word's start offset in UTF-16 code units
+ * (the unit of a boundary event's `charIndex`). `buildTimeline` uses this split, so word index
+ * `i` means the same word in the timeline and in boundary resync (spec b design §2.3).
+ */
+export function tokenize(text: string): { text: string; from: number }[] {
+  return [...text.matchAll(/\S+/g)].map((m) => ({ text: m[0], from: m.index }));
+}
+
+/**
  * Builds the speech timeline for one ghost line (Req 4.3). Pure and deterministic: the
  * result depends only on the text and locale, never on a clock.
  */
 export function buildTimeline(text: string, locale: Locale): Timeline {
-  const tokens = text.split(/\s+/).filter(Boolean);
+  const tokens = tokenize(text).map((t) => t.text);
   const words: WordCue[] = [];
   const mouth: MouthCue[] = [];
   const push = (start: number, end: number, viseme: Viseme) => {

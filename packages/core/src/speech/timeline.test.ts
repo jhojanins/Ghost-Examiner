@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTimeline } from './timeline';
+import { buildTimeline, tokenize } from './timeline';
 
 describe('buildTimeline', () => {
   it('"Mamá, hola." (es): MBP/A cues, a 200 ms comma pause and a final rest', () => {
@@ -39,5 +39,35 @@ describe('buildTimeline', () => {
 
   it('returns an empty timeline for blank text', () => {
     expect(buildTimeline('  \n ', 'en')).toEqual({ words: [], mouth: [], duration: 0 });
+  });
+});
+
+describe('tokenize', () => {
+  it('splits on whitespace and keeps each token start offset', () => {
+    expect(tokenize('  Hola,  mundo ')).toEqual([
+      { text: 'Hola,', from: 2 },
+      { text: 'mundo', from: 9 },
+    ]);
+  });
+
+  it('counts offsets in UTF-16 code units, like boundary events report charIndex', () => {
+    // "👻" is 2 code units, then a space.
+    expect(tokenize('👻 hola\tqué\n¿tal?')).toEqual([
+      { text: '👻', from: 0 },
+      { text: 'hola', from: 3 },
+      { text: 'qué', from: 8 },
+      { text: '¿tal?', from: 12 },
+    ]);
+  });
+
+  it('every token is the slice of the text at its offset', () => {
+    const text = ' Tell me about a time,  you solved a   problem. ';
+    for (const token of tokenize(text)) {
+      expect(text.slice(token.from, token.from + token.text.length)).toBe(token.text);
+    }
+  });
+
+  it('returns no tokens for blank text', () => {
+    expect(tokenize(' \n\t ')).toEqual([]);
   });
 });

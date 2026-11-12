@@ -21,7 +21,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
 ## Phase 1: the ghost speaks aloud and the mouth follows the audio
 
 ### packages/core
-- [ ] 1. `tokenize` refactor in the speech timeline
+- [x] 1. `tokenize` refactor in the speech timeline
   - Add `tokenize(text)` (`{ text, from }[]`, the same whitespace split as today) and make `buildTimeline` use it. The timeline output doesn't change.
   - **Done when:**
     - P5, P6 and every existing timeline example test pass unchanged;
