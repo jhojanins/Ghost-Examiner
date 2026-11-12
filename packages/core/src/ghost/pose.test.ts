@@ -36,18 +36,28 @@ describe('ghostPose', () => {
     expect(blinking.length).toBe(2 * 120); // one blink in each 4.5 s cycle
   });
 
-  it('reduced motion (Req 3.6): never blinks, but keeps the same expression and mouth shapes', () => {
+  it('reduced motion (Req 3.6): never blinks or floats, but keeps the same expression and mouth shapes', () => {
     for (let now = 0; now < 20000; now += 5) {
       const normal = ghostPose(speaking, now, { reducedMotion: false });
       const reduced = ghostPose(speaking, now, { reducedMotion: true });
       expect(reduced.blink).toBe(false);
-      expect(reduced).toEqual({ ...normal, blink: false });
+      expect(reduced.float).toBe(0);
+      expect(reduced).toEqual({ ...normal, blink: false, float: 0 });
     }
   });
 
-  it('has only the phase 1 fields: no float or other motion field', () => {
+  it('floats gently (phase 2, Req 3.10): sin(now / 2400 ms), one slow cycle of about 15 s', () => {
+    const idle: GhostState = { activity: 'idle', expression: 'neutral', seed: 7 };
+    const float = (now: number) => ghostPose(idle, now, { reducedMotion: false }).float;
+    expect(float(0)).toBe(0);
+    expect(float(2400 * (Math.PI / 2))).toBeCloseTo(1, 9); // the top
+    expect(float(2400 * Math.PI)).toBeCloseTo(0, 9);
+    expect(float(2400 * ((3 * Math.PI) / 2))).toBeCloseTo(-1, 9); // the bottom
+  });
+
+  it('has the phase 2 fields: float is the only motion field besides blink', () => {
     expect(Object.keys(ghostPose(speaking, 0, { reducedMotion: false })).sort()).toEqual(
-      ['activity', 'blink', 'expression', 'viseme'],
+      ['activity', 'blink', 'expression', 'float', 'viseme'],
     );
   });
 });

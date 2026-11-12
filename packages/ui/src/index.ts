@@ -14,6 +14,8 @@ export type { KeyboardInputProps } from './KeyboardInput';
 export { KeyboardInput } from './KeyboardInput';
 export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
+export type { MotionToggleProps } from './MotionToggle';
+export { MotionToggle } from './MotionToggle';
 export type { PrivacyDialogProps } from './PrivacyDialog';
 export { PrivacyDialog } from './PrivacyDialog';
 export type { SoundState, SoundToggleProps } from './SoundToggle';

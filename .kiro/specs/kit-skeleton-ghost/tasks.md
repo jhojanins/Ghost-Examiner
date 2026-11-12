@@ -194,7 +194,8 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** P5 and P6 still pass and example tests show the new visemes for "fue", "mi", "voz".
   - _Requirements: 3.2, 4.3_ · Skills: `ghost-svg-animation`
 
-- [ ] 37. Floating and the motion toggle
+- [x] 37. Floating and the motion toggle
+  - `useGhostPose(state, origin, paused)` and `MotionToggle` in the kit, both apps wired; the paused choice sits in the interview `App`, so it lasts through "Practice again" (never stored). Layout e2e checks now measure the ghost's container, not its svg, because the float is a transform. axe caught the first ES short label ("Pausa" is not a word of "Pausar movimiento"); it is now "Pausar".
   - `float` in `GhostPose`, wrapper `<div>` transform, "Pause motion" button in the header.
   - **Done when:** P7 covers `float === 0` under reduced motion; a component test shows the toggle sets `aria-pressed` and stops both floating and blinking; a Playwright MCP check confirms the toggle is reachable by keyboard.
   - _Requirements: 3.6, 3.7, 3.10_ · Skills: `ghost-svg-animation`, `a11y-review`

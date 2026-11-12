@@ -99,3 +99,9 @@
     transition-duration: 150ms;
   }
 }
+/* The same cap when the motion toggle pauses motion (design §5.4); useGhostPose sets the attribute. */
+.ge-ghost[data-reduced-motion='true'] .ge-brow,
+.ge-ghost[data-reduced-motion='true'] .ge-eye,
+.ge-ghost[data-reduced-motion='true'] .ge-mouth {
+  transition-duration: 150ms;
+}

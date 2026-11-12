@@ -48,16 +48,16 @@ function frame(t: number) {
 }
 
 // ---- The component under test: Ghost driven by the hook --------------------------------
-function AnimatedGhost({ state, origin }: { state: GhostState; origin?: () => number }) {
-  const { ref, pose } = useGhostPose(state, origin);
+function AnimatedGhost({ state, origin, paused }: { state: GhostState; origin?: () => number; paused?: boolean }) {
+  const { ref, pose } = useGhostPose(state, origin, paused);
   return <Ghost ref={ref} pose={pose} locale="en" />;
 }
 
-function mount(state: GhostState, origin?: () => number) {
+function mount(state: GhostState, origin?: () => number, paused?: boolean) {
   const commits = { count: 0 };
   const utils = render(
     <Profiler id="ghost" onRender={() => commits.count++}>
-      <AnimatedGhost state={state} origin={origin} />
+      <AnimatedGhost state={state} origin={origin} paused={paused} />
     </Profiler>,
   );
   return { ...utils, commits, svg: screen.getByRole('img') };
@@ -186,6 +186,56 @@ describe('useGhostPose', () => {
   it('works without matchMedia (feature-detected): blinks normally', () => {
     vi.stubGlobal('matchMedia', undefined);
     const { svg } = mount(idle);
+    expect(blinkChanges(svg, 0, 9000)).toHaveLength(4);
+  });
+
+  // Phase 2 floating (spec a task 37, Req 3.6, 3.7, 3.10).
+  /** The wrapper's transform at each of the given frame times. */
+  const floatAt = (svg: Element, times: number[]) =>
+    times.map((t) => {
+      frame(t);
+      return (svg.parentElement as HTMLElement).style.transform;
+    });
+  const QUARTER = 2400 * (Math.PI / 2); // float = sin(now / 2400): the top of the cycle
+
+  it('floats the wrapper through the ref, without re-rendering the component', () => {
+    const { svg, commits } = mount(idle);
+    const rendersAfterMount = commits.count;
+    expect(floatAt(svg, [0, QUARTER, 3 * QUARTER])).toEqual(['translateY(0px)', 'translateY(-4px)', 'translateY(4px)']);
+    expect(commits.count).toBe(rendersAfterMount);
+  });
+
+  it('with prefers-reduced-motion: reduce, the ghost never floats', () => {
+    reduce = true;
+    const { svg } = mount(idle);
+    expect(new Set(floatAt(svg, [0, QUARTER, 3 * QUARTER, 12345]))).toEqual(new Set(['translateY(0px)']));
+  });
+
+  it('paused (the motion toggle): no floating and no blinking, even when the media query allows motion', () => {
+    const { svg } = mount(idle, undefined, true);
+    expect(new Set(floatAt(svg, [0, QUARTER, 3 * QUARTER]))).toEqual(new Set(['translateY(0px)']));
+    expect(blinkChanges(svg, 0, 20000)).toEqual([]);
+    expect(svg.getAttribute('data-reduced-motion')).toBe('true'); // the stylesheet caps transitions at 150 ms
+  });
+
+  it('follows paused while running: pausing stops motion at once, resuming brings it back', () => {
+    const { svg, rerender } = mount(idle);
+    expect(floatAt(svg, [QUARTER])).toEqual(['translateY(-4px)']);
+    expect(svg.getAttribute('data-reduced-motion')).toBe('false');
+    // Same tree shape as mount(), so React updates the ghost instead of remounting it.
+    rerender(
+      <Profiler id="ghost" onRender={() => {}}>
+        <AnimatedGhost state={idle} paused />
+      </Profiler>,
+    );
+    expect(floatAt(svg, [QUARTER])).toEqual(['translateY(0px)']);
+    expect(blinkChanges(svg, 0, 20000)).toEqual([]);
+    rerender(
+      <Profiler id="ghost" onRender={() => {}}>
+        <AnimatedGhost state={idle} paused={false} />
+      </Profiler>,
+    );
+    expect(floatAt(svg, [QUARTER])).toEqual(['translateY(-4px)']);
     expect(blinkChanges(svg, 0, 9000)).toHaveLength(4);
   });
 });

@@ -78,6 +78,16 @@ describe('AppShell', () => {
     expect(order).toEqual(['Ghost voice', 'Language switch', 'Privacy notice']);
   });
 
+  it('the motion control slot sits after the language switch, before privacy (spec a Req 3.7)', () => {
+    shell({
+      soundControl: <button type="button">Ghost voice</button>,
+      languageSwitch: <button type="button">Language switch</button>,
+      motionControl: <button type="button">Pause motion</button>,
+    });
+    const order = [...screen.getByRole('banner').querySelectorAll('button')].map((b) => b.textContent);
+    expect(order).toEqual(['Ghost voice', 'Language switch', 'Pause motion', 'Privacy notice']);
+  });
+
   it('without a sound control (ghost-defense), the header actions are unchanged', () => {
     shell({ languageSwitch: <button type="button">Language switch</button> });
     const order = [...screen.getByRole('banner').querySelectorAll('button')].map((b) => b.textContent);

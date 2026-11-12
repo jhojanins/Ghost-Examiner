@@ -34,6 +34,8 @@ export const kitMessages = defineCatalog(
     'transcript.heading': 'Transcript',
     // Sound control (spec b Req 1.4, 1.6, 2.1). Each reason fits one line at 320 px (task 19b): what
     // happened, and what to do when there is something to do. The captions on screen show the rest.
+    'motion.label': 'Pause motion',
+    'motion.short': 'Pause', // visible on narrow screens; the accessible name stays motion.label
     'sound.label': 'Ghost voice',
     'sound.short': 'Voice', // visible on narrow screens; the accessible name stays sound.label
     'sound.noVoice': 'No voice for this language.',
@@ -132,6 +134,8 @@ export const kitMessages = defineCatalog(
     'ghost.label.amused': 'El examinador fantasma, con un gesto divertido.',
     'ghost.label.surprised': 'El examinador fantasma, sorprendido.',
     'transcript.heading': 'Transcripción',
+    'motion.label': 'Pausar movimiento',
+    'motion.short': 'Pausar',
     'sound.label': 'Voz del fantasma',
     'sound.short': 'Voz',
     'sound.noVoice': 'No hay voz para este idioma.',

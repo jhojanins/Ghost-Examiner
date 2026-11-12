@@ -19,14 +19,16 @@ const state: fc.Arbitrary<GhostState> = fc.record(
 const now = fc.double({ min: 0, max: 1e9, noNaN: true });
 
 describe('ghost pose properties', () => {
-  it('P7: deterministic, and under reduced motion blink is always false (only blink differs)', () => {
+  it('P7: deterministic, and under reduced motion blink is false and float is 0 (only those differ)', () => {
     fc.assert(
       fc.property(state, now, (s, t) => {
         const normal = ghostPose(s, t, { reducedMotion: false });
         expect(ghostPose(s, t, { reducedMotion: false })).toEqual(normal);
+        expect(Math.abs(normal.float)).toBeLessThanOrEqual(1); // normalized: the view scales it to pixels
         const reduced = ghostPose(s, t, { reducedMotion: true });
         expect(reduced.blink).toBe(false);
-        expect(reduced).toEqual({ ...normal, blink: false });
+        expect(reduced.float).toBe(0);
+        expect(reduced).toEqual({ ...normal, blink: false, float: 0 });
       }),
       { numRuns: 100 },
     );

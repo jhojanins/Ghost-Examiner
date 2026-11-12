@@ -13,11 +13,14 @@ export interface GhostPose {
   expression: Expression;
   viseme: Viseme;
   blink: boolean;
-} // phase 2 adds float
+  /** Body bob in [-1, 1] (phase 2, Req 3.10); the view scales it to a few pixels. 0 under reduced motion. */
+  float: number;
+}
 
 const BLINK_CYCLE_MS = 4500;
 const BLINK_JITTER_MS = 1500; // blink start offset within a cycle: [0, 1500)
 const BLINK_MS = 120;
+const FLOAT_MS = 2400; // float = sin(now / 2400 ms): one cycle in about 15 s
 
 /** 32-bit integer hash of (seed, cycle); stands in for a seeded RNG so poses are deterministic. */
 function hash(seed: number, cycle: number): number {
@@ -49,8 +52,8 @@ function visemeAt(speech: GhostState['speech'], now: number): Viseme {
 
 /**
  * Pure pose of the ghost at time `now` (ms, from the caller's clock) (Req 3.9). Reduced
- * motion removes blinking, the only non-essential motion in phase 1, and keeps the
- * expression and mouth, which carry meaning when muted (Req 3.6).
+ * motion removes the non-essential motion, blinking and floating, and keeps the expression
+ * and mouth, which carry meaning when muted (Req 3.6).
  */
 export function ghostPose(state: GhostState, now: number, opts: { reducedMotion: boolean }): GhostPose {
   return {
@@ -58,5 +61,6 @@ export function ghostPose(state: GhostState, now: number, opts: { reducedMotion:
     expression: state.expression,
     viseme: visemeAt(state.speech, now),
     blink: !opts.reducedMotion && isBlinking(state.seed, now),
+    float: opts.reducedMotion ? 0 : Math.sin(now / FLOAT_MS),
   };
 }

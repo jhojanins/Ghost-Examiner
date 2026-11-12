@@ -1,5 +1,6 @@
 import { ghostPose, type GhostPose, type GhostState } from '@ghost-examiner/core';
 import { useEffect, useRef, type RefObject } from 'react';
+import { floatTransform } from './Ghost';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -18,17 +19,21 @@ const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
  * `origin` (spec b design §4): the playing line's timeline origin, read every frame. While the
  * ghost speaks, it replaces `state.speech.startedAt`, so a boundary resync moves the mouth with
  * no re-render. `ghostPose` itself stays pure.
+ *
+ * `paused` (design §5.4, Req 3.7): the motion toggle. While true the ghost moves as under
+ * `prefers-reduced-motion`, whatever the media query says: no floating, no blinking.
  */
 export function useGhostPose(
   state: GhostState,
   origin?: () => number,
+  paused = false,
 ): { ref: RefObject<SVGSVGElement | null>; pose: GhostPose } {
   const ref = useRef<SVGSVGElement>(null);
-  const latest = useRef({ state, origin });
+  const latest = useRef({ state, origin, paused });
 
-  // The loop reads the newest state and origin without restarting.
+  // The loop reads the newest state, origin and paused without restarting.
   useEffect(() => {
-    latest.current = { state, origin };
+    latest.current = { state, origin, paused };
   });
 
   useEffect(() => {
@@ -42,7 +47,8 @@ export function useGhostPose(
 
     let frame = 0;
     const tick = (now: number) => {
-      if (ref.current) writePose(ref.current, ghostPose(withOrigin(latest.current), now, { reducedMotion }));
+      const reduce = reducedMotion || latest.current.paused;
+      if (ref.current) writePose(ref.current, ghostPose(withOrigin(latest.current), now, { reducedMotion: reduce }), reduce);
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -53,7 +59,7 @@ export function useGhostPose(
     };
   }, []);
 
-  return { ref, pose: { activity: state.activity, expression: state.expression, viseme: 'rest', blink: false } };
+  return { ref, pose: { activity: state.activity, expression: state.expression, viseme: 'rest', blink: false, float: 0 } };
 }
 
 /** The state with the speech's start replaced by the current origin, when both exist. */
@@ -67,8 +73,15 @@ function setIfChanged(el: Element, name: string, value: string) {
   if (el.getAttribute(name) !== value) el.setAttribute(name, value);
 }
 
-function writePose(svg: SVGSVGElement, pose: GhostPose) {
+/** Writes the per-frame parts: blink, the motion setting (Ghost.css caps transitions), mouth, float. */
+function writePose(svg: SVGSVGElement, pose: GhostPose, reducedMotion: boolean) {
   setIfChanged(svg, 'data-blink', String(pose.blink));
+  setIfChanged(svg, 'data-reduced-motion', String(reducedMotion));
+  const wrapper = svg.parentElement;
+  if (wrapper?.classList.contains('ge-ghost-float')) {
+    const transform = floatTransform(pose.float);
+    if (wrapper.style.transform !== transform) wrapper.style.transform = transform;
+  }
   for (const path of svg.querySelectorAll('[data-part="mouth"] path')) {
     setIfChanged(path, 'visibility', path.getAttribute('data-viseme') === pose.viseme ? 'visible' : 'hidden');
   }

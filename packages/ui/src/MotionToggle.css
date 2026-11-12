@@ -1,0 +1,33 @@
+/* Same look as the sound and language buttons: target >= 24 px (WCAG 2.5.8), accent border 13.0:1 on the surface. */
+.ge-motion-button {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.875rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+/* Pressed (paused) differs by fill and weight, not by hue alone (WCAG 1.4.1): --on-accent on --accent is 14.4:1. */
+.ge-motion-button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.ge-motion-short {
+  display: none;
+}
+/* Narrow screens: the short label, like the sound button (task 19b), so it shares a row with privacy. */
+@media (max-width: 30rem) {
+  .ge-motion-button {
+    min-height: 2.25rem;
+    padding: 0.125rem 0.75rem;
+  }
+  .ge-motion-full {
+    display: none;
+  }
+  .ge-motion-short {
+    display: inline;
+  }
+}

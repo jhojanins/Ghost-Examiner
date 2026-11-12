@@ -244,7 +244,8 @@ for (const width of [320, 1280]) {
 const layout = (page: Page) =>
   page.evaluate(() =>
     Object.fromEntries(
-      ['svg[role="img"]', '.ge-captions', '.ge-keyboard-field', '.ge-voice-button', '.ge-voice-messages', '.ge-voice-words', '.ge-transcript'].map(
+      // The ghost's container, not its <svg>: the float (spec a task 37) moves the svg by transform, which is not layout.
+      ['.gi-ghost', '.ge-captions', '.ge-keyboard-field', '.ge-voice-button', '.ge-voice-messages', '.ge-voice-words', '.ge-transcript'].map(
         (selector) => {
           const r = document.querySelector(selector)!.getBoundingClientRect();
           return [selector, [Math.round(r.top + window.scrollY), Math.round(r.height)]];

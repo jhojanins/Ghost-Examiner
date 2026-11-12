@@ -138,7 +138,8 @@ test('after a language switch with no line playing, the sound control says Spani
 const layout = (page: Page) =>
   page.evaluate(() =>
     Object.fromEntries(
-      ['header', 'svg[role="img"]', '.ge-captions', '.ge-keyboard-field'].map((selector) => {
+      // The ghost's container, not its <svg>: the float (spec a task 37) moves the svg by transform, which is not layout.
+      ['header', '.gi-ghost', '.ge-captions', '.ge-keyboard-field'].map((selector) => {
         const r = document.querySelector(selector)!.getBoundingClientRect();
         return [selector, [Math.round(r.top + window.scrollY), Math.round(r.height), Math.round(r.left)]];
       }),

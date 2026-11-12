@@ -36,6 +36,7 @@ const pose = (p: Partial<GhostPose> = {}): GhostPose => ({
   expression: 'neutral',
   viseme: 'rest',
   blink: false,
+  float: 0,
   ...p,
 });
 const visibleMouths = (svg: Element) =>
@@ -101,6 +102,20 @@ describe('Ghost', () => {
     expect(parts).toEqual(
       expect.arrayContaining(['body', 'brows', 'eye-left', 'eye-right', 'glasses', 'mouth', 'bowtie', 'clipboard', 'hands']),
     );
+  });
+
+  it.each([
+    [0, 'translateY(0px)'],
+    [1, 'translateY(-4px)'], // the top of the float: 4 px up
+    [-0.5, 'translateY(2px)'],
+  ])('floats the whole ghost through a wrapper <div>, not the <svg> (float %s → %s)', (float, transform) => {
+    render(<Ghost pose={pose({ float })} locale="en" />);
+    const svg = screen.getByRole('img');
+    const wrapper = svg.parentElement!;
+    expect(wrapper.tagName).toBe('DIV');
+    expect(wrapper.className).toBe('ge-ghost-float');
+    expect(wrapper.style.transform).toBe(transform);
+    expect(svg.getAttribute('style')).toBeNull();
   });
 
   it('exposes blink and activity for the stylesheet and the animation hook', () => {

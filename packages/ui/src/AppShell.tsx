@@ -15,6 +15,8 @@ export interface AppShellProps {
   soundControl?: ReactNode;
   /** Slot for the LanguageSwitch (task 17). */
   languageSwitch?: ReactNode;
+  /** Slot for the MotionToggle (spec a Req 3.7): after the language switch, before privacy. */
+  motionControl?: ReactNode;
   /** Opens the privacy notice; same place on every screen (Req 10.4, WCAG 3.2.6). */
   onPrivacy: () => void;
   children: ReactNode;
@@ -30,6 +32,7 @@ export function AppShell({
   previewNote,
   soundControl,
   languageSwitch,
+  motionControl,
   onPrivacy,
   children,
 }: AppShellProps) {
@@ -56,6 +59,7 @@ export function AppShell({
         <div className="ge-header-actions">
           {soundControl}
           {languageSwitch}
+          {motionControl}
           <button type="button" className="ge-link-button" onClick={onPrivacy}>
             {m['shell.privacy']}
           </button>

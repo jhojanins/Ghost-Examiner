@@ -18,6 +18,7 @@ import {
   KeyboardInput,
   LanguageSwitch,
   PrivacyDialog,
+  MotionToggle,
   SoundToggle,
   Transcript,
   useGhostPose,
@@ -103,6 +104,8 @@ function whenReady(locale: Locale, id: number, start: (session: AppSession) => v
 
 export function App() {
   const [session, setSession] = useState<AppSession>();
+  // "Pause motion" (spec a Req 3.7): page-level, so it lasts through "Practice again"; never stored.
+  const [motionPaused, setMotionPaused] = useState(false);
   useEffect(() => {
     let current = true;
     whenReady(browserLocale(), 1, (next) => current && setSession(next));
@@ -119,6 +122,8 @@ export function App() {
       handle={handle}
       keyboard={session.keyboard}
       demo={session.demo}
+      motionPaused={motionPaused}
+      onMotionChange={setMotionPaused}
       onRestart={(locale) => whenReady(locale, session.id + 1, setSession)}
     />
   );
@@ -146,10 +151,12 @@ interface SessionProps {
   handle: Running;
   keyboard: KeyboardAdapter;
   demo: boolean;
+  motionPaused: boolean;
+  onMotionChange: (paused: boolean) => void;
   onRestart: (locale: Locale) => void;
 }
 
-function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
+function Session({ handle, keyboard, demo, motionPaused, onMotionChange, onRestart }: SessionProps) {
   const { view, dispatch } = useSession(handle);
   const { state, line, transcript } = view;
   const voiceView = useStore(voice);
@@ -173,7 +180,7 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
   const shownFeedback = state.feedback ?? (phase === 'evaluating' ? lastFeedback : undefined);
 
   // The mouth reads the playback origin every frame, so it follows the voice's boundary events.
-  const { ref: ghostRef, pose } = useGhostPose(ghostState(view, GHOST_SEED), line?.origin);
+  const { ref: ghostRef, pose } = useGhostPose(ghostState(view, GHOST_SEED), line?.origin, motionPaused);
 
   // The sound control's "no voice" reason follows the UI language, even with no line playing.
   const sound = useStore(speech);
@@ -266,6 +273,7 @@ function Session({ handle, keyboard, demo, onRestart }: SessionProps) {
       previewNote={view.preview ? kitMessages[locale]['shell.preview.missing.voice'] : undefined}
       soundControl={<SoundToggle locale={locale} sound={sound} onChange={speech.setOn} />}
       languageSwitch={<LanguageSwitch locale={locale} onChange={(next) => dispatch({ type: 'locale-changed', locale: next })} />}
+      motionControl={<MotionToggle locale={locale} paused={motionPaused} onChange={onMotionChange} />}
       onPrivacy={() => setReadOnlyPrivacy(true)}
     >
       <div className="gi-stage">

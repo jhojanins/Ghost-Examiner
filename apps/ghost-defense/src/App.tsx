@@ -1,5 +1,5 @@
 import type { GhostState, Locale } from '@ghost-examiner/core';
-import { AppShell, Ghost, LanguageSwitch, PrivacyDialog, useGhostPose } from '@ghost-examiner/ui';
+import { AppShell, Ghost, LanguageSwitch, MotionToggle, PrivacyDialog, useGhostPose } from '@ghost-examiner/ui';
 import { browserLocale } from '@ghost-examiner/web';
 import { useId, useState } from 'react';
 import { config } from './config';
@@ -14,7 +14,8 @@ export function App() {
   const [privacy, setPrivacy] = useState(false);
   const m = messages[locale];
   const headingId = useId();
-  const { ref, pose } = useGhostPose(IDLE);
+  const [motionPaused, setMotionPaused] = useState(false); // spec a Req 3.7; never stored
+  const { ref, pose } = useGhostPose(IDLE, undefined, motionPaused);
 
   return (
     <AppShell
@@ -23,6 +24,7 @@ export function App() {
       preview={config.preview}
       previewNote={m.previewNote}
       languageSwitch={<LanguageSwitch locale={locale} onChange={setLocale} />}
+      motionControl={<MotionToggle locale={locale} paused={motionPaused} onChange={setMotionPaused} />}
       onPrivacy={() => setPrivacy(true)}
     >
       <div className="gd-ghost">

@@ -198,7 +198,7 @@ export function buildTimeline(text: string, locale: Locale): Timeline;
 export type Expression = 'neutral' | 'attentive' | 'thinking' | 'approving' | 'skeptical' | 'amused' | 'surprised'; // phase 2 (task 35) added attentive, amused, surprised
 export type GhostActivity = 'idle' | 'speaking' | 'listening' | 'thinking' | 'reacting';
 export interface GhostState { activity: GhostActivity; expression: Expression; speech?: { timeline: Timeline; startedAt: number }; seed: number }
-export interface GhostPose { activity: GhostActivity; expression: Expression; viseme: Viseme; blink: boolean } // phase 2 adds float
+export interface GhostPose { activity: GhostActivity; expression: Expression; viseme: Viseme; blink: boolean; float: number } // float added in phase 2 (task 37)
 export function ghostPose(state: GhostState, now: number, opts: { reducedMotion: boolean }): GhostPose;
 ```
 - **Viseme**: the mouth cue at `now - startedAt`; `rest` when not speaking or past `duration`.
@@ -331,7 +331,7 @@ All text sits on `--surface` or the background, never over the ghost. axe re-che
 - `@media (prefers-reduced-motion: reduce)` stops blinking (via `useGhostPose`) and caps transitions at 150 ms.
 
 ### 5.4 Motion toggle (phase 2, Req 3.7)
-Added together with floating. A "Pause motion" / "Pausar movimiento" button in the header (`aria-pressed`). Pressed → `reducedMotion: true` for `useGhostPose`, regardless of the media query. The choice lasts for the page session only (no storage). Phase 1 relies on `prefers-reduced-motion` only.
+Added together with floating. A "Pause motion" / "Pausar movimiento" button in the header (`aria-pressed`). Pressed → `reducedMotion: true` for `useGhostPose`, regardless of the media query. The choice lasts for the page session only (no storage). Phase 1 relies on `prefers-reduced-motion` only. Phase 2 (task 37): `AppShell` gets a `motionControl` slot after the language switch; below 30rem the button shows "Pause" / "Pausar" (a whole word of the accessible name, WCAG 2.5.3); the float is ±4 px on the wrapper; paused also caps expression transitions at 150 ms (`data-reduced-motion` on the svg).
 
 ## 6. Apps
 
