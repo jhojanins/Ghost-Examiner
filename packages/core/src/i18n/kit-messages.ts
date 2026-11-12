@@ -58,6 +58,13 @@ export const kitMessages = defineCatalog(
     'method.morse': 'Morse code',
     'method.sign': 'Gestures (experimental)',
 
+    // Feedback panel (Req 8.5): practice feedback, never a verdict. Demo label from task 27.
+    'feedback.heading': 'Practice feedback',
+    'feedback.demoLabel': 'Demo evaluation: based on keywords, not a full reading of your answer.',
+    'feedback.strengthLabel': 'What went well',
+    'feedback.improvementLabel': 'One thing to improve',
+    'feedback.next': 'Continue',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -109,6 +116,13 @@ export const kitMessages = defineCatalog(
     'method.voice': 'Hablado',
     'method.morse': 'Código Morse',
     'method.sign': 'Gestos (experimental)',
+
+    'feedback.heading': 'Comentarios de práctica',
+    'feedback.demoLabel':
+      'Evaluación de demostración: se basa en palabras clave, no en una lectura completa de tu respuesta.',
+    'feedback.strengthLabel': 'Lo que salió bien',
+    'feedback.improvementLabel': 'Algo para mejorar',
+    'feedback.next': 'Continuar',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',

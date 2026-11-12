@@ -121,7 +121,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show the heading receives focus on mount, the answer text and the method label ("Typed" / "Escrito") render, and Confirm, Edit and Retry call their handlers.
   - _Requirements: 7.1, 7.2_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 24. FeedbackPanel
+- [x] 24. FeedbackPanel
   - **Done when:** component tests show the "Practice feedback" heading (EN and ES), strength and improvement, the feedback's `lang` attribute, focus on the heading at mount, and Next calling its handler.
   - _Requirements: 8.2, 8.5_ · Skills: `a11y-review`, `ghost-persona`
 
@@ -139,6 +139,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
 - [ ] 27. ghost-interview slice wiring
   - `config.ts` (`preview: true`), `content/pack.ts` (one fictional question, 3 key points, EN/ES cues), `messages.ts`, `App.tsx` wiring only, `vite.config.ts` with `base: '/interview/'`.
   - `useGhostPose` (task 19) real-browser check: **done in task 21** on its harness page (Chromium, 13 s per run at 60 fps): blinks of 117 ms, 3.5 s and 5.0 s apart; none with `reducedMotion: 'reduce'`; exactly one mouth shape visible in every frame, changing while a caption word is marked and at `rest` otherwise. Task 27 only re-checks that the mouth and captions move together with the real session runtime (its `startedAt` comes from `SilentOutput`, not the harness).
+  - Focus after a language switch in the feedback phase (found in task 24): the engine re-evaluates, so the app goes feedback → evaluating → feedback. If `FeedbackPanel` unmounts during `evaluating` and mounts again, it moves focus to its heading, away from the language button the user just pressed. Keep the panel mounted through the re-evaluation, or keep focus on the language switch, and check it by keyboard.
   - Check, and report to the owner, whether the ghost should stop speaking when the user submits an answer while the question line is still playing. Today the engine moves to `confirming` and the runtime lets the question line finish (captions and mouth keep going next to the confirmation view). Decide with the owner before changing it; if it should stop, the runtime cancels the line on entering `confirming`.
   - Demo feedback is labeled honestly: whenever the evaluator's provider is a demo provider (`isDemo`), the feedback panel shows a visible line, from the `en`/`es` catalogs, saying it is a keyword-based demo evaluation (for example "Demo evaluation: based on keywords, not a full reading of your answer." / "Evaluación de demostración: se basa en palabras clave, no en una lectura completa de tu respuesta."). It sits next to the "Practice feedback" heading from task 24, and the walk-through checks it in EN and ES.
   - Esc on the privacy dialog: while the engine stays in `privacy`, the app shows the intro screen with a Start button; Start reopens the dialog (it does not dispatch `start` again, which the engine would ignore).
