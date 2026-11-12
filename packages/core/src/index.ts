@@ -30,7 +30,7 @@ export type { MouthCue, Timeline, Viseme, WordCue } from './speech/timeline';
 export { buildTimeline } from './speech/timeline';
 export { resync, wordAt, wordIndexAt } from './speech/sync';
 export type { VoiceInfo } from './speech/voices';
-export { pickVoice } from './speech/voices';
+export { pickVoice, speechLang } from './speech/voices';
 export type { Expression, GhostActivity, GhostPose, GhostState } from './ghost/pose';
 export { ghostPose } from './ghost/pose';
 export type { EvaluateInput, LLMProvider, LLMRequest, LLMResult, LLMTask } from './llm/types';

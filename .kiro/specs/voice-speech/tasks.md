@@ -219,7 +219,8 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §2.2; Requirements: 4.6_
 
 ### packages/web: VoiceAdapter
-- [ ] 24. VoiceAdapter: availability, store, listen
+- [x] 24. VoiceAdapter: availability, store, listen
+  - Owner addition (after task 21, Brave): a recognizer that can't be created, can't start, or reports `service-not-allowed` or `network` makes voice unavailable with `voice.unavailable` (the keyboard fallback), not an error message. Task 27's error mapping applies to the other codes. The `voice.unavailable` catalog key is added in task 31.
   - **Done when:** unit tests with a fake `RecognitionLike` show:
     - with no constructor, `checkAvailability()` gives unavailable with `voice.unavailable`;
     - `checkAvailability()` creates no recognizer;
