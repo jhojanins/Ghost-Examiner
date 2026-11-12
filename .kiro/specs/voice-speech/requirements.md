@@ -11,6 +11,7 @@ Architecture reference: `docs/ARCHITECTURE.md` D3 (text-driven lip-sync) and D6 
 - **Phase 1, ghost voice**: requirements 1, 2, 3, plus the matching parts of 11 and 12.
 - **Phase 2, voice answers**: requirements 4, 5, 6, 9 and 10, plus the matching parts of 11 and 12. When phase 2 lands, `apps/ghost-interview` stops being a Preview build (10.1).
 - **Phase 3, conversation**: requirements 7 and 8, plus the matching parts of 11 and 12.
+- **Scope-cut rule (owner)**: phases 1 and 2 are mandatory. If we are behind schedule on Nov 16, phase 3 is cut starting with hands-free mode (requirement 8); barge-in (requirement 7) is kept.
 
 ## Preview-only items
 Criteria marked **(Preview only)** apply only to a session that runs as a Preview build. After phase 2, a ghost-interview session runs as Preview only in a browser that offers fewer than 2 input methods, for example Firefox, which has no `SpeechRecognition` by default (requirement 10). After spec (c), Morse (tap) works in every browser, so this case should disappear.
@@ -159,7 +160,7 @@ Acceptance criteria:
 5. **(Preview only)** In a Preview session, THE Preview detail text SHALL name the missing method and the method the user can use now, in EN and ES, without blaming the user (for example: "Voice input isn't available in this browser. You can type your answers; Morse is coming."). The current text "Keyboard only for now. Voice and Morse are coming." SHALL NOT appear in a browser where voice works.
 6. Microphone permission being denied, or a missing microphone, SHALL NOT make the session a Preview session; the voice control explains the problem as in 4.10.
 
-Note: before phase 2 is marked done, the owner updates the steering line "Preview ends when voice input lands in spec (b)" (`accessibility-ethics.md`) to match 10.4.
+Note: the steering line in `accessibility-ethics.md` now matches 10.4 (owner wording, commit `60da159`). Until phase 2 lands, the code still sets `preview: true` in ghost-interview.
 
 ## Requirement 11: New controls and copy
 **User story:** As a keyboard or screen reader user, I want the new voice controls to work like the rest of the app, so that nothing new shuts me out.
@@ -183,11 +184,11 @@ Acceptance criteria:
 4. THE end-to-end suite SHALL run axe with WCAG 2.2 AA tags on the new screens and states in EN and ES, with reduced motion on and off, and SHALL keep failing on any request to another origin.
 5. THE owner SHALL check voice input and the ghost's voice once by hand in Chrome and in Safari with a real microphone, because automated runs can't use the vendors' recognition services, and the result SHALL be logged in `docs/KIRO_USAGE.md`.
 
-## Decisions for the owner
-1. **Browsers without speech recognition (requirement 10)**: recommended: `preview: false` plus a Preview session decided at runtime (10.4). Alternative: keep `preview: true` until Morse lands in spec (c). Either way, the steering line in `accessibility-ethics.md` needs your wording (note after 10.6).
-2. **Local voices only (1.3)**: recommended, because the ghost's lines will later quote the user's document (spec f) and a network voice sends that text to the vendor. Cost: browsers with only network voices (for example Chrome on Linux) get muted mode.
+## Owner decisions (2026-11-12, requirements approved)
+1. **Browsers without speech recognition**: a Preview session decided at runtime (10.4), with `preview: false` in ghost-interview. Steering updated.
+2. **Local voices only (1.3)**: yes. The ghost's lines will later quote the user's document (spec f), and a network voice would send that text to the vendor. Browsers with only network voices (for example Chrome on Linux) get muted mode.
 3. **Defaults**: sound on after the privacy notice (2.2); hands-free silence threshold 2 s, range 1 to 10 s (8.6); speech start timeout 2 s (1.6).
-4. **"Keyboard hardening"**: `docs/ARCHITECTURE.md` §6 lists it under spec (b), but it isn't in your scope for this spec. Should it be dropped from the schedule, or did you mean something specific?
+4. **"Keyboard hardening"**: dropped from the schedule (`docs/ARCHITECTURE.md` §6). Keyboard input is already covered by spec (a) task 22 and the e2e test.
 
 ## Sources
 Content was rephrased for compliance with licensing restrictions.

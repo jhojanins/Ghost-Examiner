@@ -159,8 +159,8 @@ Main schedule: (a) kit skeleton + animated ghost + Day 5 vertical slice, (b) key
 
 | Spec | Folder | Status |
 |---|---|---|
-| (a) Kit skeleton + animated ghost | `kit-skeleton-ghost/` | Requirements approved (13 requirements, EARS, with a Preview flag and two delivery phases); design drafted with 9 correctness properties and a requirement traceability table, awaiting review |
-| (b) Voice and speech | `voice-speech/` | Requirements drafted (12 requirements, EARS, 3 phases, Preview-only criteria marked), awaiting owner review |
+| (a) Kit skeleton + animated ghost | `kit-skeleton-ghost/` | Requirements, design (9 correctness properties, requirement traceability table) and tasks approved. Tasks 1–30, 32 and 33 done; 31 waits for the owner's check of `docs/DEPLOY.md`; 34 (Day 5 URL) and phase 2 tasks 35–38 pending |
+| (b) Voice and speech | `voice-speech/` | Requirements approved (12 requirements, EARS, 3 phases, Preview-only criteria marked, scope-cut rule); design next |
 
 ## Hooks (`.kiro/hooks/`)
 | Name | File | Trigger | Matcher | Action | Cost |

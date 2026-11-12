@@ -268,7 +268,7 @@ Day 1 is Nov 11. Submission is Dec 2; the official deadline (Dec 4) is buffer on
 | Nov 11 to 15 | 1 to 5 | Spec (a): kit skeleton, animated ghost, muted captions, minimal keyboard input, engine, demo evaluation, deploy pipeline |
 | **Nov 15** | **5** | **Checkpoint: vertical slice on a public URL** (ghost, one question, keyboard, confirmation, demo evaluation) |
 | Nov 16 (morning) | 6 | Spec (a) phase 2: remaining expressions and mouth shapes, floating + motion toggle, full axe matrix |
-| Nov 16 (afternoon) to Nov 19 (morning) | 6 to 9 | Spec (b): keyboard hardening, voice input, TTS with lip-sync and captions (shifted half a day) |
+| Nov 16 (afternoon) to Nov 19 (morning) | 6 to 9 | Spec (b): voice input, TTS with lip-sync and captions (shifted half a day) |
 | Nov 19 (afternoon) to 20 | 9 to 10 | Spec (c): Morse input + property-based tests (1.5 days, shortened by the half-day shift) |
 | Nov 21 to 22 | 11 to 12 | Spec (d): camera tier 1 (self-view) |
 | Nov 23 to 25 | 13 to 15 | Spec (e): ghost-interview, real LLM providers, Netlify proxy, evaluator failure path requirement (Netlify power decision Nov 14 to 15) |
