@@ -140,6 +140,18 @@ describe('PrivacyDialog', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('says the ghost speaks with voices on the device, as a point of its own, in EN and ES (spec b Req 9.2)', () => {
+    const { rerender } = setup();
+    const points = () => within(document.querySelector('dialog')!).getAllByRole('listitem').map((li) => li.textContent);
+    expect(points()).toContain(
+      'The ghost speaks with voices installed on your device, so its lines are not sent anywhere to be spoken.',
+    );
+    rerender({ locale: 'es' });
+    expect(points()).toContain(
+      'El fantasma habla con voces instaladas en tu dispositivo, así que sus frases no se envían a ningún sitio para ser leídas.',
+    );
+  });
+
   it('says honestly what happens with the data, in EN and ES', () => {
     const { rerender } = setup();
     const en = document.querySelector('dialog')!.textContent!;

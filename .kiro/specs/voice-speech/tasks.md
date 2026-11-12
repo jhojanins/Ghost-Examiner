@@ -132,7 +132,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §3.2, §6; Requirements: 1.6_
 
 ### Copy and controls
-- [ ] 14. Sound copy and the ghost-voice privacy paragraph
+- [x] 14. Sound copy and the ghost-voice privacy paragraph
   - `sound.*` keys and `privacy.ghostVoice` in `en` and `es` (design §2.6); `PrivacyDialog` shows the new paragraph.
   - **Done when:**
     - typecheck passes (same keys in both catalogs);

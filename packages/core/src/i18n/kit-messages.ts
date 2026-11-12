@@ -26,12 +26,20 @@ export const kitMessages = defineCatalog(
     'ghost.label.approving': 'The ghost examiner, looking satisfied.',
     'ghost.label.skeptical': 'The ghost examiner, looking skeptical.',
     'transcript.heading': 'Transcript',
+    // Sound control (spec b Req 1.4, 1.6, 2.1). Plain status text: what happened and what still works.
+    'sound.label': 'Ghost voice',
+    'sound.noVoice': 'This browser has no voice for this language, so the ghost speaks with captions only.',
+    'sound.failed': 'The voice stopped working, so it is off. Captions continue. You can turn it on again.',
+    'sound.noApi': "This browser can't speak aloud, so the ghost speaks with captions only.",
 
     // Privacy notice (Req 10.2, steering accessibility-ethics.md). Plain and honest; no jokes.
     'privacy.title': 'Privacy notice',
     'privacy.intro': 'Before we start, here is what happens with what you type.',
     'privacy.local':
       'Demo mode runs entirely in your browser. Your answers are not sent to any server, and they are gone when you close the page.',
+    // Spec b Req 9.2: true because the kit only ever picks local voices (pickVoice, Req 1.3).
+    'privacy.ghostVoice':
+      'The ghost speaks with voices installed on your device, so its lines are not sent anywhere to be spoken.',
     'privacy.noPersonalData':
       'Please do not enter personal or sensitive data, such as your full name, address, health or money details. Made-up examples work just as well.',
     'privacy.freeTier':
@@ -93,11 +101,17 @@ export const kitMessages = defineCatalog(
     'ghost.label.approving': 'El examinador fantasma, satisfecho.',
     'ghost.label.skeptical': 'El examinador fantasma, con cara de duda.',
     'transcript.heading': 'Transcripción',
+    'sound.label': 'Voz del fantasma',
+    'sound.noVoice': 'Este navegador no tiene voz para este idioma, así que el fantasma habla solo con subtítulos.',
+    'sound.failed': 'La voz dejó de funcionar, así que está apagada. Los subtítulos siguen. Puedes volver a encenderla.',
+    'sound.noApi': 'Este navegador no puede hablar en voz alta, así que el fantasma habla solo con subtítulos.',
 
     'privacy.title': 'Aviso de privacidad',
     'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes.',
     'privacy.local':
       'El modo demo funciona por completo en tu navegador. Tus respuestas no se envían a ningún servidor y desaparecen al cerrar la página.',
+    'privacy.ghostVoice':
+      'El fantasma habla con voces instaladas en tu dispositivo, así que sus frases no se envían a ningún sitio para ser leídas.',
     'privacy.noPersonalData':
       'Por favor, no escribas datos personales ni sensibles, como tu nombre completo, tu dirección o datos de salud o de dinero. Los ejemplos inventados funcionan igual de bien.',
     'privacy.freeTier':
