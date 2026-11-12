@@ -40,6 +40,10 @@ export const kitMessages = defineCatalog(
     'privacy.notNow': 'Not now',
     'privacy.close': 'Close',
 
+    // Strict build whose question pack fails validation (Req 5.5, design §3.4).
+    'session.blocked':
+      "This practice can't start yet: each question needs at least two ways to answer. Please try again later.",
+
     // Keyboard answer (Req 6). The error says what happened and what to do.
     'keyboard.label': 'Your answer',
     'keyboard.hint': 'Press Ctrl+Enter (⌘+Enter on Mac) to submit.',
@@ -101,6 +105,9 @@ export const kitMessages = defineCatalog(
     'privacy.accept': 'Entendido, empezar',
     'privacy.notNow': 'Ahora no',
     'privacy.close': 'Cerrar',
+
+    'session.blocked':
+      'Esta práctica todavía no puede empezar: cada pregunta necesita al menos dos formas de responder. Inténtalo más tarde.',
 
     'keyboard.label': 'Tu respuesta',
     'keyboard.hint': 'Presiona Ctrl+Enter (⌘+Enter en Mac) para enviar.',

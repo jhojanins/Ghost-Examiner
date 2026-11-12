@@ -1,0 +1,23 @@
+/* Ghost and captions on top, the current step below, then the transcript. Normal flow only,
+   so captions never cover the focused element (Req 4.5). */
+.gi-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gi-ghost {
+  width: 150px;
+}
+
+.gi-panel,
+.ge-confirm,
+.ge-feedback {
+  margin: 1.5rem auto 0;
+  max-width: 42rem;
+}
+
+.gi-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
