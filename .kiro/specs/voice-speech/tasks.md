@@ -35,7 +35,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - examples cover whitespace positions (next token), positions past the end (last token) and an empty line (`-1`).
   - _Design §2.3; Requirements: 3.3_ · Skills: `testing-strategy`
 
-- [ ] 3. `wordAt` and `resync` with property P12
+- [x] 3. `wordAt` and `resync` with property P12
   - **Done when:**
     - P12 passes: `wordAt(resync(t, e, w)) === max(clamp(w), wordAt(t, e))`;
     - one example per case passes: the audio is ahead (jump), in step (unchanged elapsed), and the estimate is ahead (hold on the current word start);

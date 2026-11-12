@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { wordIndexAt } from './sync';
+import { resync, wordAt, wordIndexAt } from './sync';
+import { buildTimeline } from './timeline';
 
 describe('wordIndexAt', () => {
   it('maps a character inside a word to that word', () => {
@@ -30,5 +31,46 @@ describe('wordIndexAt', () => {
   it('returns -1 for a line with no words', () => {
     expect(wordIndexAt('', 0)).toBe(-1);
     expect(wordIndexAt(' \n ', 1)).toBe(-1);
+  });
+});
+
+// Tell 0..260, me 260..390, more. 390..650, then a 400 ms pause: duration 1050.
+const line = buildTimeline('Tell me more.', 'en');
+const empty = buildTimeline('', 'en');
+
+describe('wordAt', () => {
+  it('is the last word that has started, or -1 before the first', () => {
+    expect([-1, 0, 259, 260, 389, 390, 2000].map((e) => wordAt(line, e))).toEqual([-1, 0, 0, 1, 1, 2, 2]);
+  });
+
+  it('is -1 for a timeline with no words', () => {
+    expect(wordAt(empty, 5)).toBe(-1);
+  });
+});
+
+describe('resync', () => {
+  it('jumps forward to the reported word when the audio is ahead', () => {
+    expect(resync(line, 100, 2)).toBe(390);
+  });
+
+  it('keeps elapsed when the reported word is the current one, so the mouth never stutters', () => {
+    expect(resync(line, 300, 1)).toBe(300);
+  });
+
+  it('holds on the current word start when the estimate is ahead of the audio', () => {
+    expect(resync(line, 500, 0)).toBe(390);
+  });
+
+  it('clamps an out-of-range word index', () => {
+    expect(resync(line, 100, 9)).toBe(390); // last word
+    expect(resync(line, 300, -4)).toBe(260); // first word is behind "me": hold on "me"
+  });
+
+  it('jumps to the reported word when no word has started yet', () => {
+    expect(resync(line, -50, 1)).toBe(260);
+  });
+
+  it('returns elapsed unchanged for a timeline with no words', () => {
+    expect(resync(empty, 123, 0)).toBe(123);
   });
 });
