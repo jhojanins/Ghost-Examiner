@@ -1,4 +1,4 @@
-import { pickVoice, type Clock, type Locale, type Timeline, type VoiceInfo } from '@ghost-examiner/core';
+import { pickVoice, resync, wordIndexAt, type Clock, type Locale, type Timeline, type VoiceInfo } from '@ghost-examiner/core';
 import type { Playback, SpeechOutput } from './silent-output';
 
 /**
@@ -136,6 +136,13 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
       if (!live(line)) return;
       line.started = true;
       line.anchor = clock.now();
+    };
+    // Req 3.2: shift the origin so the reported word is current. Without boundary events
+    // (many network voices) the origin stays at `start` and the estimate drives the mouth (Req 3.4).
+    utterance.onboundary = (e) => {
+      if (!live(line) || !line.started || e.name !== 'word') return;
+      const now = clock.now();
+      line.anchor = now - resync(line.timeline, now - line.anchor, wordIndexAt(line.text, e.charIndex));
     };
     utterance.onend = () => {
       if (live(line)) settle(line);

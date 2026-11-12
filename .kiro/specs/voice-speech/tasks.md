@@ -100,7 +100,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - an empty list 2 s after creation gives `reason: 'no-voice'`.
   - _Design §3.2; Requirements: 1.3, 1.4, 1.5_
 
-- [ ] 12. WebSpeechOutput: mouth resync on boundary events
+- [x] 12. WebSpeechOutput: mouth resync on boundary events
   - **Done when:** unit tests show:
     - a `word` boundary at the third word moves `origin()` so that `wordAt(now - origin())` is 2;
     - a boundary behind the estimate holds on the current word;

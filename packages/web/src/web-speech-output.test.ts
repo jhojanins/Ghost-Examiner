@@ -1,4 +1,4 @@
-import { buildTimeline } from '@ghost-examiner/core';
+import { buildTimeline, wordAt } from '@ghost-examiner/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWebSpeechOutput, type SynthLike, type UtteranceCtor, type UtteranceLike } from './web-speech-output';
 
@@ -284,5 +284,75 @@ describe('createWebSpeechOutput: voice choice and audio playback', () => {
     expect(output.getSnapshot()).toEqual({ on: true });
     output.speak(spanish);
     expect(utterances.map((u) => u.voice?.name)).toEqual(['Paulina']);
+  });
+});
+
+describe('createWebSpeechOutput: mouth resync on boundary events', () => {
+  // "Tell me more.": Tell 0-260 ms (char 0), me 260-390 (char 5), more. 390-650 (char 8).
+  const word = (charIndex: number) => ({ name: 'word', charIndex });
+  /** A spoken line that started at 5000 and is `ms` into its audio. */
+  async function speaking(ms: number) {
+    const setup = unlocked();
+    const playback = setup.output.speak(line);
+    setup.utterances[0].fire('start');
+    await vi.advanceTimersByTimeAsync(ms);
+    const at = () => wordAt(line.timeline, clock.now() - playback.origin());
+    return { ...setup, playback, utterance: setup.utterances[0], at };
+  }
+
+  it('a word boundary ahead of the estimate jumps to that word', async () => {
+    const { playback, utterance, at } = await speaking(100);
+    expect(at()).toBe(0);
+    utterance.fire('boundary', word(8));
+    expect(at()).toBe(2);
+    expect(playback.origin()).toBe(clock.now() - 390);
+  });
+
+  it('a boundary behind the estimate holds on the current word, never moving back', async () => {
+    const { playback, utterance, at } = await speaking(300);
+    expect(at()).toBe(1);
+    utterance.fire('boundary', word(0));
+    expect(at()).toBe(1);
+    expect(playback.origin()).toBe(clock.now() - 260); // waits at the start of "me"
+  });
+
+  it('a boundary on the current word keeps the origin, so the mouth never stutters', async () => {
+    const { playback, utterance } = await speaking(300);
+    const before = playback.origin();
+    utterance.fire('boundary', word(5));
+    expect(playback.origin()).toBe(before);
+  });
+
+  it('a character inside the current word counts as that word', async () => {
+    const { playback, utterance } = await speaking(100);
+    const before = playback.origin();
+    utterance.fire('boundary', word(3)); // the "l" at the end of "Tell"
+    expect(playback.origin()).toBe(before);
+  });
+
+  it('a sentence boundary changes nothing', async () => {
+    const { playback, utterance } = await speaking(100);
+    const before = playback.origin();
+    utterance.fire('boundary', { name: 'sentence', charIndex: 8 });
+    expect(playback.origin()).toBe(before);
+  });
+
+  it('a boundary before the start event changes nothing', () => {
+    const { output, utterances } = unlocked();
+    const playback = output.speak(line);
+    utterances[0].fire('boundary', word(8));
+    expect(playback.origin()).toBe(Infinity);
+  });
+
+  it('a boundary from an older utterance changes nothing', async () => {
+    const { output, utterances } = unlocked();
+    output.speak(line);
+    utterances[0].fire('start');
+    const second = output.speak(line);
+    utterances[1].fire('start');
+    await vi.advanceTimersByTimeAsync(100);
+    const before = second.origin();
+    utterances[0].fire('boundary', word(8));
+    expect(second.origin()).toBe(before);
   });
 });

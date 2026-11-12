@@ -28,6 +28,7 @@ export type { PackIssue } from './engine/validate-pack';
 export { validatePack } from './engine/validate-pack';
 export type { MouthCue, Timeline, Viseme, WordCue } from './speech/timeline';
 export { buildTimeline } from './speech/timeline';
+export { resync, wordAt, wordIndexAt } from './speech/sync';
 export type { VoiceInfo } from './speech/voices';
 export { pickVoice } from './speech/voices';
 export type { Expression, GhostActivity, GhostPose, GhostState } from './ghost/pose';
