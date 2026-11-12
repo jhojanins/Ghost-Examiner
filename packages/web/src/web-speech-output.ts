@@ -1,4 +1,4 @@
-import type { Clock, Timeline } from '@ghost-examiner/core';
+import { pickVoice, type Clock, type Locale, type Timeline, type VoiceInfo } from '@ghost-examiner/core';
 import type { Playback, SpeechOutput } from './silent-output';
 
 /**
@@ -33,7 +33,12 @@ export interface WebSpeechDeps {
   synth?: SynthLike;
   Utterance?: UtteranceCtor;
   clock: Clock;
+  /** The browser's preferred languages (`navigator.languages`), for the voice's region. */
+  languages: readonly string[];
 }
+
+/** How long an empty voice list counts as "still loading" (some systems never fire voiceschanged). */
+const VOICES_GRACE_MS = 2000;
 
 /** One line: spoken aloud, or played on the clock (muted) like SilentOutput. */
 interface Line {
@@ -58,10 +63,39 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
   let on = true; // sound on by default (Req 2.2)
   let unlocked = false;
   let current: Line | undefined;
+  let lastLocale: Locale | undefined; // language of the latest line: the one the "no-voice" reason is about
+  let voicesLoading = true;
   const listeners = new Set<() => void>();
 
-  const viewNow = (): SoundView => (api ? { on } : { on: false, reason: 'no-api' });
+  /** The local voice `pickVoice` chooses for `locale` (Req 1.3), from the current voice list. */
+  function voiceFor(locale: Locale): SpeechSynthesisVoice | undefined {
+    const voices = api?.synth.getVoices() ?? [];
+    const infos: VoiceInfo[] = voices.map((v) => ({ name: v.name, lang: v.lang, localService: v.localService, isDefault: v.default }));
+    const chosen = pickVoice(infos, locale, deps.languages);
+    return chosen && voices[infos.indexOf(chosen)];
+  }
+
+  function reasonNow(): SoundView['reason'] {
+    if (!api) return 'no-api';
+    if (api.synth.getVoices().length === 0) return voicesLoading ? undefined : 'no-voice';
+    if (lastLocale && !voiceFor(lastLocale)) return 'no-voice';
+    return undefined;
+  }
+
+  const viewNow = (): SoundView => {
+    const reason = reasonNow();
+    if (reason === 'no-api') return { on: false, reason };
+    return reason ? { on, reason } : { on };
+  };
   let view = viewNow();
+
+  if (api) {
+    api.synth.addEventListener('voiceschanged', () => refresh()); // Req 1.5
+    setTimeout(() => {
+      voicesLoading = false;
+      refresh();
+    }, VOICES_GRACE_MS);
+  }
 
   /** Recomputes the view; replaces the snapshot and notifies only when something changed. */
   function refresh() {
@@ -85,10 +119,28 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
     line.timer = setTimeout(() => settle(line), Math.max(0, line.anchor + line.timeline.duration - clock.now()));
   }
 
-  function speakAloud(line: Line, { synth, Utterance }: NonNullable<typeof api>) {
+  /**
+   * Events count only while the line is still audio and not ended. An older line is always
+   * settled (a new `speak` cancels it first), so its events never count.
+   */
+  const live = (line: Line) => line.audio && !line.settled;
+
+  function speakAloud(line: Line, voice: SpeechSynthesisVoice, { synth, Utterance }: NonNullable<typeof api>) {
     line.audio = true;
     line.anchor = Infinity;
-    synth.speak(new Utterance(line.text));
+    const utterance = new Utterance(line.text);
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = 1;
+    utterance.onstart = () => {
+      if (!live(line)) return;
+      line.started = true;
+      line.anchor = clock.now();
+    };
+    utterance.onend = () => {
+      if (live(line)) settle(line);
+    };
+    synth.speak(utterance);
   }
 
   function cancel() {
@@ -99,14 +151,17 @@ export function createWebSpeechOutput(deps: WebSpeechDeps): VoiceOutput {
   }
 
   return {
-    speak({ text, timeline }): Playback {
+    speak({ text, locale, timeline }): Playback {
       cancel();
+      lastLocale = locale;
+      refresh();
       const startedAt = clock.now();
       let finish!: () => void;
       const done = new Promise<void>((resolve) => (finish = resolve));
       const line: Line = { text, timeline, anchor: startedAt, audio: false, started: false, settled: false, finish };
       current = line;
-      if (api && unlocked && on) speakAloud(line, api);
+      const voice = api && unlocked && on ? voiceFor(locale) : undefined;
+      if (api && voice) speakAloud(line, voice, api);
       else runOnClock(line);
       return { startedAt, origin: () => line.anchor, audible: () => line.audio && line.started, done };
     },

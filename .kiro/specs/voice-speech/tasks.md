@@ -91,7 +91,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - with a fake synth, no utterance is created before `unlock()`, and one is created after it.
   - _Design §3.2; Requirements: 1.1, 1.2, 2.2_
 
-- [ ] 11. WebSpeechOutput: voice choice and audio playback
+- [x] 11. WebSpeechOutput: voice choice and audio playback
   - Utterance with `lang`, `voice` and `rate = 1`; `origin()` is `Infinity` until `start`, then the start time; `done` resolves on `end`; voice list from `getVoices()` and `voiceschanged`.
   - **Done when:** unit tests with a fake synth show:
     - the chosen voice is the `pickVoice` result;

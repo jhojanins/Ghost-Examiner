@@ -17,7 +17,9 @@ function track(done: Promise<void>) {
  * `interrupted` error on every utterance that was spoken and has not ended; here it fires
  * synchronously, the harshest order for the code under test.
  */
-function fakes() {
+function fakes(initialVoices: SpeechSynthesisVoice[] = [alex]) {
+  let voices = initialVoices;
+  const voicesChanged: (() => void)[] = [];
   const utterances: FakeUtterance[] = [];
   const spoken: FakeUtterance[] = [];
   class FakeUtterance implements UtteranceLike {
@@ -44,11 +46,29 @@ function fakes() {
     cancel: vi.fn(() => {
       for (const u of spoken) if (!u.ended) u.fire('error', { error: 'interrupted' });
     }),
-    getVoices: () => [] as SpeechSynthesisVoice[],
-    addEventListener: vi.fn(),
+    getVoices: () => voices,
+    addEventListener: vi.fn((_: 'voiceschanged', listener: () => void) => void voicesChanged.push(listener)),
   } satisfies SynthLike;
-  return { synth, Utterance: FakeUtterance satisfies UtteranceCtor, utterances, spoken };
+  /** The browser's voice list changes, as when voices finish loading. */
+  const setVoices = (next: SpeechSynthesisVoice[]) => {
+    voices = next;
+    for (const listener of voicesChanged) listener();
+  };
+  return { synth, Utterance: FakeUtterance satisfies UtteranceCtor, utterances, spoken, setVoices };
 }
+
+const voice = (name: string, lang: string, localService = true, isDefault = false): SpeechSynthesisVoice => ({
+  name,
+  lang,
+  localService,
+  default: isDefault,
+  voiceURI: name,
+});
+const alex = voice('Alex', 'en-US');
+const daniel = voice('Daniel', 'en-GB');
+const network = voice('Google US English', 'en-US', false, true);
+const paulina = voice('Paulina', 'es-MX');
+const monica = voice('Mónica', 'es-ES', true, true);
 
 beforeEach(() => vi.useFakeTimers({ now: 5000 }));
 afterEach(() => vi.useRealTimers());
@@ -58,7 +78,7 @@ describe('createWebSpeechOutput: no speech API', () => {
     ['no speechSynthesis', { Utterance: fakes().Utterance }],
     ['no SpeechSynthesisUtterance', { synth: fakes().synth }],
   ])('%s: sound is off with reason no-api, and setOn(true) cannot turn it on', (_, api) => {
-    const output = createWebSpeechOutput({ ...api, clock });
+    const output = createWebSpeechOutput({ ...api, clock, languages: [] });
     expect(output.getSnapshot()).toEqual({ on: false, reason: 'no-api' });
     output.unlock();
     output.setOn(true);
@@ -66,7 +86,7 @@ describe('createWebSpeechOutput: no speech API', () => {
   });
 
   it('plays every line on the clock, like SilentOutput', async () => {
-    const output = createWebSpeechOutput({ clock });
+    const output = createWebSpeechOutput({ clock, languages: [] });
     output.unlock();
     const playback = output.speak(line);
     expect(playback.startedAt).toBe(5000);
@@ -80,7 +100,7 @@ describe('createWebSpeechOutput: no speech API', () => {
   });
 
   it('cancel() and a new line end the current clock line early', async () => {
-    const output = createWebSpeechOutput({ clock });
+    const output = createWebSpeechOutput({ clock, languages: [] });
     const first = track(output.speak(line).done);
     const second = output.speak(line);
     await vi.advanceTimersByTimeAsync(0);
@@ -94,12 +114,12 @@ describe('createWebSpeechOutput: no speech API', () => {
 describe('createWebSpeechOutput: unlock and the sound switch', () => {
   it('sound is on by default when the API exists', () => {
     const { synth, Utterance } = fakes();
-    expect(createWebSpeechOutput({ synth, Utterance, clock }).getSnapshot()).toEqual({ on: true });
+    expect(createWebSpeechOutput({ synth, Utterance, clock, languages: [] }).getSnapshot()).toEqual({ on: true });
   });
 
   it('creates no utterance before unlock(), and one with the line text after it', () => {
     const { synth, Utterance, utterances } = fakes();
-    const output = createWebSpeechOutput({ synth, Utterance, clock });
+    const output = createWebSpeechOutput({ synth, Utterance, clock, languages: [] });
 
     const before = output.speak(line);
     expect(utterances).toHaveLength(0);
@@ -116,7 +136,7 @@ describe('createWebSpeechOutput: unlock and the sound switch', () => {
 
   it('with sound off, lines play on the clock even after unlock()', () => {
     const { synth, Utterance, utterances } = fakes();
-    const output = createWebSpeechOutput({ synth, Utterance, clock });
+    const output = createWebSpeechOutput({ synth, Utterance, clock, languages: [] });
     output.unlock();
     output.setOn(false);
     output.speak(line);
@@ -125,7 +145,7 @@ describe('createWebSpeechOutput: unlock and the sound switch', () => {
 
   it('cancel() on a line waiting for audio resolves it and cancels the synth', async () => {
     const { synth, Utterance } = fakes();
-    const output = createWebSpeechOutput({ synth, Utterance, clock });
+    const output = createWebSpeechOutput({ synth, Utterance, clock, languages: [] });
     output.unlock();
     const { done } = output.speak(line);
     output.cancel();
@@ -135,7 +155,7 @@ describe('createWebSpeechOutput: unlock and the sound switch', () => {
 
   it('setOn notifies subscribers once per change, with a stable snapshot between changes', () => {
     const { synth, Utterance } = fakes();
-    const output = createWebSpeechOutput({ synth, Utterance, clock });
+    const output = createWebSpeechOutput({ synth, Utterance, clock, languages: [] });
     const listener = vi.fn();
     const unsubscribe = output.subscribe(listener);
     const first = output.getSnapshot();
@@ -158,5 +178,111 @@ describe('createWebSpeechOutput: unlock and the sound switch', () => {
       Utterance: Utterance satisfies UtteranceCtor,
     });
     expect(typeof fits).toBe('function');
+  });
+});
+
+/** An unlocked output over fake speech: the state after the privacy notice was accepted. */
+function unlocked(voices?: SpeechSynthesisVoice[], languages: readonly string[] = ['en-US']) {
+  const f = fakes(voices);
+  const output = createWebSpeechOutput({ synth: f.synth, Utterance: f.Utterance, clock, languages });
+  output.unlock();
+  return { ...f, output };
+}
+const spanish = { text: 'Cuéntame más.', locale: 'es' as const, timeline: buildTimeline('Cuéntame más.', 'es') };
+
+describe('createWebSpeechOutput: voice choice and audio playback', () => {
+  it('speaks with the pickVoice voice for the line language, its lang and rate 1', () => {
+    const { output, utterances } = unlocked([network, alex, daniel, paulina, monica], ['en-GB', 'es-MX']);
+    output.speak(line);
+    output.speak(spanish);
+    expect(utterances.map((u) => [u.text, u.voice?.name, u.lang, u.rate])).toEqual([
+      [text, 'Daniel', 'en-GB', 1], // the preferred region; the network default is never used
+      ['Cuéntame más.', 'Paulina', 'es-MX', 1], // the preferred region beats the default voice
+    ]);
+  });
+
+  it('origin() is Infinity until the start event, then the start time; done resolves on end', async () => {
+    const { output, utterances } = unlocked();
+    const playback = output.speak(line);
+    const state = track(playback.done);
+    expect(playback.origin()).toBe(Infinity);
+
+    await vi.advanceTimersByTimeAsync(300);
+    utterances[0].fire('start');
+    expect(playback.origin()).toBe(5300);
+    expect(playback.audible()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(5000); // audio may outlast the estimate: only `end` ends it
+    expect(state.resolved).toBe(false);
+    utterances[0].fire('end');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.resolved).toBe(true);
+    expect(playback.audible()).toBe(true); // it was heard
+  });
+
+  it('an end without a start resolves the line as not heard', async () => {
+    const { output, utterances } = unlocked();
+    const playback = output.speak(line);
+    utterances[0].fire('end');
+    await expect(playback.done).resolves.toBeUndefined();
+    expect(playback.audible()).toBe(false);
+  });
+
+  it('ignores the events of an older utterance', async () => {
+    const { output, utterances } = unlocked();
+    output.speak(line);
+    const second = output.speak(line);
+    const state = track(second.done);
+    utterances[0].fire('start');
+    utterances[0].fire('end');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(second.origin()).toBe(Infinity);
+    expect(state.resolved).toBe(false);
+  });
+
+  it('no local voice for the language: that line plays on the clock and the view says no-voice', () => {
+    const { output, utterances } = unlocked([alex, voice('Google español', 'es-ES', false)]);
+    const listener = vi.fn();
+    output.subscribe(listener);
+
+    const muted = output.speak(spanish);
+    expect(utterances).toHaveLength(0);
+    expect(muted.origin()).toBe(muted.startedAt);
+    expect(output.getSnapshot()).toEqual({ on: true, reason: 'no-voice' });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    output.speak(line); // English has a voice
+    expect(utterances).toHaveLength(1);
+    expect(output.getSnapshot()).toEqual({ on: true });
+  });
+
+  it('an empty voice list: no reason during the first 2 s, then no-voice; voices arriving clear it', async () => {
+    const { output, utterances, setVoices } = unlocked([]);
+    const listener = vi.fn();
+    output.subscribe(listener);
+
+    output.speak(line); // voices are still loading: muted, no reason yet
+    expect(utterances).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(output.getSnapshot()).toEqual({ on: true, reason: 'no-voice' });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    setVoices([alex]);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    expect(listener).toHaveBeenCalledTimes(2);
+    output.speak(line);
+    expect(utterances.map((u) => u.voice?.name)).toEqual(['Alex']);
+  });
+
+  it('chooses again when the voice list changes', () => {
+    const { output, utterances, setVoices } = unlocked([alex]);
+    output.speak(spanish);
+    expect(output.getSnapshot().reason).toBe('no-voice');
+    setVoices([alex, paulina]);
+    expect(output.getSnapshot()).toEqual({ on: true });
+    output.speak(spanish);
+    expect(utterances.map((u) => u.voice?.name)).toEqual(['Paulina']);
   });
 });
