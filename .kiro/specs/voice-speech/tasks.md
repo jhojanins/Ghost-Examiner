@@ -143,7 +143,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - **Done when:** a component test with a fake store re-renders on `subscribe` notifications only, and returns the new snapshot.
   - _Design §4; Requirements: 2.1_
 
-- [ ] 16. `SoundToggle` component
+- [x] 16. `SoundToggle` component
   - **Done when:** component tests show:
     - a native button with `aria-pressed` that reflects `on`, with its label in EN and ES;
     - the `reason` status text for `no-voice` and `failed`;

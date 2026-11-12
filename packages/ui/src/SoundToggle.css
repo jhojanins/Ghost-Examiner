@@ -1,0 +1,43 @@
+.ge-sound {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+/* Same look as the language buttons: target >= 24 px (WCAG 2.5.8), accent border 13.0:1 on the surface. */
+.ge-sound-button {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.875rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* On differs by fill and weight, not by hue alone (WCAG 1.4.1): --on-accent on --accent is 14.4:1. */
+.ge-sound-button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+/* No speech API: a dashed border marks it unavailable; the text keeps full contrast. */
+.ge-sound-button[aria-disabled='true'] {
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/*
+ * --text-muted: 10.85:1 on --surface, 9.38:1 or more on the scene gradient. Empty unless there is
+ * a reason, but never display:none: a live region must stay in the accessibility tree, or some
+ * screen readers miss the text when it appears.
+ */
+.ge-sound-status {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}

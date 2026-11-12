@@ -16,6 +16,8 @@ export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
 export type { PrivacyDialogProps } from './PrivacyDialog';
 export { PrivacyDialog } from './PrivacyDialog';
+export type { SoundState, SoundToggleProps } from './SoundToggle';
+export { SoundToggle } from './SoundToggle';
 export type { TranscriptLine, TranscriptProps } from './Transcript';
 export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';
