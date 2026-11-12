@@ -150,7 +150,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - Enter and Space call `onChange`.
   - _Design §4; Requirements: 1.4, 1.6, 2.1_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 17. `AppShell` `soundControl` slot
+- [x] 17. `AppShell` `soundControl` slot
   - **Done when:** component tests show the slot renders before the language switch in the header actions, and nothing renders when it is omitted (ghost-defense).
   - _Design §4; Requirements: 2.1_ · Skills: `a11y-review`
 

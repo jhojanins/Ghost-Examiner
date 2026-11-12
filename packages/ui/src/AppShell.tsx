@@ -11,6 +11,8 @@ export interface AppShellProps {
   preview: boolean;
   /** Replaces the kit's Preview explanation when it would not be true for this app. */
   previewNote?: string;
+  /** Slot for the SoundToggle (spec b Req 2.1): same place on every screen, before the language switch. */
+  soundControl?: ReactNode;
   /** Slot for the LanguageSwitch (task 17). */
   languageSwitch?: ReactNode;
   /** Opens the privacy notice; same place on every screen (Req 10.4, WCAG 3.2.6). */
@@ -21,7 +23,16 @@ export interface AppShellProps {
 const MAIN_ID = 'main-content';
 
 /** Page frame shared by both apps (design §5.1): skip link, header, and <main>. */
-export function AppShell({ title, locale, preview, previewNote, languageSwitch, onPrivacy, children }: AppShellProps) {
+export function AppShell({
+  title,
+  locale,
+  preview,
+  previewNote,
+  soundControl,
+  languageSwitch,
+  onPrivacy,
+  children,
+}: AppShellProps) {
   const m = kitMessages[locale];
 
   // Keeps <html lang> in step with the UI language (Req 9.2, WCAG 3.1.1).
@@ -43,6 +54,7 @@ export function AppShell({ title, locale, preview, previewNote, languageSwitch, 
           </p>
         )}
         <div className="ge-header-actions">
+          {soundControl}
           {languageSwitch}
           <button type="button" className="ge-link-button" onClick={onPrivacy}>
             {m['shell.privacy']}

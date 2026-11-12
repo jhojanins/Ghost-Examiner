@@ -68,4 +68,19 @@ describe('AppShell', () => {
     privacy.click();
     expect(onPrivacy).toHaveBeenCalledTimes(1);
   });
+
+  it('the sound control slot comes first in the header actions, before the language switch (spec b Req 2.1)', () => {
+    shell({
+      soundControl: <button type="button">Ghost voice</button>,
+      languageSwitch: <button type="button">Language switch</button>,
+    });
+    const order = [...screen.getByRole('banner').querySelectorAll('button')].map((b) => b.textContent);
+    expect(order).toEqual(['Ghost voice', 'Language switch', 'Privacy notice']);
+  });
+
+  it('without a sound control (ghost-defense), the header actions are unchanged', () => {
+    shell({ languageSwitch: <button type="button">Language switch</button> });
+    const order = [...screen.getByRole('banner').querySelectorAll('button')].map((b) => b.textContent);
+    expect(order).toEqual(['Language switch', 'Privacy notice']);
+  });
 });
