@@ -34,9 +34,18 @@ export interface LineView {
   playing: boolean;
 }
 
+/** A ghost line that has stopped (finished, replaced by a newer line, or cancelled). */
+export interface TranscriptEntry {
+  id: number;
+  text: string;
+  locale: Locale;
+}
+
 export interface SessionView {
   state: SessionState;
   line?: LineView;
+  /** Every line the ghost said, in order (Req 4.4). */
+  transcript: readonly TranscriptEntry[];
 }
 
 export type SessionHandle =
@@ -66,10 +75,32 @@ export function createSession(deps: SessionDeps): SessionHandle {
   let lineRef: LineRef | undefined;
   let playback = 0; // identifies the current playback, so a cancelled one never ends the line
   let inputKey: string | undefined; // question and locale the adapters were started for
-  let view: SessionView = { state };
+  let transcript: readonly TranscriptEntry[] = [];
+  let view: SessionView = { state, transcript };
   const listeners = new Set<() => void>();
 
+  /**
+   * The current line stops playing and goes into the transcript in the language it ended in.
+   * Once only: a line that is not playing returns early, and a replay keeps the same playing line.
+   */
+  function stopLine() {
+    if (!line?.playing) return;
+    line = { ...line, playing: false };
+    transcript = [...transcript, { id: line.id, text: line.text, locale: line.locale }];
+  }
+
+  /**
+   * Silences the ghost now. Its playback still resolves and sends `line-done`, which the engine
+   * ignores: it accepts `line-done` only in `asking`, and every new line there has a new id.
+   */
+  function cancelLine() {
+    if (!line?.playing) return;
+    deps.speech.cancel();
+    stopLine();
+  }
+
   function play(id: number, ref: LineRef) {
+    if (line && line.id !== id) stopLine(); // a newer line replaces the older one (a replay keeps it)
     const { text, locale } = resolveLine(ref, state.locale);
     const timeline = buildTimeline(text, locale);
     deps.speech.cancel(); // a newer line cancels the older one
@@ -79,7 +110,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
     lineRef = ref;
     void done.then(() => {
       if (token !== playback || !line) return;
-      line = { ...line, playing: false };
+      stopLine();
       dispatch({ type: 'line-done', lineId: id }, true);
     });
   }
@@ -117,9 +148,11 @@ export function createSession(deps: SessionDeps): SessionHandle {
           .then((feedback) => dispatch({ type: 'feedback-ready', feedback }));
       }
     }
+    // Owner decision (task 27): an answer submitted while the question plays stops the ghost.
+    if (state.phase === 'confirming' && before.phase !== 'confirming') cancelLine();
     if (state.locale !== before.locale) relocalize();
     syncInputs();
-    view = { state, line };
+    view = { state, line, transcript };
     for (const listener of listeners) listener();
   }
 

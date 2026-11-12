@@ -187,6 +187,69 @@ describe('createSession', () => {
     expect(stop).toHaveBeenCalled();
   });
 
+  it('submitting during the question stops the ghost speaking (owner decision, task 27)', async () => {
+    const { handle, keyboard, speech } = setup();
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    expect(handle.getSnapshot().line).toMatchObject({ text: 'Tell me more.', playing: true });
+    const cancelsBefore = vi.mocked(speech.cancel).mock.calls.length;
+
+    keyboard.submit('My answer.');
+    const view = handle.getSnapshot();
+    expect(view.state.phase).toBe('confirming');
+    expect(vi.mocked(speech.cancel).mock.calls.length).toBe(cancelsBefore + 1);
+    expect(view.line).toMatchObject({ text: 'Tell me more.', playing: false }); // captions stay, mouth stops
+
+    await flush(); // the cancelled playback resolving must not count as anything
+    expect(handle.getSnapshot().state.phase).toBe('confirming');
+    expect(speech.speak).toHaveBeenCalledTimes(2); // greeting and question only
+  });
+
+  it('a candidate after the question finished cancels nothing', async () => {
+    const { handle, keyboard, speech, finishLast } = setup();
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    await finishLast();
+    const cancelsBefore = vi.mocked(speech.cancel).mock.calls.length;
+    keyboard.submit('My answer.');
+    expect(handle.getSnapshot().state.phase).toBe('confirming');
+    expect(vi.mocked(speech.cancel).mock.calls.length).toBe(cancelsBefore);
+  });
+
+  it('keeps a transcript of every line that stopped: finished, replaced by a newer line, or cancelled', async () => {
+    const { handle, keyboard, finishLast } = setup();
+    expect(handle.getSnapshot().transcript).toEqual([]);
+
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' }); // the question replaces the greeting mid-line
+    expect(handle.getSnapshot().transcript).toEqual([{ id: 1, text: 'Good evening.', locale: 'en' }]);
+
+    keyboard.submit('My answer.'); // cancels the question
+    expect(handle.getSnapshot().transcript.map((l) => l.text)).toEqual(['Good evening.', 'Tell me more.']);
+
+    handle.dispatch({ type: 'confirm', candidateId: handle.getSnapshot().state.candidate!.candidateId });
+    await flush();
+    await finishLast(); // the feedback summary finishes
+    expect(handle.getSnapshot().transcript.map((l) => l.text)).toEqual([
+      'Good evening.',
+      'Tell me more.',
+      'Thank you. That answer was clear and on topic.',
+    ]);
+  });
+
+  it('a line replayed in a new language enters the transcript once, in the language it ended in', async () => {
+    const { handle, finishLast } = setup();
+    handle.dispatch({ type: 'start' });
+    handle.dispatch({ type: 'privacy-accepted' });
+    handle.dispatch({ type: 'locale-changed', locale: 'es' });
+    await flush();
+    await finishLast();
+    expect(handle.getSnapshot().transcript).toEqual([
+      { id: 1, text: 'Good evening.', locale: 'en' },
+      { id: 2, text: 'Cuéntame más.', locale: 'es' },
+    ]);
+  });
+
   it('getSnapshot is stable between changes and listeners hear each change', () => {
     const { handle } = setup();
     const listener = vi.fn();
