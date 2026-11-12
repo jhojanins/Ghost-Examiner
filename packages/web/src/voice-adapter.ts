@@ -63,12 +63,23 @@ const QUICK_END_MS = 500;
 
 /**
  * Errors that mean this browser can't recognize speech at all, so voice becomes unavailable (the
- * keyboard fallback) rather than an error message (owner rule after task 21):
+ * keyboard fallback) rather than an error message (owner rules after tasks 21 and 25):
  * - `service-not-allowed`: the browser has no recognition service for the page (spec meaning);
- * - `network`: the API exists but its service doesn't answer. Brave behaves like this (its build
- *   has no speech service).
+ * - `network` while nothing was ever recognized on this page: the API exists but its service
+ *   doesn't answer. Brave behaves like this (its build has no speech service). After one success
+ *   on the page, `network` is a transient error instead.
  */
-const cannotRun = (code: string) => code === 'service-not-allowed' || code === 'network';
+const cannotRun = (code: string, everHeard: boolean) => code === 'service-not-allowed' || (code === 'network' && !everHeard);
+
+/** Error messages (Req 4.10, design §3.3), as kit catalog keys; any other code is a service error. */
+const ERRORS: Record<string, string> = {
+  'not-allowed': 'voice.error.permission',
+  'audio-capture': 'voice.error.noMic',
+  network: 'voice.error.network',
+  'language-not-supported': 'voice.error.language',
+};
+/** `aborted` is our own stop(); `no-speech` ends recognition early, which restarts it (task 26). */
+const IGNORED = new Set(['aborted', 'no-speech']);
 
 /** The results' text, final or not: trimmed pieces joined by one space (browsers differ in spacing). */
 function textOf(event: RecognitionResultEventLike, isFinal: boolean): string {
@@ -98,6 +109,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
   let stopping = false; // the user asked to stop: the next end turns the text into a candidate
   let committed = ''; // text kept from earlier recognizers in this turn (the browser ended them early)
   let quickEnds = 0; // early ends in a row that were too quick and heard nothing (loop guard)
+  let everHeard = false; // something was recognized on this page (the network rule)
   let view: VoiceView = { availability, listening: false, final: '', interim: '' };
   const listeners = new Set<() => void>();
 
@@ -106,10 +118,24 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
     for (const listener of listeners) listener();
   }
 
+  /**
+   * Ends listening for good: errors, the loop guard and "unavailable". Text recognized so far becomes
+   * a candidate (owner rule after task 25); it still goes to the confirmation step.
+   */
+  function finish(patch: Partial<VoiceView>) {
+    const r = recognizer;
+    recognizer = undefined;
+    stopping = false;
+    r?.abort(); // releases the microphone at once; its later events are ignored
+    const text = joined(view).trim();
+    committed = '';
+    update({ listening: false, final: '', interim: '', ...patch });
+    if (text) emit?.({ type: 'candidate', candidate: { text, method: 'voice' } });
+  }
+
   function becomeUnavailable() {
     availability = UNAVAILABLE;
-    recognizer = undefined;
-    update({ availability, listening: false });
+    finish({ availability });
   }
 
   /** Creates and starts one recognizer for the armed question; used by listen() and every restart. */
@@ -127,12 +153,14 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
         if (r !== recognizer) return;
         const final = textOf(e, true);
         const interim = textOf(e, false);
-        if (final || interim) heard = true;
+        if (final || interim) heard = everHeard = true;
         update({ final: join(committed, final), interim });
         emit?.({ type: 'partial', text: joined(view) }); // live captions and barge-in (Req 5.1, 7.1)
       };
       r.onerror = (e) => {
-        if (r === recognizer && cannotRun(e.error)) becomeUnavailable();
+        if (r !== recognizer || IGNORED.has(e.error)) return;
+        if (cannotRun(e.error, everHeard)) becomeUnavailable();
+        else finish({ error: ERRORS[e.error] ?? 'voice.error.service' }); // voice stays available: retry works
       };
       r.onend = () => {
         if (r !== recognizer) return; // an aborted or failed recognizer
@@ -157,7 +185,7 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
    */
   function endedEarly(heard: boolean, ms: number) {
     quickEnds = !heard && ms < QUICK_END_MS ? quickEnds + 1 : 0;
-    if (quickEnds >= QUICK_ENDS) return update({ listening: false, error: 'voice.error.service' });
+    if (quickEnds >= QUICK_ENDS) return finish({ error: 'voice.error.service' });
     committed = joined(view);
     update({ final: committed, interim: '' });
     if (ctx) begin(ctx);

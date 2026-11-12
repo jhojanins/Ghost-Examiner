@@ -243,7 +243,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - three ends in a row under 500 ms with no result stop listening with `voice.error.service`.
   - _Design §3.3; Requirements: 4.9_
 
-- [ ] 27. VoiceAdapter: errors
+- [x] 27. VoiceAdapter: errors
   - **Done when:**
     - one unit test per error code shows the right key (`permission`, `noMic`, `network`, `language`, `service`), and that `aborted` and `no-speech` are ignored;
     - after an error, voice stays available and `listen()` starts a new recognizer (retry);

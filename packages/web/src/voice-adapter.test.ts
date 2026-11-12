@@ -337,3 +337,104 @@ describe('createVoiceAdapter: early end and the loop guard (task 26)', () => {
     expect(adapter.getSnapshot()).toMatchObject({ listening: true });
   });
 });
+
+describe('createVoiceAdapter: errors (task 27)', () => {
+  const UNAVAILABLE = { available: false, reason: 'voice.unavailable' };
+  function listening() {
+    const s = setup();
+    s.adapter.start(en, s.emit);
+    s.adapter.listen();
+    return s;
+  }
+  const candidates = (events: InputEvent[]) => events.filter((e) => e.type === 'candidate');
+
+  it.each([
+    ['not-allowed', 'voice.error.permission'],
+    ['audio-capture', 'voice.error.noMic'],
+    ['language-not-supported', 'voice.error.language'],
+    ['bad-grammar', 'voice.error.service'],
+    ['something-new', 'voice.error.service'],
+  ])('"%s" stops listening with %s; voice stays available and listen() retries', (code, key) => {
+    const { adapter, instances, events } = listening();
+    instances[0].error(code);
+    instances[0].end(); // the end that follows an error changes nothing
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, error: key, availability: { available: true } });
+    expect(instances[0].abort).toHaveBeenCalled(); // the microphone is released at once
+    expect(candidates(events)).toEqual([]); // nothing was recognized
+
+    adapter.listen();
+    expect(instances).toHaveLength(2);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: true });
+    expect(adapter.getSnapshot().error).toBeUndefined();
+  });
+
+  it.each(['aborted', 'no-speech'])('"%s" is ignored: still listening, no message', (code) => {
+    const { adapter, instances } = listening();
+    instances[0].error(code);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: true });
+    expect(adapter.getSnapshot().error).toBeUndefined();
+  });
+
+  it('network after a successful recognition on this page is a transient error: message, retry, voice stays available', () => {
+    const { adapter, instances, events, emit } = listening();
+    instances[0].result([['I fixed the build', true]]);
+    adapter.stopListening();
+    instances[0].end(); // a first answer: something was recognized on this page
+    expect(candidates(events)).toHaveLength(1);
+
+    adapter.stop(); // the next question
+    adapter.start(en, emit);
+    adapter.listen();
+    instances[1].error('network');
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, error: 'voice.error.network', availability: { available: true } });
+    adapter.listen();
+    expect(instances).toHaveLength(3);
+  });
+
+  it('network before anything was recognized on this page makes voice unavailable, with no message (Brave)', async () => {
+    const { adapter, instances } = listening();
+    instances[0].error('network');
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, availability: UNAVAILABLE });
+    expect(adapter.getSnapshot().error).toBeUndefined();
+    await expect(adapter.checkAvailability()).resolves.toEqual(UNAVAILABLE);
+  });
+
+  it('text recognized before an error becomes a candidate, and the message is still set', () => {
+    const { adapter, instances, events } = listening();
+    instances[0].result([['I fixed', true], ['the build', false]]);
+    instances[0].error('audio-capture');
+    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: '', interim: '', error: 'voice.error.noMic' });
+  });
+
+  it('text recognized before the error that makes voice unavailable also becomes a candidate', () => {
+    const { adapter, instances, events } = listening();
+    instances[0].result([['I fixed the build', true]]);
+    instances[0].error('service-not-allowed');
+    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+    expect(adapter.getSnapshot().availability).toEqual(UNAVAILABLE);
+  });
+
+  it('text kept from before a loop-guard stop also becomes a candidate', () => {
+    const { adapter, instances, events } = listening();
+    instances[0].result([['I fixed the build', true]]);
+    tick(6000);
+    instances[0].end(); // early end, text kept
+    for (let i = 1; i <= 3; i++) {
+      tick(100);
+      instances[i].end(); // three quick ends with nothing heard
+    }
+    expect(adapter.getSnapshot().error).toBe('voice.error.service');
+    expect(candidates(events)).toEqual([{ type: 'candidate', candidate: { text: 'I fixed the build', method: 'voice' } }]);
+  });
+
+  it('an error after the user pressed stop is handled the same way, once', () => {
+    const { adapter, instances, events } = listening();
+    instances[0].result([['I fixed the build', true]]);
+    adapter.stopListening();
+    instances[0].error('audio-capture');
+    instances[0].end();
+    expect(candidates(events)).toHaveLength(1);
+    expect(adapter.getSnapshot().error).toBe('voice.error.noMic');
+  });
+});
