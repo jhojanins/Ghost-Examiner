@@ -38,6 +38,7 @@ Target: WCAG 2.2 AA. For detailed audits use the `a11y-review` skill.
 - Never send real sensitive data. Demo content is fictional.
 - Before any upload and before real (non-demo) mode starts, warn users in ES and EN: do not upload sensitive, confidential or personal documents, and do not include personal data in answers, because free-tier LLM providers may use submitted content to improve their products and may let human reviewers read it (this is the case for the Gemini API free tier). Name the active provider in the notice.
 - No accounts, no server-side storage of answers or documents, no analytics that track individuals.
+- The privacy notice says answers are gone when the page closes, so never store answers (or drafts, transcripts, feedback) in `localStorage`, `sessionStorage`, IndexedDB, cookies or similar without first changing that text in both languages.
 
 ## Ethics
 - Feedback is constructive and kind. The ghost can be dry and funny but never humiliates the user.
