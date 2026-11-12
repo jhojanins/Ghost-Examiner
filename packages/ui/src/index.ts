@@ -21,3 +21,5 @@ export { Transcript } from './Transcript';
 export { useGhostPose } from './useGhostPose';
 export type { SessionStore } from './useSession';
 export { useSession } from './useSession';
+export type { Store } from './useStore';
+export { useStore } from './useStore';

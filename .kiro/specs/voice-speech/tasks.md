@@ -139,7 +139,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
     - a `PrivacyDialog` component test finds the paragraph in EN and ES.
   - _Design §2.6; Requirements: 9.2, 11.1_ · Skills: `ghost-persona`, `a11y-review`
 
-- [ ] 15. `useStore` hook
+- [x] 15. `useStore` hook
   - **Done when:** a component test with a fake store re-renders on `subscribe` notifications only, and returns the new snapshot.
   - _Design §4; Requirements: 2.1_
 
