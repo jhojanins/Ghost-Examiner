@@ -1,5 +1,6 @@
 import { kitMessages, type Locale } from '@ghost-examiner/core';
 import { useEffect, useId, useRef, type SyntheticEvent } from 'react';
+import './tokens.css';
 import './PrivacyDialog.css';
 
 export interface PrivacyDialogProps {

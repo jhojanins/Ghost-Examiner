@@ -113,7 +113,7 @@ Tasks 1 and 33 trace to repository rules in `structure.md` steering rather than 
   - **Done when:** component tests show the dialog opens modal with focus inside, Accept calls `onAccept`, Esc calls `onDismiss` without `onAccept`, and the read-only mode has only a Close button.
   - _Requirements: 10.1, 10.2, 10.3_ · Skills: `a11y-review`, `ghost-persona`
 
-- [ ] 22. KeyboardInput
+- [x] 22. KeyboardInput
   - **Done when:** component tests show a visible label tied to the textarea, paste works, Ctrl+Enter and Cmd+Enter submit, an empty submit shows the inline error linked by `aria-describedby` and keeps focus, and the `draft` prop prefills the text.
   - _Requirements: 6.2, 6.3, 6.4, 7.3_ · Skills: `a11y-review`
 

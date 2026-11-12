@@ -1,0 +1,45 @@
+.ge-keyboard-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 42rem;
+}
+
+.ge-keyboard-label {
+  font-weight: 600;
+}
+
+/* Border --text-muted on --surface is 10.8:1 (WCAG 1.4.11); the focus ring comes from tokens.css. */
+.ge-keyboard-field {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--text-muted);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+.ge-keyboard-field[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+/* --text-muted on --bg-end is 9.4:1. */
+.ge-keyboard-hint {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* --error on --bg-end is 8.7:1. The message says what to do, so it does not rely on color. */
+.ge-keyboard-error {
+  margin: 0;
+  color: var(--error);
+  font-weight: 600;
+}
+
+.ge-keyboard-input .ge-button {
+  align-self: flex-start;
+}

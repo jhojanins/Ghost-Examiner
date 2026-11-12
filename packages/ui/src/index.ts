@@ -4,6 +4,8 @@ export type { CaptionLine } from './Captions';
 export { Captions } from './Captions';
 export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';
+export type { KeyboardInputProps } from './KeyboardInput';
+export { KeyboardInput } from './KeyboardInput';
 export type { LanguageSwitchProps } from './LanguageSwitch';
 export { LanguageSwitch } from './LanguageSwitch';
 export type { PrivacyDialogProps } from './PrivacyDialog';

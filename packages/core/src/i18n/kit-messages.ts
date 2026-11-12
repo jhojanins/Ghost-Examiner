@@ -40,6 +40,12 @@ export const kitMessages = defineCatalog(
     'privacy.notNow': 'Not now',
     'privacy.close': 'Close',
 
+    // Keyboard answer (Req 6). The error says what happened and what to do.
+    'keyboard.label': 'Your answer',
+    'keyboard.hint': 'Press Ctrl+Enter (⌘+Enter on Mac) to submit.',
+    'keyboard.submit': 'Submit answer',
+    'keyboard.empty': 'The answer is empty. Type a few words, then submit.',
+
     // Demo feedback (design §3.7). No jokes here: humor never comes right after a weak answer.
     'feedback.summary.approving': 'Thank you. That answer was clear and on topic.',
     'feedback.summary.skeptical': "Thank you. There's a good start here, and room to build on it.",
@@ -76,6 +82,11 @@ export const kitMessages = defineCatalog(
     'privacy.accept': 'Entendido, empezar',
     'privacy.notNow': 'Ahora no',
     'privacy.close': 'Cerrar',
+
+    'keyboard.label': 'Tu respuesta',
+    'keyboard.hint': 'Presiona Ctrl+Enter (⌘+Enter en Mac) para enviar.',
+    'keyboard.submit': 'Enviar respuesta',
+    'keyboard.empty': 'La respuesta está vacía. Escribe unas palabras y luego envíala.',
 
     'feedback.summary.approving': 'Gracias. Esa respuesta fue clara y se centró en el tema.',
     'feedback.summary.skeptical': 'Gracias. Es un buen comienzo, y todavía puedes desarrollarlo más.',
