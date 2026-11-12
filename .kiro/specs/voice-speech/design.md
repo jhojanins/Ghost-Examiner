@@ -208,13 +208,16 @@ export function createVoiceAdapter(deps: {
 - `stopListening()` calls `recognizer.stop()`, so pending results arrive. On `end`, the adapter emits a candidate with `(final + interim).trim()`. Empty text gives `error: 'voice.empty'` and no candidate (Req 4.7, 4.8).
 - **Early end** (Req 4.9): if `end` arrives while the user hasn't stopped, the text so far moves to `committed` and a new recognizer starts. `no-speech` errors are ignored for the same reason. Loop guard: three `end`s in a row, each under 500 ms after its start with no result, stop listening with `voice.error.service`.
 - **Errors** (Req 4.10):
-  - `not-allowed`, `service-not-allowed` → `voice.error.permission`;
+  - `not-allowed` → `voice.error.permission`;
   - `audio-capture` → `voice.error.noMic`;
-  - `network` → `voice.error.network`;
+  - `network` → `voice.error.network`, but see the unavailable rule below;
   - `language-not-supported` → `voice.error.language`;
-  - `aborted` → our own `stop()`, ignored;
+  - `aborted` → our own `stop()`, ignored; `no-speech` → ignored (early end);
   - anything else → `voice.error.service`.
-  If text exists, it is emitted as a candidate.
+
+  An error stops listening and shows its message; voice stays available, so the user can retry.
+- **Unavailable instead of an error** (owner decisions after tasks 21 and 25; Brave exposes the API but has no speech service, so it fails with `network`): voice becomes unavailable for the page, with reason `voice.unavailable` and no error message, when the constructor or `start()` throws, on `service-not-allowed`, or on `network` **only if nothing has been recognized yet on this page**. After one successful recognition on the page, `network` is a transient error as above.
+- **Text before an error** (owner decision after task 25): any text recognized before an error, including the error or loop guard that ends listening and the error that makes voice unavailable, becomes a candidate. It still goes through the confirmation step before any evaluation.
 - **Hands-free** (Req 8):
   - `onTurn()` calls `listen()` when `handsFree` is on.
   - Each result schedules a check at `lastResultAt + silenceMs`; when `turnEnded(...)` is true, the adapter calls `stopListening()`.

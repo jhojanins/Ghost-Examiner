@@ -244,7 +244,11 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §3.3; Requirements: 4.9_
 
 - [ ] 27. VoiceAdapter: errors
-  - **Done when:** one unit test per error code shows the right key (`permission`, `noMic`, `network`, `language`, `service`), that `aborted` is ignored, and that text recognized before the error becomes a candidate.
+  - **Done when:**
+    - one unit test per error code shows the right key (`permission`, `noMic`, `network`, `language`, `service`), and that `aborted` and `no-speech` are ignored;
+    - after an error, voice stays available and `listen()` starts a new recognizer (retry);
+    - **`network` rule (owner decision after task 25):** before anything was recognized on this page, `network` makes voice unavailable (`voice.unavailable`, no error message; the Brave case); after one successful recognition on this page, `network` is a transient error (`voice.error.network`, voice stays available, retry works);
+    - **text before an error (owner decision after task 25):** text recognized before any error becomes a candidate, also for the loop guard and for the error that makes voice unavailable; it goes to the confirmation step like any candidate.
   - _Design §3.3, §6; Requirements: 4.10_
 
 - [ ] 28. VoiceAdapter: `setLocale` while listening
