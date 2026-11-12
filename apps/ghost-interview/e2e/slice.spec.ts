@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { installFakeSpeech } from './fakes/speech-synthesis';
 
 // WCAG 2.2 AA (testing-strategy skill).
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -51,6 +52,9 @@ async function tabTo(page: Page, target: Locator, max = 20) {
   }
   throw new Error(`Tab never reached ${target}`);
 }
+
+// Fake speech in every test, so results never depend on the host's voices (spec b task 18).
+test.beforeEach(({ page }) => installFakeSpeech(page));
 
 const transcriptItems = (page: Page) => page.getByRole('region', { name: 'Transcript' }).getByRole('listitem');
 const captions = (page: Page) => page.locator('.ge-captions');

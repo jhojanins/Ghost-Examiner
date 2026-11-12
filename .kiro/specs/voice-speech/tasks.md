@@ -155,7 +155,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §4; Requirements: 2.1_ · Skills: `a11y-review`
 
 ### Wiring and end-to-end
-- [ ] 18. End-to-end fake for `speechSynthesis`
+- [x] 18. End-to-end fake for `speechSynthesis`
   - `apps/ghost-interview/e2e/fakes/speech-synthesis.ts`, an init script:
     - two local voices, en-US and es-MX;
     - `start`, `word` `boundary` and `end` fired on the estimated schedule;
