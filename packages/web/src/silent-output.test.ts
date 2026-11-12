@@ -2,7 +2,9 @@ import { buildTimeline } from '@ghost-examiner/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSilentOutput } from './silent-output';
 
-const timeline = buildTimeline('Mamá, hola.', 'es'); // 1080 ms
+const text = 'Mamá, hola.';
+const timeline = buildTimeline(text, 'es'); // 1080 ms
+const line = { text, locale: 'es' as const, timeline };
 const clock = { now: () => Date.now() }; // Date is faked by vi.useFakeTimers()
 
 function track(done: Promise<void>) {
@@ -16,7 +18,7 @@ describe('createSilentOutput', () => {
   afterEach(() => vi.useRealTimers());
 
   it('starts at the clock time and resolves exactly at timeline.duration', async () => {
-    const { startedAt, done } = createSilentOutput(clock).speak(timeline);
+    const { startedAt, done } = createSilentOutput(clock).speak(line);
     expect(startedAt).toBe(5000);
     const state = track(done);
 
@@ -28,7 +30,7 @@ describe('createSilentOutput', () => {
 
   it('cancel() resolves early, without error, and clears the timer', async () => {
     const output = createSilentOutput(clock);
-    const { done } = output.speak(timeline);
+    const { done } = output.speak(line);
     await vi.advanceTimersByTimeAsync(100);
     output.cancel();
     await expect(done).resolves.toBeUndefined();
@@ -37,13 +39,22 @@ describe('createSilentOutput', () => {
 
   it('a new line ends the previous one: one line plays at a time', async () => {
     const output = createSilentOutput(clock);
-    const first = track(output.speak(timeline).done);
+    const first = track(output.speak(line).done);
     await vi.advanceTimersByTimeAsync(100);
-    const second = output.speak(timeline);
+    const second = output.speak(line);
     await vi.advanceTimersByTimeAsync(0);
     expect(first.resolved).toBe(true);
     expect(second.startedAt).toBe(5100);
     expect(vi.getTimerCount()).toBe(1);
+  });
+
+  it('a muted playback: the timeline origin is the start time and it is never audible', async () => {
+    const playback = createSilentOutput(clock).speak(line);
+    expect(playback.origin()).toBe(playback.startedAt);
+    expect(playback.audible()).toBe(false);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(playback.origin()).toBe(5000);
+    expect(playback.audible()).toBe(false);
   });
 
   it('cancel() with nothing playing does nothing', () => {

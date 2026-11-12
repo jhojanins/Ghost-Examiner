@@ -8,7 +8,7 @@ import {
 } from '@ghost-examiner/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createSession, type SessionDeps, type SessionHandle } from './session';
-import type { SpeechOutput } from './silent-output';
+import type { Playback, SpeechOutput } from './silent-output';
 
 // Fictional pack, test data only.
 const pack: QuestionPack = {
@@ -27,15 +27,17 @@ const feedback: Feedback = {
 
 /** Speech you finish by hand; `cancel()` ends the current line early, like SilentOutput. */
 function fakeSpeech() {
-  const lines: { timeline: Timeline; finish: () => void }[] = [];
+  const lines: { timeline: Timeline; finish: () => void; playback: Playback }[] = [];
   let now = 0;
   const speech: SpeechOutput = {
-    speak: vi.fn((timeline: Timeline) => {
+    speak: vi.fn(({ timeline }: { timeline: Timeline }) => {
       now += 1000;
+      const startedAt = now;
       let finish!: () => void;
       const done = new Promise<void>((resolve) => (finish = resolve));
-      lines.push({ timeline, finish });
-      return { startedAt: now, done };
+      const playback: Playback = { startedAt, origin: () => startedAt, audible: () => false, done };
+      lines.push({ timeline, finish, playback });
+      return playback;
     }),
     cancel: vi.fn(() => lines.at(-1)?.finish()),
   };
@@ -99,6 +101,15 @@ describe('createSession', () => {
 
     await finishLast();
     expect(handle.getSnapshot().line?.playing).toBe(false);
+  });
+
+  it('speaks the resolved line with its text, locale and timeline, and the view reads the playback origin', () => {
+    const { handle, speech, lines } = setup();
+    handle.dispatch({ type: 'start' });
+    expect(speech.speak).toHaveBeenCalledWith({ text: 'Good evening.', locale: 'en', timeline: lines[0].timeline });
+    const view = handle.getSnapshot().line!;
+    expect(view.origin).toBe(lines[0].playback.origin);
+    expect(view.startedAt).toBe(lines[0].playback.startedAt);
   });
 
   it('dispatches line-done when the question finishes, moving asking → answering', async () => {

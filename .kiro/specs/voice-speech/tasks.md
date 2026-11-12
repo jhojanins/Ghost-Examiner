@@ -50,7 +50,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - _Design §2.2; Requirements: 1.3_ · Skills: `testing-strategy`
 
 ### packages/web: playback interface
-- [ ] 5. `SpeechOutput.speak` takes the line and returns a `Playback`
+- [x] 5. `SpeechOutput.speak` takes the line and returns a `Playback`
   - Change the signature to `speak({ text, locale, timeline })`, returning `{ startedAt, origin(), audible(), done }`. Update `SilentOutput` and the session runtime call. `LineView` gains `origin`.
   - **Done when:**
     - all existing web tests pass with the new call;

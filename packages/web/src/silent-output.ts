@@ -1,11 +1,23 @@
-import type { Clock, Timeline } from '@ghost-examiner/core';
+import type { Clock, Locale, Timeline } from '@ghost-examiner/core';
 
 /**
- * Plays a ghost line. `startedAt` is the clock time the line started, so the ghost's mouth and
- * the captions read the same timeline on the same clock origin (design §4.2).
+ * One playing ghost line (spec b design §3.1). The ghost's mouth and the captions read the line's
+ * timeline from `origin()`, every frame, so a boundary resync moves both without a React render.
  */
+export interface Playback {
+  /** Clock time `speak` was called; fixed, so it identifies the playback. */
+  startedAt: number;
+  /** Current time origin of the timeline. Infinity while a spoken line has not started yet. */
+  origin(): number;
+  /** True while this playback is real audio. */
+  audible(): boolean;
+  /** Resolves when the line ends or is cancelled. */
+  done: Promise<void>;
+}
+
+/** Plays a ghost line: muted (SilentOutput) or spoken (WebSpeechOutput, spec b). */
 export interface SpeechOutput {
-  speak(timeline: Timeline): { startedAt: number; done: Promise<void> };
+  speak(line: { text: string; locale: Locale; timeline: Timeline }): Playback;
   cancel(): void;
 }
 
@@ -26,7 +38,7 @@ export function createSilentOutput(clock: Clock): SpeechOutput {
   };
 
   return {
-    speak(timeline) {
+    speak({ timeline }) {
       cancel();
       const startedAt = clock.now();
       const done = new Promise<void>((finish) => {
@@ -39,7 +51,7 @@ export function createSilentOutput(clock: Clock): SpeechOutput {
         };
         current = line;
       });
-      return { startedAt, done };
+      return { startedAt, origin: () => startedAt, audible: () => false, done };
     },
     cancel,
   };

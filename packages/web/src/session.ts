@@ -30,7 +30,8 @@ export interface LineView {
   text: string;
   locale: Locale;
   timeline: Timeline;
-  startedAt: number; // on the speech output's clock
+  startedAt: number; // on the speech output's clock; identifies the playback
+  origin: () => number; // the timeline's current time origin, read every frame (spec b design §3.1)
   playing: boolean;
 }
 
@@ -105,8 +106,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
     const timeline = buildTimeline(text, locale);
     deps.speech.cancel(); // a newer line cancels the older one
     const token = ++playback;
-    const { startedAt, done } = deps.speech.speak(timeline);
-    line = { id, text, locale, timeline, startedAt, playing: true };
+    const { startedAt, origin, done } = deps.speech.speak({ text, locale, timeline });
+    line = { id, text, locale, timeline, startedAt, origin, playing: true };
     lineRef = ref;
     void done.then(() => {
       if (token !== playback || !line) return;
