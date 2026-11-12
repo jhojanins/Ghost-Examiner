@@ -48,16 +48,16 @@ function frame(t: number) {
 }
 
 // ---- The component under test: Ghost driven by the hook --------------------------------
-function AnimatedGhost({ state }: { state: GhostState }) {
-  const { ref, pose } = useGhostPose(state);
+function AnimatedGhost({ state, origin }: { state: GhostState; origin?: () => number }) {
+  const { ref, pose } = useGhostPose(state, origin);
   return <Ghost ref={ref} pose={pose} locale="en" />;
 }
 
-function mount(state: GhostState) {
+function mount(state: GhostState, origin?: () => number) {
   const commits = { count: 0 };
   const utils = render(
     <Profiler id="ghost" onRender={() => commits.count++}>
-      <AnimatedGhost state={state} />
+      <AnimatedGhost state={state} origin={origin} />
     </Profiler>,
   );
   return { ...utils, commits, svg: screen.getByRole('img') };
@@ -119,6 +119,30 @@ describe('useGhostPose', () => {
     expect(seen).toEqual(['MBP', 'A', 'rest', 'O', 'A', 'rest']);
     expect(svg.querySelectorAll('[data-part="mouth"] path[visibility="visible"]')).toHaveLength(1);
     expect(commits.count).toBe(rendersAfterMount);
+  });
+
+  it('follows origin() instead of startedAt when it moves between frames, without re-rendering', () => {
+    const timeline = buildTimeline('Mamá, hola.', 'es'); // MBP 0-60, A 60-120, ..., O 500-620
+    const speaking: GhostState = { ...idle, activity: 'speaking', speech: { timeline, startedAt: 1000 } };
+    let origin = 1000;
+    const { svg, commits } = mount(speaking, () => origin);
+    const rendersAfterMount = commits.count;
+
+    frame(1070);
+    expect(visibleMouth(svg)).toBe('A'); // 70 ms in
+    origin = 570; // a boundary event: the audio is 500 ms in
+    frame(1070);
+    expect(visibleMouth(svg)).toBe('O');
+    origin = Infinity; // a spoken line that has not started yet
+    frame(1070);
+    expect(visibleMouth(svg)).toBe('rest');
+    expect(commits.count).toBe(rendersAfterMount);
+  });
+
+  it('ignores origin() when the ghost is not speaking', () => {
+    const { svg } = mount(idle, () => 0);
+    frame(70);
+    expect(visibleMouth(svg)).toBe('rest');
   });
 
   it('reads the latest state after a re-render, without restarting the loop', () => {

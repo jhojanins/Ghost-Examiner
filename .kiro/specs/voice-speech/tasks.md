@@ -71,7 +71,7 @@ Fakes: unit tests use fake `SynthLike` and `RecognitionLike` objects and fake ti
   - **Done when:** a component test with a mocked rAF moves `origin` forward between frames and the marked word changes without a re-render or a remount (same element; `key` still from `startedAt`).
   - _Design §4; Requirements: 3.1, 3.2_ · Skills: `ghost-svg-animation`, `a11y-review`
 
-- [ ] 8. `useGhostPose(state, origin?)`
+- [x] 8. `useGhostPose(state, origin?)`
   - **Done when:**
     - a test with a mocked rAF shows the visible mouth path follows `origin()` when it moves;
     - without `origin`, behavior is unchanged (the existing tests pass).

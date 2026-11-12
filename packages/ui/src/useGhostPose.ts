@@ -14,14 +14,21 @@ const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
  * Usage: `const { ref, pose } = useGhostPose(state); <Ghost ref={ref} pose={pose} locale={locale} />`.
  * `pose` holds the parts React renders (activity, expression and label); blink and mouth start
  * at rest and the loop takes over from the first frame.
+ *
+ * `origin` (spec b design §4): the playing line's timeline origin, read every frame. While the
+ * ghost speaks, it replaces `state.speech.startedAt`, so a boundary resync moves the mouth with
+ * no re-render. `ghostPose` itself stays pure.
  */
-export function useGhostPose(state: GhostState): { ref: RefObject<SVGSVGElement | null>; pose: GhostPose } {
+export function useGhostPose(
+  state: GhostState,
+  origin?: () => number,
+): { ref: RefObject<SVGSVGElement | null>; pose: GhostPose } {
   const ref = useRef<SVGSVGElement>(null);
-  const latest = useRef(state);
+  const latest = useRef({ state, origin });
 
-  // The loop reads the newest state without restarting.
+  // The loop reads the newest state and origin without restarting.
   useEffect(() => {
-    latest.current = state;
+    latest.current = { state, origin };
   });
 
   useEffect(() => {
@@ -35,7 +42,7 @@ export function useGhostPose(state: GhostState): { ref: RefObject<SVGSVGElement 
 
     let frame = 0;
     const tick = (now: number) => {
-      if (ref.current) writePose(ref.current, ghostPose(latest.current, now, { reducedMotion }));
+      if (ref.current) writePose(ref.current, ghostPose(withOrigin(latest.current), now, { reducedMotion }));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -47,6 +54,12 @@ export function useGhostPose(state: GhostState): { ref: RefObject<SVGSVGElement 
   }, []);
 
   return { ref, pose: { activity: state.activity, expression: state.expression, viseme: 'rest', blink: false } };
+}
+
+/** The state with the speech's start replaced by the current origin, when both exist. */
+function withOrigin({ state, origin }: { state: GhostState; origin?: () => number }): GhostState {
+  if (!origin || !state.speech) return state;
+  return { ...state, speech: { ...state.speech, startedAt: origin() } };
 }
 
 /** Writes an attribute only when its value differs, so unchanged frames touch nothing. */
