@@ -28,6 +28,7 @@ Feature freeze and final deploy: **Dec 1, 2026**. Submit: **Dec 2**. Official de
 - [ ] Under 3 minutes, public link (YouTube or Vimeo), English, with captions.
 - [ ] Shows both apps, the kit reuse, at least 3 input methods, captions, muted mode, camera optional, privacy notice, and a short Kiro workflow segment.
 - [ ] Uses demo mode or fictional data only.
+- [ ] The demo evaluator is keyword-based: the video, its narration and the Devpost text present it as a demo ("keyword-based demo feedback"), never as the app understanding or grading the answer. Real LLM evaluation is described only where a real provider is shown.
 
 ## Live URL until Jan 29, 2027
 - [ ] Netlify production URL works in a private window with no API key (demo mode).
