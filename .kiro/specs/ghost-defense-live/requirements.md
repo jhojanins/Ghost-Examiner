@@ -2,13 +2,13 @@
 ## Introduction
 This spec builds the headline experience: a conversation with the ghost about a file the user made. The user uploads their own work, sees the text the app extracted from it, and agrees to what will be sent. The ghost then asks questions grounded in the file. The user answers by voice when the browser supports it, or by typing. The ghost replies with a correction or a follow-up that quotes the file, in close to real time.
 It merges two earlier plans: (e) real LLM providers with the Netlify proxy, and (f) the ghost-defense app (`docs/ARCHITECTURE.md` §6). Video-call visuals come later and are not part of it. Spec (c) Morse is paused and its docs stay as they are.
-The work lives in the kit (`packages/`) where it is reusable (document parsing, providers, streaming, the conversation engine, prompt templates) and in `apps/ghost-defense` (content, copy, screens). `apps/ghost-interview` keeps the demo evaluator in this spec (question 5).
+The work lives in the kit (`packages/`) where it is reusable (document parsing, providers, streaming, the conversation engine, prompt templates) and in `apps/ghost-defense` (content, copy, screens). `apps/ghost-interview` may use the same provider through the same consent, as a cuttable last step (requirement 16).
 Architecture references: `docs/ARCHITECTURE.md` D7 (demo always, proxy by default, optional BYOK), D9 (hand-written type guards), D10 (local document parsing). The skills `netlify-proxy-safety` and `prompt-injection-defense` apply. Specs (a) and (b) stay in force; this spec only adds to them.
 ## Delivery phases and scope-cut rule
 - **Phase 1, offline conversation (mandatory)**: requirements 1, 2, 4, 6, 7, 8, 12 and 14, with the demo provider only. The whole flow works with no network and no key.
 - **Phase 2, real AI (mandatory)**: requirements 3, 9, 10, 11 and 13, with the proxy and one real provider, without streaming. Replies arrive whole.
 - **Phase 3, real-time feel (mandatory, cut last)**: requirement 5, streaming and sentence-by-sentence speech.
-- Items marked **[Cuttable]** may be dropped if we are behind, in this order: first bring-your-own-key (11.6 to 11.9), then saving the summary as a file (8.5), then PDF parsing (1.3 to 1.5, keeping `.txt` and `.md`), then streaming (requirement 5, keeping phase 2). Everything else is mandatory.
+- Items marked **[Cuttable]** may be dropped if we are behind, in this order: first bring-your-own-key (11.6 to 11.9), then real AI in ghost-interview (requirement 16), then PDF parsing (1.3 to 1.5, keeping `.txt` and `.md`), then streaming (requirement 5, keeping phase 2). Everything else is mandatory.
 - Requirement 15 (tests) applies to every phase. Each phase must leave the app working end to end, so a cut never leaves a broken screen.
 ## Out of scope
 - Video-call visuals (a call layout, a self-view tile, gaze). Camera work stays in spec (d).
@@ -18,7 +18,7 @@ Architecture references: `docs/ARCHITECTURE.md` D7 (demo always, proxy by defaul
 - Tools, browsing or code execution for the model. Model output is never executed or rendered as HTML or Markdown.
 - Real-time duplex audio models (spec b, out of scope for the same reasons).
 - Morse (spec c, paused) and signs.
-- Real-AI evaluation in `apps/ghost-interview` (question 5).
+- Saving the summary as a file (owner decision 4). Only copying it to the clipboard is offered (8.5).
 ## Glossary
 - **File**: the one document the user uploads for a session.
 - **Extracted text**: the plain text the app gets from the file, in the browser. It is the only form of the file the app uses.
@@ -68,7 +68,7 @@ Acceptance criteria:
 ## Requirement 4: The conversation loop
 **User story:** As a student, I want the ghost to ask about my work and react to what I say, so that I find out whether I really understand it.
 Acceptance criteria:
-1. A session SHALL have 5 main questions by default. THE user SHALL be able to choose 3 to 8 before the session starts.
+1. A session SHALL have 4 main questions by default, so a first try takes about 2 minutes. THE user SHALL be able to choose 3 to 8 before the session starts.
 2. THE ghost SHALL open with a short spoken introduction and its first question. Every question SHALL be grounded in one excerpt and SHALL show the quote it is about, marked as a quote from the user's file.
 3. Questions SHALL check understanding (why, how, what if, what does this mean, how would you defend this), not recall of exact wording. They SHALL be one question at a time, at most about 25 words (ghost persona).
 4. THE user SHALL answer by voice where the browser supports it, or by typing, with the input methods and the confirmation step of specs (a) and (b) (requirement 7).
@@ -94,7 +94,7 @@ Acceptance criteria:
 4. A streamed sentence SHALL be shown or spoken only after it passes the per-sentence checks of 9.6. THE parts that need the whole reply (its kind and its quote) SHALL be checked before the quote is shown (requirement 6).
 5. Screen readers SHALL get each finished ghost line once through the transcript (spec a 4.6, spec b 3.6), never word by word or per token.
 6. IN demo mode and when streaming is cut, THE reply SHALL arrive whole and be spoken line by line as today; the rest of this spec SHALL work the same.
-7. Reuse of spec (b) phase 3: WHERE barge-in (spec b requirement 7) exists, THE user MAY interrupt a long reply by speaking; WHERE hands-free (spec b requirement 8) exists, listening MAY start after the ghost's question ends. Neither is required by this spec.
+7. Hands-free and barge-in (spec b requirements 7 and 8) are not used in this spec (7.3).
 ## Requirement 6: Grounding, quotes and "not in the file"
 **User story:** As a student, I want every correction to show me where in my file it comes from, so that I can trust it and check it.
 Acceptance criteria:
@@ -109,13 +109,13 @@ Acceptance criteria:
 **User story:** As a user, I want to check what the app understood without slowing the conversation down, so that I'm never judged on a mistake and still feel I'm talking.
 Acceptance criteria:
 1. EVERY answer SHALL be shown and confirmed before it is sent or evaluated (spec a requirement 7, steering `accessibility-ethics.md`). No mode SHALL confirm automatically (spec b 6.4).
-2. THE design SHALL choose a fast confirmation from these options, or a mix, and the owner decides at the design review:
-   - **A. Today's confirmation view** (Confirm, Edit, Answer again): no new work; one extra screen per turn.
-   - **B. Inline confirmation**: the transcript of the answer stays in the answer area with "Send" focused, so Enter confirms; Edit edits in place; Answer again restarts the method. One key press, no screen change.
-   - **C. Confirm on stop**: after the user stops speaking, focus lands on "Send" (as B), so stop then Enter is the whole action.
-   - **D. Hands-free (spec b phase 3)**: listening starts after the ghost's question; the user still presses Send. Depends on spec b requirement 8, which is cuttable there.
-   - **E. Barge-in (spec b phase 3)**: the user can talk over a long reply to move on. Depends on spec b requirement 7.
-3. WHATEVER the choice, THE interpreted answer, its method and any notice (spec b) SHALL be visible and announced before confirmation, Edit SHALL put the text in the typed field, and the choice SHALL work by keyboard alone.
+2. THE confirmation SHALL be inline (owner decision 3, options B and C of the requirements review):
+   - THE interpreted answer (the transcript or the typed text) SHALL stay in the answer area, with its method and any notice, and a "Send" button with focus, so Enter confirms;
+   - WHEN the user stops speaking, focus SHALL land on Send once the transcript is final, so stopping and then pressing Enter is the whole action;
+   - Edit SHALL edit the text in place, and Answer again SHALL restart the current method;
+   - confirmation SHALL always be an explicit user action; nothing is sent when Send isn't pressed.
+3. Hands-free and barge-in from spec (b) phase 3 (options D and E) are not part of this spec; the owner re-evaluates them after the Chrome check.
+4. THE interpreted answer, its method and any notice (spec b) SHALL be visible, and announced once, before confirmation, and the whole step SHALL work by keyboard alone.
 ## Requirement 8: Session summary
 **User story:** As a student, I want a short summary at the end, so that I know what to review.
 Acceptance criteria:
@@ -123,7 +123,7 @@ Acceptance criteria:
 2. THE summary SHALL be labeled as practice feedback, never a grade, score or verdict, and SHALL say whether it came from AI or from the offline demo rules.
 3. THE summary SHALL be readable as text (headings and lists), spoken by the ghost in short lines, and complete in the transcript.
 4. THE user SHALL be able to start again with the same file or a new one, or remove the file.
-5. **[Cuttable]** THE user MAY save the summary as a plain text file to their own device, by an explicit button. Nothing is saved otherwise (question 4).
+5. THE summary SHALL offer a "Copy summary" button that copies it as plain text to the clipboard, with a polite confirmation message. The app SHALL NOT save it as a file or anywhere else (owner decision 4).
 ## Requirement 9: Provider abstraction and output validation
 **User story:** As the developer, I want every model call to go through the kit's provider interface with strict checks, so that a bad or hostile reply can never break the app or mislead the user.
 Acceptance criteria:
@@ -187,10 +187,16 @@ Acceptance criteria:
 1. THE core SHALL have unit and fast-check tests for: excerpt splitting (every character of the text is in exactly one excerpt, ids are stable); quote verification (a substring of the text always verifies after normalization, a changed one never does); every new output guard (valid shapes pass, extra keys, wrong types, over-long text and unknown excerpt ids fail); the sentence splitter for streaming (concatenating the sentences gives back the text); and the delimiter handling (a file containing the tag can't close the block).
 2. THE web package SHALL test the parsers (`.txt`, `.md`, and PDF if built) on small fixtures, the providers with a mocked `fetch` (success, stream, 429, timeout, malformed JSON, a stream cut midway), and `withFallback` with the new tasks.
 3. THE proxy SHALL have handler tests with a mocked upstream: every rejected shape (bad task, locale, oversized input, extra fields, wrong content type, bad origin), the limits, the kill switch, and that no body is logged.
-4. THE end-to-end suite SHALL use a fake provider (intercepting the proxy path) with scripted, streamed replies, and SHALL cover by keyboard: upload, preview, consent (and that nothing is sent before it), a full 5-question session to the summary, a correction with a verified quote, a "not in the file" reply, an invalid quote dropped, a fallback to demo with its label, and the offline choice. It SHALL keep failing on any request to another origin, and SHALL run axe on every new screen in EN and ES with reduced motion on and off.
+4. THE end-to-end suite SHALL use a fake provider (intercepting the proxy path) with scripted, streamed replies, and SHALL cover by keyboard: upload, preview, consent (and that nothing is sent before it), a full 4-question session (the default) to the summary, with Copy summary, a correction with a verified quote, a "not in the file" reply, an invalid quote dropped, a fallback to demo with its label, and the offline choice. It SHALL keep failing on any request to another origin, and SHALL run axe on every new screen in EN and ES with reduced motion on and off.
 5. A golden set of 6 fictional example files SHALL live in the repo, in EN and ES: a short essay, a project README, a thesis abstract (also as a PDF if PDF is built), a lab report, a file with injected instructions and fake delimiters, and a file whose main claim is wrong on purpose. For each, the expected properties of good questions are written down (which excerpts they may cite, which wrong claim a correction must catch).
 6. With the demo provider, the golden set SHALL pass automatically (schema, grounding, quotes). With the real provider, a manual evaluation script SHALL run the golden set before release, and its results (grounded questions, verified quotes, caught wrong claims, injections ignored) SHALL be logged in `docs/KIRO_USAGE.md`.
 7. THE owner SHALL check the live flow by hand in Chrome and Safari, with voice and sound, measuring the latency budget of 5.2 against the chosen provider, and SHALL log the numbers.
+## Requirement 16: Real AI in ghost-interview **[Cuttable, cut second]**
+**User story:** As a user of Ghost Interview, I want the same real feedback as in Ghost Defense, so that both apps show what the kit can do.
+Acceptance criteria:
+1. `apps/ghost-interview` SHALL be able to evaluate its answers with the same provider chain, proxy and limits as this spec, through the same consent screen (requirement 3), naming what is sent (the question and the confirmed answer; no file).
+2. Its demo path, labels and fallback SHALL stay as today, and the fallback rules of requirement 10 SHALL apply.
+3. Nothing else in ghost-interview changes.
 ## Research to do in the design phase (with sources)
 1. **Providers with a free tier**: at least Google Gemini, Groq and one more (for example Mistral or Cerebras). For each: free limits (requests and tokens per minute and per day), models good at EN and ES, JSON or structured output, streaming support, time to first token, CORS for browser calls (BYOK), and data-use terms on the free tier (training use, human review, retention).
 2. **Streaming through Netlify Functions**: streamed responses from a Function, execution time limits, how rate limiting and the Free plan's credit metering apply to Functions (compute, invocations), and whether Edge Functions are a better fit.
@@ -202,14 +208,14 @@ Acceptance criteria:
   - phase 1 about 14: parsing, excerpts, preview, the demo conversation engine, quote checks, summary, screens;
   - phase 2 about 16: tasks and guards, prompt templates, providers, proxy, limits, kill switch, consent, fallback, golden set;
   - phase 3 about 6: streaming in the proxy and the client, sentence-by-sentence speech, latency checks;
-  - cuttable items about 4: BYOK, summary download, PDF parsing (streaming is phase 3).
+  - cuttable items about 4: BYOK, real AI in ghost-interview, PDF parsing (streaming is phase 3).
   The old plan gave (e) and (f) 6 days together (Nov 23 to 28). Whether about 40 tasks fit in the time now available is for the owner to judge from the pace so far; the cut order is how to make it fit.
 - **Netlify credits**: production deploys stay at 15 credits each, within the 10-a-month budget (deploy-hosting steering). Function compute and invocations are researched in item 2 before the design commits to a limit.
 - **Provider cost**: zero by design: the proxy uses a free-tier key on a project with no billing, so hitting quota returns `rate-limited` and the session falls back to demo.
-## Questions for the owner
-1. **Limits (1.6, 9.4)**: 2 MB, 50 PDF pages, 60,000 characters used, 6,000 characters per request. Change any?
-2. **Main questions (4.1)**: default 5, range 3 to 8, at most one follow-up per question. Agree?
-3. **Confirmation (7.2)**: the design compares options A to E; is there one you already prefer?
-4. **Saving the summary (8.5)**: a user-initiated text download is not app storage, but the privacy notice says answers are gone when the page closes. Allow it, with a line in the notice, or drop it?
-5. **ghost-interview**: keep it on the demo evaluator in this spec, or add a small task to let it use the same proxy for its one question?
-6. **BYOK keys (11.7)**: memory only, as you asked. The `netlify-proxy-safety` skill still allows `sessionStorage` on opt-in; update the skill to memory only?
+## Owner decisions (2026-11-13, requirements approved)
+1. **Limits**: 2 MB, 50 PDF pages, 60,000 characters used, 6,000 characters per request (1.6, 9.4).
+2. **Questions**: 3 to 8, default 4 so a judge's try takes about 2 minutes; at most one follow-up each (4.1, 4.6).
+3. **Confirmation**: options B and C together, always explicit (7.2); D and E are re-evaluated after the owner's Chrome check.
+4. **Summary**: no file download; a Copy summary button only (8.5).
+5. **ghost-interview**: a small task at the end gives it the same provider through the same consent, cuttable right after BYOK (requirement 16).
+6. **BYOK keys**: memory only; the `netlify-proxy-safety` skill is updated to match (no `sessionStorage`).
