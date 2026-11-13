@@ -6,7 +6,7 @@ The work lives in the kit (`packages/`), so both apps can use it. Only `apps/gho
 Architecture reference: `docs/ARCHITECTURE.md` §3.1 (`InputAdapter`, the `morse` method id and the `trace` field) and the note that Morse timing uses an injected `Clock` with a pure classifier. The codec and classifier contract is in the `morse-input-pbt` skill. Spec (a) and (b) requirements stay in force; this spec only adds to them.
 ## Delivery and scope-cut rule
 - Spec (c) is scheduled for Nov 19 (afternoon) to Nov 20 (`docs/ARCHITECTURE.md` §6).
-- Criteria marked **[Cuttable]** may be dropped if we are behind on Nov 20, in this order: first the adaptive threshold (requirement 4.5 to 4.7), then practice mode (requirement 7.3 and 7.4). Everything else is mandatory.
+- Criteria marked **[Cuttable]** may be dropped if we are behind on Nov 20, in this order: first the adaptive threshold (requirement 4.5 to 4.7), then practice mode (requirement 7.3 and 7.4), then the switch that silences letter announcements (requirement 6.7). Everything else is mandatory.
 - Cutting 4.5 to 4.7 leaves the speed setting (4.1 to 4.4), so timing stays adjustable. Cutting practice mode leaves the reference chart (7.1, 7.2).
 ## Out of scope
 - Signs and the camera (spec d and the stretch goal).
@@ -82,6 +82,7 @@ Acceptance criteria:
 4. THE pad SHALL offer Clear as a button only (no single key), which empties the current Morse answer.
 5. THE pad SHALL offer Done, by key and by button, which ends any letter in progress and sends the decoded text as a candidate. Nothing else sends a Morse answer.
 6. IF Done is pressed with no decoded text, THEN THE pad SHALL show a message and send no candidate.
+7. **[Cuttable]** THE pad SHALL offer a switch, on by default, that turns the letter announcements of 6.2 on and off. When off, the decoding line still updates on screen, and other messages (for example the empty-answer message of 6.6) are still announced.
 ## Requirement 7: Reference chart and practice mode
 **User story:** As a user who doesn't know Morse by heart, I want a chart and a safe place to practice, so that I can learn without affecting my answer.
 Acceptance criteria:
@@ -136,8 +137,8 @@ Acceptance criteria:
 3. THE web or ui package SHALL have component tests of the pad: one-key and two-key mode, auto-repeat ignored, cancelled presses, manual gaps, Backspace, Clear, Done, the empty-answer message, and the single live region.
 4. THE end-to-end suite SHALL cover, by keyboard only with the page clock: a Morse answer through confirmation (with the trace) to feedback; Edit and Answer again; a pointer answer in two-key mode; and a browser without `SpeechRecognition` that is no longer a Preview session.
 5. THE end-to-end suite SHALL run axe with WCAG 2.2 AA tags on the pad, the chart and practice mode in EN and ES, with reduced motion on and off, and SHALL keep failing on any request to another origin.
-## Questions for the owner
-1. **Default speed (4.2)**: 6 WPM (unit 200 ms) is proposed for first-time users. Faster?
-2. **Keys (2.1, 2.2, 5.2, 6.3, 6.5)**: proposed Space for one-key taps; `.` and `-` for two-key mode; Enter for Done; Backspace for Backspace. The keys for "end letter" and "space" would be fixed in the design. Any keys you want instead?
-3. **Adaptive threshold on by default (4.5)**: proposed on in one-key mode, off in two-key mode (where press length doesn't matter). Agree?
-4. **Announcing letters (6.2)**: proposed always on for screen readers, one letter at a time. Should there be a switch to silence it?
+## Owner decisions (2026-11-12, requirements approved)
+1. **Default speed (4.2)**: 6 WPM (unit 200 ms).
+2. **Keys**: Space for one-key taps; `.` and `-` for two-key mode; Enter for Done; Backspace for Backspace. The design picks the keys for "end letter" and "space": they must exist on US and Spanish layouts, must not collide with common screen reader quick keys, and must be shown on screen.
+3. **Adaptive threshold (4.5)**: on by default in one-key mode, off in two-key mode.
+4. **Letter announcements**: a switch to silence them, on by default, added as 6.7 and marked [Cuttable], cut after practice mode.
