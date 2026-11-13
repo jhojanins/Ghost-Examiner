@@ -1,0 +1,143 @@
+# Tasks: (c) Morse input
+Implements `requirements.md` and `design.md` in this folder. Each task is one logical unit with one checkable **Done when**. The definition of done in `.kiro/steering/workflow.md` applies to every task. Always load `lean-code`, plus the skills listed per task.
+Working rules (owner):
+- Tests first.
+- Mutation checks on new logic: back up each file, mutate it, run the tests, restore it, and diff it against the backup.
+- One commit per task, in its own message, after the edits are confirmed.
+- No pushes without the owner's approval.
+- Stop processes only by the PID recorded when they were started; never by name pattern.
+- A log entry in `docs/KIRO_USAGE.md` for each task; new properties also go under PBT there.
+Markers:
+- **[Browser + axe]**: a full Playwright MCP keyboard walk-through with screenshots at 320 and 1280 px, plus an axe run (WCAG 2.2 AA tags, EN and ES, reduced motion on and off). Other UI tasks use component tests only (owner decision, spec a task 17).
+- **[Owner]**: the owner checks by hand on real devices. The agent prepares the checklist and logs the result.
+- **[Cuttable, cut first]**, **[Cuttable, cut second]**, **[Cuttable, cut third]**: the scope-cut order of requirements and design §11. Cut tasks are whole tasks; nothing else depends on them.
+Fakes: unit tests use a fake `Clock` and fake timers. End-to-end tests keep the fake speech APIs and drive time with `page.clock`; Morse key holds use `page.keyboard.down`, `page.clock.runFor` and `page.keyboard.up`.
+## Docs
+- [ ] 1. Requirement amendments for the method selector and the word boundary
+  - Apply design §2.5 once the owner has approved the design: spec (b) 4.4 and 4.11; spec (c) 2.8, new 2.9, the glossary and 4.3 (4.5u); a note in spec (a) design §5 and spec (b) design §4 pointing to spec (c) design §2.
+  - **Done when:** `git diff` shows only those edits, each matching the wording in design §2.5; no code changes.
+  - _Design §2.5, §3.3_ · Skills: `a11y-review`
+## packages/core
+- [ ] 2. `AnswerCandidate.trace` and the Morse types
+  - `trace?: string` on `AnswerCandidate`; `morse/types.ts` with `Symbol`, `Press`, `Thresholds` and `MorseSettings` (`mode`, `gaps`, `wpm`; `adaptive` and `announce` arrive with tasks 24 and 28).
+  - **Done when:** typecheck passes and a type test shows a candidate with and without `trace`; the keyboard and voice adapters are unchanged.
+  - _Design §3.1; Requirements: 1.5, 8.1_
+- [ ] 3. `CODES`, `ALPHABET` and `normalize`
+  - **Done when:** examples pass: `normalize('  Él  DIJO ')` → `'el dijo'`; `'Ñandú'` → `'ñandu'`; unsupported characters are dropped; the reverse table is derived (a test shows every code maps back to its character and no two characters share a code).
+  - _Design §3.2; Requirements: 3.1, 3.2_ · Skills: `morse-input-pbt`
+- [ ] 4. `encode` and `decode` with P15, P16 and P17
+  - **Done when:**
+    - P15 (round trip), P16 (output alphabet) and P17 (totality and the `unknown` flag) pass;
+    - examples pass: "SOS", the empty string, "ñ", the digits, every punctuation mark, and `..--..` (a real `?`, `unknown: false`) next to `......` (`?`, `unknown: true`);
+    - mutations are caught: a wrong code in the table, `unknown` never set, uppercase output.
+  - _Design §3.2, §8; Requirements: 3.1 to 3.5, 12.1, 12.2_ · Skills: `morse-input-pbt`, `testing-strategy`
+- [ ] 5. Units, thresholds, `classifyPress` and `classifyGap`
+  - **Done when:** examples pass: `unitForWpm(6)` → 200, the range 3 to 20 WPM gives 400 to 60 ms, `thresholdsFor(200)` → `{ dash: 400, letter: 400, word: 900 }`, and presses and gaps exactly on a boundary go to the longer side.
+  - _Design §3.3; Requirements: 4.1 to 4.3_ · Skills: `morse-input-pbt`
+- [ ] 6. `classify` with P18, P19 and P20
+  - **Done when:**
+    - P18 (recovery with ±30% jitter at units 60 to 400 ms), P19 (monotonicity) and P20 (scale invariance with integer factors) pass;
+    - an example shows "sos" at 200 ms with ideal timing;
+    - mutations are caught: the word boundary back at 5u (P18 fails), `<=` for `<` (P20 or an example fails).
+  - _Design §3.3, §8; Requirements: 12.1_ · Skills: `morse-input-pbt`, `testing-strategy`
+- [ ] 7. Pad reducer: presses, symbols and gaps
+  - `press`, `release`, `cancel`, `symbol`, `tick`, `endLetter`, `space`, with `schedule` and `announce` effects.
+  - **Done when:** examples show: a press and release appends the right symbol; a second `press` while down is ignored; `cancel` produces nothing; `tick` ends a letter at 2u and adds one word gap at 4.5u, and does nothing under manual gaps; `space` twice adds one word gap.
+  - _Design §3.5; Requirements: 2.1, 2.2, 2.4, 2.6, 5.1 to 5.4_ · Skills: `morse-input-pbt`
+- [ ] 8. Pad reducer: Backspace, Clear, Done and settings, with P21
+  - **Done when:**
+    - examples show: Backspace drops the last symbol, then the last letter, then a word gap; Clear empties; Done ends the letter, trims a trailing word gap and emits `candidate { text, trace, unknown }`; Done on an empty buffer sets `morse.empty` and emits nothing; a speed change leaves the decoded text unchanged;
+    - P21 (determinism of `encode`, `decode`, `classify`, `reducePad`) passes.
+  - _Design §3.5, §8; Requirements: 4.4, 6.3 to 6.6, 12.1_ · Skills: `morse-input-pbt`
+- [ ] 9. Kit catalog: Morse copy
+  - The keys of design §3.6 for the pad, controls with their keys, settings (mode, gaps, speed), chart, announcements (punctuation names, "space"), `morse.empty`, `morse.unknown`, `confirm.trace`, and the method tab labels. Not yet: the reworded voice messages and the privacy point (task 22).
+  - **Done when:** typecheck passes with `es` matching `en`; a test shows the speed value text "6 words per minute" / "6 palabras por minuto"; every key used by tasks 15 to 19 exists.
+  - _Design §3.6; Requirements: 9.2, 11.1_ · Skills: `ghost-persona`
+## packages/web
+- [ ] 10. MorseAdapter: availability, store, commands and events
+  - **Done when:** tests with a fake clock show: `checkAvailability()` is available; `requires` is no camera and no microphone; every answer kind is supported; press/release and two-key `symbol` update `letter` and `text`; each text change emits one `partial`; `done()` emits a `candidate` with `method: 'morse'` and `trace`, and `notice: 'morse.unknown'` when needed; `announcement` gets a new id for a repeated letter.
+  - _Design §4.1; Requirements: 1.1 to 1.6, 6.1, 6.5, 8.2_ · Skills: `morse-input-pbt`, `testing-strategy`
+- [ ] 11. MorseAdapter: gap timers and `pause()`
+  - **Done when:** tests with fake timers show: a letter ends after 2u and a word gap is added after 4.5u; a new symbol clears the pending timers; `pause()`, `stop()` and `done()` clear them; after `pause()` nothing ends however long the clock runs; a speed change applies to the next press only.
+  - _Design §4.1; Requirements: 4.4, 5.1, 5.4_ · Skills: `testing-strategy`
+- [ ] 12. VoiceAdapter: `cancelListening()`
+  - **Done when:** tests with the fake recognizer show it returns final plus interim text, emits no candidate, returns the view to idle, and ignores the cancelled recognizer's late events; existing voice adapter tests pass unchanged.
+  - _Design §2.2, §4.2; Requirements: spec b 4.11 (amended)_ · Skills: `testing-strategy`
+## packages/ui
+- [ ] 13. `AnswerMethods` selector
+  - **Done when:** component tests show: a tab list with tabs and panels linked by ARIA; arrows, Home and End move focus without selecting; Enter and Space select; the unavailable tab keeps its visible label and its name adds ", not available" / ", no disponible"; hidden panels stay mounted (a typed value survives a switch); `onSelect` is called once per selection.
+  - _Design §2.2, §5.1; Requirements: 2.8, 2.9 (amended), 9.1, 9.3_ · Skills: `a11y-review`
+- [ ] 14. `KeyboardInput.insertText` and `VoiceInput.labelledBy`
+  - **Done when:** component tests show a new `insertText.id` appends the text after a space (no extra space in an empty field), the same id twice appends once, and `VoiceInput` with `labelledBy` renders no heading of its own; existing tests pass.
+  - _Design §5.6; Requirements: spec b 4.11 (amended)_ · Skills: `a11y-review`
+- [ ] 15. `MorsePad`: keyboard, decoding line and live region
+  - **Done when:** component tests show:
+    - one-key mode: holding Space gives a dot or a dash by duration, and auto-repeat keydowns are ignored;
+    - two-key mode: `.` and `-` (and the numpad keys) give dot and dash;
+    - → ends the letter, ↓ adds a word gap, Backspace and Enter work, and no key is handled when the pad isn't focused;
+    - blur during a hold cancels it; handled keys call `preventDefault`;
+    - the decoding line shows the letter in progress and the text; one polite region announces each finished letter and the empty-answer message;
+    - the pad has `role="application"`, a name and instructions that name the keys of the current mode, in EN and ES.
+  - _Design §5.2; Requirements: 2.1 to 2.4, 2.6, 2.7, 5.2, 6.1 to 6.6, 9.2, 9.3_ · Skills: `a11y-review`
+- [ ] 16. `MorsePad`: pointer and touch targets
+  - **Done when:** component tests show: pointer down and up give a symbol; leaving the target or `pointercancel` gives nothing; two targets in two-key mode; the targets are not focusable; `touch-action: none` is set; the pressed state adds text, not only color.
+  - _Design §5.2; Requirements: 2.5 to 2.7_ · Skills: `a11y-review`
+- [ ] 17. `MorseSettings`: mode, gaps and speed
+  - **Done when:** component tests show native radios and a range with WPM value text in EN and ES, each change calls the adapter once, and the disclosure button reflects `aria-expanded`.
+  - _Design §5.3; Requirements: 2.2, 4.1 to 4.4, 5.3, 9.1_ · Skills: `a11y-review`
+- [ ] 18. `MorseChart`
+  - **Done when:** component tests show a table with a caption, one row per supported character, symbols hidden from screen readers and the spoken form ("dot dash" / "punto raya") present; opening and closing leaves the adapter's buffer unchanged.
+  - _Design §5.4; Requirements: 7.1, 7.2_ · Skills: `a11y-review`
+- [ ] 19. `ConfirmAnswer`: the trace
+  - **Done when:** component tests show the trace paragraph with its label after the method line when `trace` exists, nothing when it doesn't, and the unknown-code notice next to the text.
+  - _Design §5.5; Requirements: 8.1, 8.2_ · Skills: `a11y-review`
+## apps/ghost-interview
+- [ ] 20. ghost-interview: the method selector with Speak and Type **[Browser + axe]**
+  - `AnswerMethods` with Speak first and Type; the default and page-level memory of §2.2; the focus rules of §2.3; selecting Type while listening cancels listening and moves the words into the field. The existing e2e files select their tab first.
+  - **Done when:**
+    - e2e shows: Speak is selected where voice works and Type where it doesn't; focus lands on the selected tab after the question; Edit selects Type with the field prefilled; Answer again after a spoken answer focuses the voice button; words heard before switching to Type appear in the field;
+    - the walk-through, at 320 and 1280 px in EN and ES, shows one live region in the tree for the visible panel; axe passes on both panels;
+    - every existing e2e test passes after its tab selection.
+  - _Design §2, §6; Requirements: 2.8, 2.9 (amended); spec b 4.4, 4.11 (amended), 6.3_ · Skills: `a11y-review`, `testing-strategy`
+- [ ] 21. ghost-interview: Morse answers **[Browser + axe]**
+  - Register one `MorseAdapter` per page; the Morse tab and panel; leaving Morse calls `pause()`; Answer again after a Morse answer focuses the pad; Firefox (no `SpeechRecognition`) is no longer a Preview session.
+  - **Done when:** the walk-through, by keyboard with the page clock, shows a one-key answer reaching confirmation with its trace and then feedback, in EN and ES; screenshots at 320 × 700 confirm or correct the vertical budget of design §2.4 (numbers logged); axe passes on the pad, chart and settings with both motion settings; no console errors.
+  - _Design §2.4, §6; Requirements: 1, 8.3, 10.1 to 10.3_ · Skills: `a11y-review`, `ghost-persona`, `testing-strategy`
+- [ ] 22. Copy: voice messages, intro, privacy and landing page
+  - Reword the voice messages that offer only typing, the ghost-interview intro, add `privacy.morse`, and update `site/index.html` (EN and ES; drop "(Preview)").
+  - **Done when:** catalog tests pass with `es` matching `en`; no voice message names typing as the only alternative; the privacy dialog test shows the Morse point in EN and ES; `site/index.html` has no "(Preview)" for Ghost Interview, and an axe run on it passes.
+  - _Design §3.6, §6; Requirements: 10.4, 11.1 to 11.3_ · Skills: `ghost-persona`, `a11y-review`
+- [ ] 23. End-to-end test of Morse answers
+  - `e2e/morse-input.spec.ts`, plus the axe matrix entries.
+  - **Done when:** `pnpm e2e` passes and covers, by keyboard with the page clock: a one-key answer to feedback (trace on the confirmation screen); Edit and Answer again; a two-key answer by pointer; manual gaps with no clock movement at all; Done on an empty pad; a browser without `SpeechRecognition` that isn't a Preview session; axe on the tabs, pad, chart and settings in EN and ES × reduced motion on and off; the network guard stays.
+  - _Design §9; Requirements: 12.4, 12.5_ · Skills: `testing-strategy`, `a11y-review`
+## Cuttable, in cut order
+- [ ] 24. `adaptUnit` with P22, in the reducer **[Cuttable, cut first]**
+  - Add `adaptive` to `MorseSettings` (on in one-key mode, off in two-key mode); run `adaptUnit` after each finished letter; the adapter view shows the current WPM.
+  - **Done when:** P22 passes; reducer examples show the unit moving toward a slower tapper and never by more than 25% per letter; mutations are caught (no step limit, no clamp).
+  - _Design §3.4, §8; Requirements: 4.5, 4.6, 12.1_ · Skills: `morse-input-pbt`
+- [ ] 25. Adaptive setting in `MorseSettings` **[Cuttable, cut first]**
+  - **Done when:** component tests show the checkbox only in one-key mode, on by default, the current WPM next to it, and turning it off returns to the speed setting.
+  - _Design §5.3; Requirements: 4.5 to 4.7_ · Skills: `a11y-review`
+- [ ] 26. Practice buffer in the reducer and adapter **[Cuttable, cut second]**
+  - **Done when:** tests show practice taps decode on the line but emit no `partial` and no `candidate`, Done does nothing, and leaving practice restores the answer buffer exactly.
+  - _Design §3.5, §4.1; Requirements: 7.3, 7.4_ · Skills: `testing-strategy`
+- [ ] 27. Practice mode in the pad **[Cuttable, cut second]**
+  - **Done when:** component tests show the practice toggle with `aria-pressed`, a visible "Practice" label on the decoding line, and Done disabled in practice; the e2e axe matrix includes practice mode in EN and ES.
+  - _Design §5.2; Requirements: 7.3, 7.4, 12.5_ · Skills: `a11y-review`
+- [ ] 28. Switch for letter announcements **[Cuttable, cut third]**
+  - Add `announce` to `MorseSettings` (on by default) and the checkbox.
+  - **Done when:** tests show that with it off the decoding line still updates, letters are not announced, and the empty-answer message still is.
+  - _Design §3.5, §5.3; Requirements: 6.7_ · Skills: `a11y-review`
+## Release
+- [ ] 29. README: Morse status and privacy
+  - **Done when:** the README lists Morse with an honest status (what was cut, if anything), states that taps are decoded in the browser and nothing about them is sent or stored, mentions the method selector, and every command in it still runs as written.
+  - _Requirements: 11.2, 11.4_ · Skills: `kiroween-checklist`
+- [ ] 30. Owner check **[Owner]**
+  - **Done when:** the owner confirms:
+    - a one-key answer by keyboard in Chrome, Safari and Firefox (real key holds), in EN and ES;
+    - the two-key and arrow keys on a Spanish keyboard layout;
+    - a touch answer on a phone, with no scrolling or menu during a long press;
+    - with NVDA or VoiceOver: the pad passes Space and the arrows through, the letters are announced once each, and VoiceOver Quick Nav (if turned on) is noted;
+    - the result is logged in `docs/KIRO_USAGE.md`.
+  - _Requirements: 2, 9_
