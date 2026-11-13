@@ -9,15 +9,17 @@ metadata:
 
 ## Contract under test (finalized in spec c)
 - `encode(text) → string`: letters separated by one space, words by ` / `. Output alphabet: `.`, `-`, ` `, `/`.
-- `decode(code) → string`: total function, never throws. Unknown codes become `?`.
-- `normalize(text)`: uppercase, strip accents (É→E), keep Ñ (`--.--`), collapse whitespace.
+- `decode(code) → { text: string; unknown: boolean }`: total function, never throws (spec c Req 3.3, 3.4).
+  - `text` is lowercase. A code that matches no character becomes `?` in `text`.
+  - `unknown` is `true` exactly when at least one code matched no character. It is reported separately so a real question mark (`..--..`) is never taken for an unknown code.
+- `normalize(text)`: lowercase, strip accents (É→e), keep ñ (`--.--`), drop characters outside the supported set, collapse whitespace to one space, trim.
 - `classify(presses, thresholds) → symbols`: pure; input is press/release timestamps, never `Date.now()`.
 - Timing model (unit `u`): dot 1u, dash 3u, gap inside a letter 1u, between letters 3u, between words 7u. Default boundaries: press < 2u is a dot; gap < 2u same letter, < 5u new letter, otherwise new word.
 
 ## Properties to cover
-1. **Round trip**: for any string over the supported alphabet, `decode(encode(s)) === normalize(s)`.
+1. **Round trip**: for any string over the supported alphabet, `decode(encode(s))` is `{ text: normalize(s), unknown: false }`.
 2. **Output alphabet**: `encode` output only contains `.`, `-`, ` `, `/`.
-3. **Totality**: `decode` of any string over `.- /` returns without throwing.
+3. **Totality**: `decode` of any string over `.- /` returns without throwing; `unknown` is true exactly when some letter code isn't in the table, and then `text` has a `?` for it.
 4. **Recovery under jitter**: build ideal presses from a symbol sequence with unit `u` in the user range (60 to 400 ms) and jitter up to ±30%; `classify` returns the original symbols.
 5. **Monotonicity**: lengthening a press never turns a dash into a dot; lengthening a gap never merges letters.
 6. **Scale invariance**: multiplying all timestamps and thresholds by `k > 0` gives the same symbols.
@@ -41,7 +43,12 @@ const text = fc
 
 describe('morse codec', () => {
   it('round-trips any supported text', async () => {
-    await fc.assert(fc.property(text, s => decode(encode(s)) === normalize(s)));
+    await fc.assert(
+      fc.property(text, (s) => {
+        const { text: decoded, unknown } = decode(encode(s));
+        return decoded === normalize(s) && !unknown;
+      }),
+    );
   });
 });
 ```
