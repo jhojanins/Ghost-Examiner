@@ -43,7 +43,7 @@ export const config: Config = {
 
 ## Client side
 - `withFallback(byok?, proxy, demo)`: on any error, move to the next provider and show the ghost's fallback notice. At most one retry with backoff; never loop.
-- BYOK field: `type="password"`, `autocomplete="off"`, paste allowed. Key kept in memory; `sessionStorage` only if the user opts in; never `localStorage`; never sent to our proxy; a "Clear key" button.
+- BYOK field: `type="password"`, `autocomplete="off"`, paste allowed. The key lives in memory only, for the page: never `localStorage`, `sessionStorage`, IndexedDB or cookies (owner decision, spec ghost-defense-live). It is sent only to that provider's API, never to our proxy. A "Forget key" button clears it.
 - Show the privacy notice (provider name, free-tier data use) before the first real-mode request.
 
 ## Tests before done
