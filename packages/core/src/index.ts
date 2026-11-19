@@ -42,3 +42,6 @@ export { createDemoProvider } from './llm/demo-provider';
 export type { Evaluator } from './llm/evaluator';
 export { createLlmEvaluator } from './llm/evaluator';
 export type { Clock } from './clock';
+export type { Excerpt } from './document/excerpts';
+export { selectExcerpts, splitExcerpts } from './document/excerpts';
+export { normalizeForQuote, QUOTE_MAX, QUOTE_MIN, verifyQuote } from './document/quote';

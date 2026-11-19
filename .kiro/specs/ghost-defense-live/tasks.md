@@ -13,7 +13,7 @@ Markers:
 - **[Cuttable, cut first]**, **[Cuttable, cut second]**, **[Cuttable, cut third]**: the cut order of requirements and design §12. Phase 3 (tasks 21 to 24) is cut last. Cut tasks are whole tasks; nothing mandatory depends on them.
 Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Function tests use a mocked `fetch` and a fake Blobs store; e2e serves `/api/llm` with `page.route` and keeps the speech fakes, so no real model or microphone is used.
 ## Phase 1: the conversation, offline
-- [ ] 1. Excerpts, selection and quote verification, with P23 and P24
+- [x] 1. Excerpts, selection and quote verification, with P23 and P24
   - `document/`: `splitExcerpts`, `selectExcerpts`, `normalizeForQuote`, `verifyQuote`.
   - **Done when:** P23 and P24 pass; examples cover Markdown headings, a paragraph longer than the limit, curly quotes, and a quote that exists in another excerpt but not its own (rejected); mutations are caught (overlapping excerpts, case not normalized, quote checked against the whole text).
   - _Design §3.1, §9; Requirements: 1.9, 6.1, 6.2, 9.4_ · Skills: `testing-strategy`
