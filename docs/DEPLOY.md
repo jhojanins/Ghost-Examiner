@@ -4,11 +4,12 @@
 
 1. **Antes:** el CI de `main` debe estar en verde en GitHub (pestaña **Actions**).
 2. **GitHub Desktop:** cambia a la rama `release`, menú **Branch → Update from main**, luego **Push origin**. Vuelve a `main`.
-3. **Netlify:** **Add new project → Import an existing project → GitHub**, elige `Ghost-Examiner` y la rama **`release`**. Deja vacío el directorio base. Pulsa **Publish** (o **Deploy**).
-4. **Hazlo público:** **Project configuration → General → Visitor access → Project visibility**: pon **Public** en producción y en previews. Si no, nadie más puede ver la página.
-5. **Activa `main`:** **Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts → Configure**, elige **Let me add individual branches**, escribe `main` y pulsa **Save**.
-6. **Costo:** cada deploy exitoso de `release` cuesta **15 créditos** (máximo 10 al mes). Los deploys de `main` y los que fallan **no cuestan nada**.
-7. **Si falla:** no lo repitas. Copia el log y pégalo en el chat de Kiro. No pulses **Fix with agent** (gasta créditos).
+3. **Variables, antes del primer deploy** (en la página de importación del paso 4, botón **Add environment variables**): sección *Environment variables for the AI*. `GEMINI_API_KEY` (marca **Contains secret values**) y `GEMINI_MODEL` = `gemini-3.5-flash-lite`, con scope **Functions**, en **Production** y **Branch deploys**. Nunca con prefijo `VITE_`.
+4. **Netlify:** **Add new project → Import an existing project → GitHub**, elige `Ghost-Examiner` y la rama **`release`**. Deja vacío el directorio base. Pulsa **Publish** (o **Deploy**).
+5. **Hazlo público:** **Project configuration → General → Visitor access → Project visibility**: pon **Public** en producción y en previews. Si no, nadie más puede ver la página.
+6. **Activa `main`:** **Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts → Configure**, elige **Let me add individual branches**, escribe `main` y pulsa **Save**.
+7. **Costo:** cada deploy exitoso de `release` cuesta **15 créditos** (máximo 10 al mes). Los deploys de `main` y los que fallan **no cuestan nada**.
+8. **Si falla:** no lo repitas. Copia el log y pégalo en el chat de Kiro. No pulses **Fix with agent** (gasta créditos).
 
 ---
 
@@ -51,6 +52,24 @@ Why the CI check matters: the CI installs pnpm the same way Netlify does (Node 2
 
 **Important for later:** after Netlify is connected, every **Push origin** on `release` is a production deploy (15 credits). Do it only when you want to publish.
 
+## Environment variables for the AI (set them before the first deploy)
+Ghost Defense's real AI mode calls Google Gemini through our proxy (`/api/llm`). The proxy reads two environment variables. **Set both before the first deploy**, so the first build already has them: on the import page of Step 2, before **Publish**. If you change a value later, it applies only after the next deploy (a deploy of `main` is free; production gets it with the next `release` deploy).
+| Key | Value | Contains secret values |
+|---|---|---|
+| `GEMINI_API_KEY` | your key from Google AI Studio | **yes**, tick it |
+| `GEMINI_MODEL` | `gemini-3.5-flash-lite` | no |
+Why this model: it is free of charge on the Gemini free tier, it supports JSON output with a schema, and Google calls it its cost-efficient model for high-volume, simple data tasks, which fits short questions and replies. (Checked 2026-11-19 on Google's [pricing](https://aistudio.google.com/docs/pricing) and [model](https://aistudio.google.com/docs/models/gemini-3.5-flash-lite) pages.)
+Where to set them, in Netlify:
+1. On the import page (Step 2), click **Add environment variables** if it is there. If the page has no such button, finish the import, then go to **Project configuration → Environment variables → Add a variable → Add a single variable** right away. The variables then apply from the next deploy, as said above.
+2. Type the **Key** and the **Value** from the table.
+3. **Scopes:** if Netlify shows this option, it must include **Functions** (the proxy is an Edge Function, and it can only read variables with that scope).
+4. **Deploy contexts:** the value must be available in **Production** and in **Branch deploys** (choose **Same value for all deploy contexts**, or set the same value for both).
+5. Click **Create variable**. Repeat for the second variable.
+Rules:
+- **Never** add the prefix `VITE_` to these names. Vite copies every `VITE_*` variable into the public page.
+- Never paste the key into the repository, a commit, an issue or the Kiro chat. Only Netlify and AI Studio hold it.
+- Create the key in a Google project **with no billing account**. Then running out of quota returns an error and costs nothing; the app then continues in demo mode.
+Where to see the free limits: Google AI Studio, [Rate limit](https://aistudio.google.com/rate-limit) page (requests per minute, tokens per minute and requests per day for your project). Limits apply per project, not per key, and the daily limit resets at midnight Pacific time ([Google's rate limits page](https://aistudio.google.com/docs/rate-limits)). Tell Kiro the numbers you see for `gemini-3.5-flash-lite` and the date, and Kiro logs them (never the key).
 ## Step 2. Import the project into Netlify
 
 1. Go to [app.netlify.com](https://app.netlify.com).
@@ -67,7 +86,8 @@ Why the CI check matters: the CI installs pnpm the same way Netlify does (Node 2
    | **Publish directory** | `dist` |
 
    Netlify may say it found several apps in this repository (a "monorepo") and ask which one to build. **Do not choose `ghost-interview` or `ghost-defense`.** Choose the repository root, so the base directory stays empty. The build makes all three pages together.
-6. Click **Publish** (in some versions the button says **Deploy**).
+6. Add the two environment variables now: see **Environment variables for the AI** above.
+7. Click **Publish** (in some versions the button says **Deploy**).
 
 This first build is a production deploy: **15 credits if it succeeds, 0 if it fails.**
 
