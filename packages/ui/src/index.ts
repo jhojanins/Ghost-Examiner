@@ -6,7 +6,7 @@ export type { ConfirmAnswerProps } from './ConfirmAnswer';
 export { ConfirmAnswer } from './ConfirmAnswer';
 export type { FeedbackPanelProps } from './FeedbackPanel';
 export { FeedbackPanel } from './FeedbackPanel';
-export type { FileUploadProps } from './FileUpload';
+export type { FileSample, FileUploadProps } from './FileUpload';
 export { FileUpload } from './FileUpload';
 export type { GhostProps } from './Ghost';
 export { Ghost } from './Ghost';

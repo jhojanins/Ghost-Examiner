@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FileUpload, type FileUploadProps } from './FileUpload';
 
@@ -55,5 +55,26 @@ describe('FileUpload', () => {
     expect(regions[0].textContent).toBe('This file is over 2 MB. Use a shorter file, or paste the part you want to discuss.');
     rerender({ error: 'defense.error.type', locale: 'es' });
     expect(document.querySelector('[aria-live="polite"]')?.textContent).toBe('Este tipo de archivo no se admite aquí. Usa un archivo .txt o .md, o pega el texto.');
+  });
+});
+
+describe('FileUpload: samples (ghost-defense-live task 7b)', () => {
+  const samples = [
+    { lang: 'en' as const, text: 'An English sample.' },
+    { lang: 'es' as const, text: 'Un ejemplo en español.' },
+  ];
+  it('offers one button per sample, in a labeled group, and passes the sample text and language on', () => {
+    const onSample = vi.fn();
+    setup({ samples, onSample });
+    const group = screen.getByRole('group', { name: 'Or try a sample file' });
+    const buttons = within(group).getAllByRole('button');
+    expect(buttons.map((b) => b.textContent)).toEqual(['Sample in English', 'Sample in Spanish']);
+    fireEvent.click(buttons[1]);
+    expect(onSample).toHaveBeenCalledWith(samples[1]);
+  });
+
+  it('shows no sample group when the app has no samples', () => {
+    setup();
+    expect(screen.queryByRole('group', { name: 'Or try a sample file' })).toBeNull();
   });
 });

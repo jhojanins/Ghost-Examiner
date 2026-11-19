@@ -11,6 +11,13 @@ export interface FileUploadProps {
   error?: KitMessageKey;
   onFile: (file: File) => void;
   onPaste: (text: string) => void;
+  /** Bundled fictional samples (Req 1.10); the app loads a chosen one through the same path as pasted text. */
+  samples?: readonly FileSample[];
+  onSample?: (sample: FileSample) => void;
+}
+export interface FileSample {
+  lang: Locale;
+  text: string;
 }
 
 /**
@@ -19,7 +26,7 @@ export interface FileUploadProps {
  * and a "paste text instead" disclosure. Parsing happens in the app (packages/web); this only
  * passes the file or text on. Errors go to one polite region that is always present.
  */
-export function FileUpload({ locale, provider, error, onFile, onPaste }: FileUploadProps) {
+export function FileUpload({ locale, provider, error, onFile, onPaste, samples = [], onSample }: FileUploadProps) {
   const m = kitMessages[locale];
   const id = useId();
   const [pasting, setPasting] = useState(false);
@@ -66,6 +73,18 @@ export function FileUpload({ locale, provider, error, onFile, onPaste }: FileUpl
           </>
         )}
       </div>
+      {samples.length > 0 && (
+        <div className="ge-upload-samples" role="group" aria-labelledby={`${id}-samples`}>
+          <p id={`${id}-samples`} className="ge-upload-label">
+            {m['defense.upload.samples']}
+          </p>
+          {samples.map((sample) => (
+            <button key={sample.lang} type="button" className="ge-button" onClick={() => onSample?.(sample)}>
+              {m[`defense.upload.sample.${sample.lang}`]}
+            </button>
+          ))}
+        </div>
+      )}
       <p className="ge-upload-error" aria-live="polite">
         {error && m[error]}
       </p>

@@ -38,7 +38,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 7. `FileUpload` and `TextPreview`
   - **Done when:** component tests show the warning above the file input, a labeled native input, paste as an alternative, errors in one polite region, the preview's counts and warnings, headings exposed as headings, the file-language radios, the number-of-questions select (default 4), and Remove file clearing the text.
   - _Design §6.1; Requirements: 1.1, 1.2, 1.7, 2.1 to 2.5, 4.1_ · Skills: `a11y-review`, `ghost-persona`
-- [ ] 7b. Sample files and "Try with a sample file" (owner decision 6)
+- [x] 7b. Sample files and "Try with a sample file" (owner decision 6)
   - Two fictional samples in `apps/ghost-defense/content/samples/` (`sample-en.md`, `sample-es.md`), each long enough for 4 grounded questions; a `samples` prop on `FileUpload` with one button per sample.
   - **Done when:** component tests show the two buttons with their languages, and that choosing one calls the same handler as an upload with the sample's text and language; a core test shows each sample splits into at least 4 excerpts and passes the 300 to 60,000 character limits.
   - _Design §6.1, §7; Requirements: 1.10, 15.5_ · Skills: `a11y-review`, `ghost-persona`

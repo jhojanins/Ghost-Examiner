@@ -10,6 +10,7 @@ export default defineConfig({
       { test: { name: 'ui', root: 'packages/ui', environment: 'jsdom', css: { include: [/\.css\?raw$/] } } },
       // Content checks only; the app's screens are covered by the browser walk-through and e2e.
       { test: { name: 'ghost-interview', root: 'apps/ghost-interview', environment: 'node', exclude: ['e2e/**', 'node_modules/**'] } },
+      { test: { name: 'ghost-defense', root: 'apps/ghost-defense', environment: 'node', exclude: ['e2e/**', 'node_modules/**'] } },
     ],
   },
 });

@@ -45,6 +45,16 @@
 .ge-upload-paste .ge-button {
   align-self: flex-start;
 }
+.ge-upload-samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+.ge-upload-samples > p {
+  flex-basis: 100%;
+  margin: 0;
+}
 .ge-upload-error {
   margin: 0;
   color: var(--error);
