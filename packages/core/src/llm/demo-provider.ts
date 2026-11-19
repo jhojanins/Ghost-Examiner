@@ -43,6 +43,7 @@ export function createDemoProvider(): LLMProvider {
     id: 'demo',
     isDemo: true,
     async complete(req) {
+      if (req.task !== 'evaluate-answer') return { ok: false, error: 'unavailable' }; // defense tasks: ghost-defense-live task 4
       return { ok: true, text: JSON.stringify(demoFeedback(req.input, req.locale)) };
     },
   };

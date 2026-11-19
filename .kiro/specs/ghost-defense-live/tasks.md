@@ -17,7 +17,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - `document/`: `splitExcerpts`, `selectExcerpts`, `normalizeForQuote`, `verifyQuote`.
   - **Done when:** P23 and P24 pass; examples cover Markdown headings, a paragraph longer than the limit, curly quotes, and a quote that exists in another excerpt but not its own (rejected); mutations are caught (overlapping excerpts, case not normalized, quote checked against the whole text).
   - _Design §3.1, §9; Requirements: 1.9, 6.1, 6.2, 9.4_ · Skills: `testing-strategy`
-- [ ] 2. Defense task types, output guards and the language check, with P28
+- [x] 2. Defense task types, output guards and the language check, with P28
   - `LLMTask` grows to the three defense tasks; `isDefenseQuestions`, `isDefenseReply`, `isDefenseSummary`; `inLanguage`.
   - **Done when:** P28 passes; examples show every reply kind, a follow-up when not allowed (rejected), markup and links (rejected), an unknown excerpt id (rejected), and the drop rules of design §3.2 (unverified question dropped, unverified correction turned into the local line); `inLanguage` passes short sentences and rejects a clear EN reply in an ES session.
   - _Design §3.2, §9; Requirements: 6.3, 6.4, 9.1 to 9.3, 14.1_ · Skills: `prompt-injection-defense`, `testing-strategy`

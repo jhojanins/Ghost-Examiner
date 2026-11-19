@@ -45,3 +45,16 @@ export type { Clock } from './clock';
 export type { Excerpt } from './document/excerpts';
 export { selectExcerpts, splitExcerpts } from './document/excerpts';
 export { normalizeForQuote, QUOTE_MAX, QUOTE_MIN, verifyQuote } from './document/quote';
+export type {
+  DefenseQuestion,
+  DefenseQuestionsInput,
+  DefenseReply,
+  DefenseReplyInput,
+  DefenseSummary,
+  DefenseSummaryInput,
+  ExcerptInput,
+  ReplyKind,
+} from './llm/defense/types';
+export type { GuardContext, Parsed } from './llm/defense/guards';
+export { parseDefenseQuestions, parseDefenseReply, parseDefenseSummary, TEXT_MAX } from './llm/defense/guards';
+export { inLanguage } from './llm/defense/language';
