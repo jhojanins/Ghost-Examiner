@@ -24,7 +24,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 3. Engine: dynamic questions, replies with one follow-up, skip, end and summary, with P29
   - **Done when:** P29 passes; every existing engine test and property passes unchanged (pack sessions behave as today); examples cover `preparing`, an empty question list, a follow-up asked once, skip, end early, and `summarize`; mutations are caught (two follow-ups allowed, `confirm` skipped).
   - _Design §3.5, §9; Requirements: 4.1, 4.5, 4.6, 4.8, 7.1, 8.1_ · Skills: `testing-strategy`
-- [ ] 4. Demo provider for the defense tasks, and the kit copy
+- [x] 4. Demo provider for the defense tasks, and the kit copy
   - The heuristics of design §3.6 and the catalog keys of §3.7 (EN and ES), without the consent and real-mode texts (task 16).
   - **Done when:** the demo output passes the guards on fixture texts; outputs are deterministic; typecheck shows `es` matching `en`; the ghost-persona rules hold (no verdict words, one question at a time, at most about 25 words per question).
   - _Design §3.6, §3.7; Requirements: 4.2, 4.3, 4.7, 9.7, 10.4_ · Skills: `ghost-persona`

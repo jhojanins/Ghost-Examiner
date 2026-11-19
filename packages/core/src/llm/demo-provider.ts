@@ -1,6 +1,7 @@
 import type { Feedback } from '../engine/types';
 import { format } from '../i18n/i18n';
 import { kitMessages } from '../i18n/kit-messages';
+import { demoQuestions, demoReply, demoSummary } from './defense/demo';
 import type { EvaluateInput, LLMProvider } from './types';
 
 const SHORT_ANSWER_WORDS = 8;
@@ -43,8 +44,16 @@ export function createDemoProvider(): LLMProvider {
     id: 'demo',
     isDemo: true,
     async complete(req) {
-      if (req.task !== 'evaluate-answer') return { ok: false, error: 'unavailable' }; // defense tasks: ghost-defense-live task 4
-      return { ok: true, text: JSON.stringify(demoFeedback(req.input, req.locale)) };
+      switch (req.task) {
+        case 'evaluate-answer':
+          return { ok: true, text: JSON.stringify(demoFeedback(req.input, req.locale)) };
+        case 'defense-questions':
+          return { ok: true, text: JSON.stringify(demoQuestions(req.input, req.locale)) };
+        case 'defense-reply':
+          return { ok: true, text: JSON.stringify(demoReply(req.input, req.locale)) };
+        case 'defense-summary':
+          return { ok: true, text: JSON.stringify(demoSummary(req.input, req.locale)) };
+      }
     },
   };
 }
