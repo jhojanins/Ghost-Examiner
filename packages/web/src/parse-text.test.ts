@@ -1,3 +1,4 @@
+import { prepareUntrusted, splitExcerpts, verifyQuote } from '@ghost-examiner/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_BYTES, MAX_CHARS, MIN_CHARS, parsePastedText, parseTextFile } from './parse-text';
 
@@ -41,6 +42,26 @@ describe('parseTextFile', () => {
   });
 });
 
+describe('invisible characters (owner decision 2026-11-19, after phase 2)', () => {
+  // A zero-width space, a zero-width joiner, a bidi override and a control character inside a sentence.
+  const sentence = 'We chose a mes\u200Bsage qu\u200Deue be\u202Ecause the pay\u0007ment service was slow.';
+  const clean = 'We chose a message queue because the payment service was slow.';
+  it('removes zero-width and control characters once, when the file or paste is parsed, keeping line breaks and tabs', async () => {
+    const body = `${sentence}\n\tIndented line.\n${text(400)}`;
+    const r = await parseTextFile(file(body, 'notes.md'));
+    expect(r).toEqual({ ok: true, text: `${clean}\n\tIndented line.\n${text(400)}`, truncated: false });
+    expect(parsePastedText(body)).toEqual(r);
+  });
+  it('a quote that spans such a character verifies in the browser and survives the proxy cleaning unchanged', async () => {
+    const r = await parseTextFile(file(`# Design\n\n${sentence} ${text(400)}`, 'notes.md'));
+    if (!r.ok) throw new Error('parse failed');
+    const [excerpt] = splitExcerpts(r.text, { maxChars: 1500 });
+    const quote = 'a message queue because the payment';
+    expect(verifyQuote(quote, excerpt.text)).toBe(true);
+    // The proxy cleans what it receives again; the text the browser checked quotes against is already clean.
+    expect(prepareUntrusted(excerpt.text, '7f3a9c0e').text).toBe(excerpt.text);
+  });
+});
 describe('parsePastedText', () => {
   it('uses the same length rules as a file', () => {
     expect(parsePastedText(text(400))).toEqual({ ok: true, text: text(400), truncated: false });

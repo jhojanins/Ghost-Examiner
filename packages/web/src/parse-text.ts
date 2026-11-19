@@ -1,4 +1,4 @@
-import type { KitMessageKey } from '@ghost-examiner/core';
+import { removeInvisible, type KitMessageKey } from '@ghost-examiner/core';
 
 /** Limits of ghost-defense-live Req 1.6 (owner decision 1). */
 export const MAX_BYTES = 2 * 1024 * 1024;
@@ -10,10 +10,12 @@ export type ParsedText = { ok: true; text: string; truncated: boolean } | { ok: 
 
 /**
  * Applies the length rules to extracted text: NFC (so quotes can be checked one character at a
- * time), `\n` line ends, at least 300 characters, and only the first 60,000 used (Req 1.6).
+ * time), `\n` line ends, no control or zero-width characters (the same cleaning the proxy does, so
+ * quotes are checked against the same text on both sides), at least 300 characters, and only the
+ * first 60,000 used (Req 1.6, 13.2).
  */
 function checked(raw: string): ParsedText {
-  const text = raw.replace(/\r\n?/g, '\n').normalize('NFC');
+  const text = removeInvisible(raw);
   if (text.trim().length < MIN_CHARS) return { ok: false, error: 'defense.error.short' };
   return text.length > MAX_CHARS ? { ok: true, text: text.slice(0, MAX_CHARS), truncated: true } : { ok: true, text, truncated: false };
 }

@@ -46,11 +46,20 @@ const PATTERNS = [
 ];
 
 /**
+ * Line breaks as `\n`, NFC, and control and zero-width characters removed (Req 13.2). The browser
+ * applies it when the file is parsed and the proxy again before a block, so both check quotes
+ * against the same text.
+ */
+export function removeInvisible(text: string): string {
+  return text.replace(/\r\n?/g, '\n').normalize('NFC').replace(INVISIBLE, '');
+}
+
+/**
  * Untrusted text, ready for a block (Req 13.2): NFC, line breaks as `\n`, control and zero-width
  * characters removed, then every occurrence of the tag removed in any case, until none is left.
  */
 export function prepareUntrusted(text: string, tag: string): { text: string; flags: number } {
-  let clean = text.replace(/\r\n?/g, '\n').normalize('NFC').replace(INVISIBLE, '');
+  let clean = removeInvisible(text);
   const flags = PATTERNS.reduce((n, p) => n + (clean.match(p)?.length ?? 0), 0);
   const tagAnyCase = new RegExp(tag, 'gi');
   for (let before = ''; before !== clean; ) {

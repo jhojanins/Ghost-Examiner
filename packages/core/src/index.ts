@@ -60,7 +60,7 @@ export type { GuardContext, Parsed } from './llm/defense/guards';
 export { parseDefenseQuestions, parseDefenseReply, parseDefenseSummary, TEXT_MAX } from './llm/defense/guards';
 export { inLanguage } from './llm/defense/language';
 export type { DefensePrompt, DefenseRequest } from './llm/defense/prompts';
-export { buildDefensePrompt, makeTag, prepareUntrusted } from './llm/defense/prompts';
+export { buildDefensePrompt, makeTag, prepareUntrusted, removeInvisible } from './llm/defense/prompts';
 export type { ParsedRequest, RequestProblem } from './llm/defense/request';
 export { MAX_OUTPUT_TOKENS, parseDefenseRequest } from './llm/defense/request';
 export { defenseSchema } from './llm/defense/schemas';
