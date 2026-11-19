@@ -1,6 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
 import { config } from '../edge-functions/llm.ts';
-import { handleLlm, type LlmDeps } from './handler.ts';
+import { handleLlm, type ControlStore, type LlmDeps } from './handler.ts';
+
+/**
+ * A fake of the Netlify Blobs store `llm-control` (design §2.3): text values with ETags and the
+ * two conditional writes. `conflicts` makes the next N conditional writes lose a race.
+ */
+function fakeStore(initial: Record<string, string> = {}) {
+  const data = new Map<string, { value: string; etag: string }>(Object.entries(initial).map(([k, v]) => [k, { value: v, etag: '"0"' }]));
+  let version = 0;
+  const writes: { key: string; value: string; options: object }[] = [];
+  const store = {
+    conflicts: 0,
+    failing: false,
+    data,
+    writes,
+    async get(key: string) {
+      if (store.failing) throw new Error('blobs down');
+      return data.get(key)?.value ?? null;
+    },
+    async getWithMetadata(key: string) {
+      if (store.failing) throw new Error('blobs down');
+      const e = data.get(key);
+      return e ? { data: e.value, etag: e.etag } : null;
+    },
+    async set(key: string, value: string, options: { onlyIfNew: true } | { onlyIfMatch: string }) {
+      writes.push({ key, value, options });
+      if (store.conflicts > 0) {
+        store.conflicts--;
+        data.set(key, { value: String(Number(data.get(key)?.value ?? 0) + 1), etag: `"c${++version}"` }); // another request won
+        return { modified: false };
+      }
+      const current = data.get(key);
+      const ok = 'onlyIfNew' in options ? current === undefined : current?.etag === options.onlyIfMatch;
+      if (ok) data.set(key, { value, etag: `"${++version}"` });
+      return { modified: ok };
+    },
+  } satisfies ControlStore & Record<string, unknown>;
+  return store;
+}
 
 // Fictional site, key and bodies (test data only). The key is not a real key format.
 const SITE = { name: 'ghost-examiner', url: 'https://ghost-examiner.netlify.app' };
@@ -41,6 +79,7 @@ function setup(over: Partial<LlmDeps> = {}, upstream: (init?: RequestInit) => Pr
     now: () => (clock += 25),
     log: (line) => logs.push(line),
     timeoutMs: 1000,
+    control: fakeStore(),
     ...over,
   };
   return { deps, calls, logs };
@@ -220,5 +259,68 @@ describe('Edge Function /api/llm: logs (Req 11.5, 12.2)', () => {
       expect(line).not.toContain('SECRET-ANSWER');
       expect(line).not.toContain(KEY);
     }
+  });
+});
+
+describe('Edge Function /api/llm: kill switch and daily cap in Netlify Blobs (design §2.3, Req 11.3, 11.4)', () => {
+  const NOW = Date.UTC(2026, 10, 19, 23, 59, 30); // 2026-11-19, 30 s before midnight UTC
+  const day = (store: ReturnType<typeof fakeStore>) => store.data.get('count-2026-11-19')?.value;
+  const run = (store: ReturnType<typeof fakeStore>, body: unknown = BODIES['defense-reply']) => {
+    const { deps, calls } = setup({ control: store, now: () => NOW });
+    return handleLlm(post(body), deps).then(async (r) => ({ status: r.status, error: r.status === 200 ? undefined : await errorOf(r), calls: calls.length }));
+  };
+  it('the kill switch returns 503 disabled before any count or upstream call', async () => {
+    const store = fakeStore({ kill: 'on' });
+    expect(await run(store)).toEqual({ status: 503, error: 'disabled', calls: 0 });
+    expect(store.writes).toEqual([]);
+    for (const off of ['off', '', 'no']) expect((await run(fakeStore({ kill: off }))).status, off).toBe(200);
+    expect((await run(fakeStore({ kill: ' ON\n' }))).status).toBe(503);
+  });
+  it('counts each request that goes upstream in a key per UTC day, starting with a create-only write', async () => {
+    const store = fakeStore();
+    await run(store);
+    await run(store);
+    expect(day(store)).toBe('2');
+    expect(store.writes.map((w) => w.options)).toEqual([{ onlyIfNew: true }, { onlyIfMatch: '"1"' }]);
+    await run(store, { task: 'defense-reply' }); // rejected before the count
+    expect(day(store)).toBe('2');
+  });
+  it('returns 429 at the cap from the cap key, without calling upstream', async () => {
+    const store = fakeStore({ cap: '2' });
+    expect((await run(store)).status).toBe(200);
+    expect((await run(store)).status).toBe(200);
+    expect(await run(store)).toEqual({ status: 429, error: 'rate-limited', calls: 0 });
+    expect(day(store)).toBe('2');
+  });
+  it('uses 300 when the cap is missing or not a whole number', async () => {
+    for (const cap of [undefined, 'abc', '-5', '1.5', '']) {
+      const store = fakeStore({ ...(cap !== undefined && { cap }), 'count-2026-11-19': '299' });
+      expect((await run(store)).status, String(cap)).toBe(200);
+      expect((await run(store)).status, String(cap)).toBe(429);
+    }
+    expect((await run(fakeStore({ cap: '0' }))).status).toBe(429); // 0 is a valid cap: AI off for the day
+  });
+  it('retries once on an ETag conflict; on a second conflict it lets the request through', async () => {
+    const once = fakeStore({ 'count-2026-11-19': '5' });
+    once.conflicts = 1;
+    expect((await run(once)).status).toBe(200);
+    expect(day(once)).toBe('7'); // the other request's count, then ours
+    expect(once.writes).toHaveLength(2);
+    const twice = fakeStore({ 'count-2026-11-19': '5' });
+    twice.conflicts = 2;
+    expect((await run(twice)).status).toBe(200);
+    expect(twice.writes).toHaveLength(2); // no third try: the count is approximate under bursts
+  });
+  it('stores no user content: only the day counter, holding digits', async () => {
+    const store = fakeStore();
+    await run(store);
+    await run(store, BODIES['defense-questions']);
+    expect([...store.data.keys()]).toEqual(['count-2026-11-19']);
+    for (const w of store.writes) expect(w.value).toMatch(/^\d+$/);
+  });
+  it('fails closed with 503 when the store cannot be read', async () => {
+    const store = fakeStore();
+    store.failing = true;
+    expect(await run(store)).toEqual({ status: 503, error: 'unavailable', calls: 0 });
   });
 });

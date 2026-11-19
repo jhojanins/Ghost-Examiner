@@ -7,9 +7,20 @@ import { buildDefensePrompt, defenseSchema, makeTag, parseDefenseRequest, type D
  *
  * Checks, in order, each with its own status: POST (405), same-origin from this site or one of
  * its deploys (403), JSON content type (415), body size (413), shape and caps per task (400 or
- * 413). Then it builds the prompt from the core templates and calls Gemini with the server key.
+ * 413), the kill switch (503 `disabled`) and the daily cap (429), both in Netlify Blobs. Then it
+ * builds the prompt from the core templates and calls Gemini with the server key.
  * Upstream bodies are never forwarded; logs hold only the task, the status and the latency.
  */
+/**
+ * The Blobs store `llm-control` (design §2.3): `kill` ("on" stops the proxy), `cap` (requests per
+ * UTC day, 300 when missing or invalid) and `count-YYYY-MM-DD` (a number). No user content, ever.
+ */
+export interface ControlStore {
+  get(key: string): Promise<string | null>;
+  getWithMetadata(key: string): Promise<{ data: string; etag?: string } | null>;
+  set(key: string, value: string, options: { onlyIfNew: true } | { onlyIfMatch: string }): Promise<{ modified: boolean }>;
+}
+
 export interface LlmDeps {
   env: (name: string) => string | undefined;
   /** The Netlify site (`context.site`). */
@@ -18,6 +29,7 @@ export interface LlmDeps {
   randomBytes: (n: number) => Uint8Array;
   now: () => number;
   log: (line: string) => void;
+  control: ControlStore;
   /** Upstream timeout in ms. Below the client's 20 s, so the client gets our answer first. */
   timeoutMs?: number;
 }
@@ -28,8 +40,10 @@ const TEXT_MAX_CHARS = 16_000;
 const TIMEOUT_MS = 18_000;
 const MODEL_ID = /^[a-z0-9][a-z0-9.-]{0,63}$/;
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
+const DEFAULT_CAP = 300; // owner decision 3
+const WHOLE = /^\d+$/;
 
-type ErrorCode = 'method' | 'forbidden' | 'media-type' | 'too-large' | 'bad-request' | 'rate-limited' | 'unavailable' | 'bad-output';
+type ErrorCode = 'method' | 'forbidden' | 'media-type' | 'too-large' | 'bad-request' | 'disabled' | 'rate-limited' | 'unavailable' | 'bad-output';
 const fail = (status: number, error: ErrorCode, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify({ error }), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
 
@@ -122,7 +136,28 @@ async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Abor
   }
 }
 
-async function route(req: Request, deps: LlmDeps, seen: { task: string | null }): Promise<Response> {
+/**
+ * The kill switch, then the daily cap. A request under the cap is counted with a conditional
+ * write; on an ETag conflict it re-reads and tries once more, and on a second conflict it goes
+ * through, so the count is approximate under bursts. Gemini's own daily quota is a second cap.
+ */
+async function admit(store: ControlStore, now: number): Promise<'ok' | 'disabled' | 'capped'> {
+  const [kill, capText] = await Promise.all([store.get('kill'), store.get('cap')]);
+  if (kill?.trim().toLowerCase() === 'on') return 'disabled';
+  const cap = WHOLE.test(capText?.trim() ?? '') ? Number(capText?.trim()) : DEFAULT_CAP;
+  const key = `count-${new Date(now).toISOString().slice(0, 10)}`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const current = await store.getWithMetadata(key);
+    const count = current && WHOLE.test(current.data) ? Number(current.data) : 0;
+    if (count >= cap) return 'capped';
+    const next = String(count + 1);
+    const write = current?.etag ? await store.set(key, next, { onlyIfMatch: current.etag }) : await store.set(key, next, { onlyIfNew: true });
+    if (write.modified) return 'ok';
+  }
+  return 'ok';
+}
+
+async function route(req: Request, deps: LlmDeps, seen: { task: string | null }, started: number): Promise<Response> {
   if (req.method !== 'POST') return fail(405, 'method', { allow: 'POST' });
   if (!allowedOrigin(req, deps.site)) return fail(403, 'forbidden');
   if (!/^application\/json(\s*;|$)/i.test(req.headers.get('content-type') ?? '')) return fail(415, 'media-type');
@@ -138,13 +173,21 @@ async function route(req: Request, deps: LlmDeps, seen: { task: string | null })
   const parsed = parseDefenseRequest(body);
   if (!parsed.ok) return parsed.reason === 'too-large' ? fail(413, 'too-large') : fail(400, 'bad-request');
   seen.task = parsed.value.task;
+  let gate: Awaited<ReturnType<typeof admit>>;
+  try {
+    gate = await admit(deps.control, started);
+  } catch {
+    return fail(503, 'unavailable'); // fail closed: without the store, no kill switch and no cap
+  }
+  if (gate === 'disabled') return fail(503, 'disabled');
+  if (gate === 'capped') return fail(429, 'rate-limited');
   return callGemini(parsed.value, deps, req.signal);
 }
 
 export async function handleLlm(req: Request, deps: LlmDeps): Promise<Response> {
   const started = deps.now();
   const seen: { task: string | null } = { task: null };
-  const res = await route(req, deps, seen);
+  const res = await route(req, deps, seen, started);
   // Only the task, the status and the latency: never a body, a key or a header (Req 11.5, 12.2).
   deps.log(JSON.stringify({ task: seen.task, status: res.status, ms: deps.now() - started }));
   return res;
