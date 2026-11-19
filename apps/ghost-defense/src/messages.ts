@@ -1,22 +1,30 @@
 import { defineCatalog } from '@ghost-examiner/core';
-
-/**
- * App strings (design §6). This app is a shell: the copy says plainly that nothing works here
- * yet and never describes the document defense as available.
- */
+/** App strings (ghost-defense-live design §7), written with the ghost-persona skill. Spanish uses "tú". */
 export const messages = defineCatalog(
   {
     title: 'Ghost Defense',
-    previewNote: 'Work in progress: there is nothing to answer here yet.',
-    'wip.heading': 'Still in development',
-    'wip.text': 'The document defense is not ready yet. Try Ghost Interview meanwhile.',
-    'wip.link': 'Go to Ghost Interview',
+    'intro.heading': 'Defend your own work',
+    'intro.text':
+      'Choose a text file about your thesis or project. The examiner reads it and asks you a few questions about it, so you can check that you really understand it. There is no time limit.',
+    'intro.start': 'Start',
+    'ghost.greeting': "Good evening. I'll ask you about your file, one question at a time.",
+    'ghost.closing': "That's all for tonight. My clipboard is full.",
+    'preparing.heading': 'Reading your file',
+    'question.heading': 'Question {n} of {total}',
+    'question.followUp': 'Follow-up question',
+    'reply.heading': "The examiner's reply",
   },
   {
     title: 'Defensa fantasma',
-    previewNote: 'En desarrollo: aquí todavía no hay nada que responder.',
-    'wip.heading': 'Todavía en desarrollo',
-    'wip.text': 'La defensa de documentos todavía no está lista. Mientras tanto, prueba la Entrevista fantasma.',
-    'wip.link': 'Ir a la Entrevista fantasma',
+    'intro.heading': 'Defiende tu propio trabajo',
+    'intro.text':
+      'Elige un archivo de texto sobre tu tesis o proyecto. El examinador lo lee y te hace algunas preguntas sobre él, para que compruebes que de verdad lo entiendes. No hay límite de tiempo.',
+    'intro.start': 'Empezar',
+    'ghost.greeting': 'Buenas noches. Te haré preguntas sobre tu archivo, una a la vez.',
+    'ghost.closing': 'Eso es todo por esta noche. Mi portapapeles está lleno.',
+    'preparing.heading': 'Leyendo tu archivo',
+    'question.heading': 'Pregunta {n} de {total}',
+    'question.followUp': 'Pregunta de seguimiento',
+    'reply.heading': 'La respuesta del examinador',
   },
 );

@@ -1,4 +1,13 @@
-import { buildTimeline, initialState, type Feedback, type Phase, type QuestionPack, type SessionState } from '@ghost-examiner/core';
+import {
+  buildTimeline,
+  initialState,
+  type DefenseReply,
+  type Feedback,
+  type GhostState,
+  type Phase,
+  type QuestionPack,
+  type SessionState,
+} from '@ghost-examiner/core';
 import { describe, expect, it } from 'vitest';
 import { ghostState, type GhostSessionView } from './ghost-state';
 
@@ -75,5 +84,23 @@ describe('ghostState (design §5.2)', () => {
       expect(ghostState(view(state, finished), SEED).speech).toBeUndefined();
       expect(ghostState(view(state, playing), SEED).speech).toEqual({ timeline, startedAt: 1234 });
     }
+  });
+});
+
+describe('ghostState: dynamic sessions (ghost-defense-live design §3.5)', () => {
+  const reply = (kind: DefenseReply['kind']): DefenseReply => ({ kind, say: ['S.'] });
+  it.each<[DefenseReply['kind'], GhostState['expression']]>([
+    ['correction', 'skeptical'],
+    ['acknowledgment', 'approving'],
+    ['follow-up', 'attentive'],
+    ['not-in-file', 'neutral'],
+    ['unsupported', 'neutral'],
+  ])('a %s reply → %s, while it is said and after it', (kind, expression) => {
+    const state = at('feedback', { reply: reply(kind) });
+    expect(ghostState(view(state, playing), SEED)).toMatchObject({ activity: 'speaking', expression });
+    expect(ghostState(view(state, finished), SEED)).toEqual({ activity: 'reacting', expression, seed: SEED });
+  });
+  it('preparing the questions → thinking / thinking', () => {
+    expect(ghostState(view(at('preparing'), undefined), SEED)).toEqual({ activity: 'thinking', expression: 'thinking', seed: SEED });
   });
 });

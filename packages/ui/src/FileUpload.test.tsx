@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FileUpload, type FileUploadProps } from './FileUpload';
 
@@ -76,5 +77,11 @@ describe('FileUpload: samples (ghost-defense-live task 7b)', () => {
   it('shows no sample group when the app has no samples', () => {
     setup();
     expect(screen.queryByRole('group', { name: 'Or try a sample file' })).toBeNull();
+  });
+  it('passes its heading on as a focus target, for the app to move focus to when the screen opens', () => {
+    const ref = createRef<HTMLHeadingElement>();
+    setup({ ref });
+    expect(ref.current).toBe(screen.getByRole('heading', { level: 2, name: 'Your file' }));
+    expect(ref.current?.getAttribute('tabindex')).toBe('-1');
   });
 });

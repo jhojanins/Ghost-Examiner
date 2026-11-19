@@ -197,12 +197,16 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     await s.begin();
     expect(s.timers).toHaveLength(1);
     expect(s.timers[0].ms).toBe(1500);
+    await s.finishLine(); // the greeting
     s.timers[0].fn();
     expect(s.lines.at(-1)?.text).toBe(kitMessages.en['defense.waiting']);
     release();
     await flush();
     await flush();
     expect(s.view().state.phase).toBe('asking');
+    expect(s.lines.at(-1)?.text).toBe(kitMessages.en['defense.waiting']); // the question waits for it
+    await s.finishLine();
+    expect(s.lines.at(-1)?.text).toBe(s.view().state.pack.questions[0].prompt.en);
 
     const fast = setup(createDemoProvider());
     await fast.begin();
@@ -210,6 +214,34 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     expect(fast.lines.some((l) => l.text === kitMessages.en['defense.waiting'])).toBe(false);
   });
 
+  it('opens with the greeting and then the first question: the question waits instead of cutting it (Req 4.2)', async () => {
+    const s = setup(scripted({ 'defense-questions': fourQuestions }).provider);
+    await s.begin();
+    expect(s.view().state.phase).toBe('asking');
+    expect(s.lines.map((l) => l.text)).toEqual(['Good evening.']);
+    expect(s.speech.cancel).toHaveBeenCalledTimes(1); // only before the greeting itself
+    await s.finishLine();
+    expect(s.lines.at(-1)?.text).toBe('Why is part 1 like this?');
+    await s.finishLine();
+    expect(s.view().state.phase).toBe('answering');
+  });
+  it('skips the waiting line when the questions arrive before the greeting ends', async () => {
+    let release!: () => void;
+    const slow: LLMProvider = {
+      id: 'proxy',
+      isDemo: false,
+      complete: (req) => new Promise((resolve) => (release = () => void createDemoProvider().complete(req).then(resolve))),
+    };
+    const s = setup(slow);
+    await s.begin();
+    s.timers[0].fn(); // 1.5 s, the greeting still playing: the waiting line waits behind it
+    expect(s.lines.map((l) => l.text)).toEqual(['Good evening.']);
+    release();
+    await flush();
+    await flush();
+    await s.finishLine();
+    expect(s.lines.map((l) => l.text)).toEqual(['Good evening.', s.view().state.pack.questions[0].prompt.en]);
+  });
   it('asks only `count` questions; extra ones are spares for questions dropped by the guard', async () => {
     const six = { questions: [...fourQuestions().questions, ...fourQuestions().questions.slice(0, 2)] }; // count + 2
     const { provider } = scripted({ 'defense-questions': () => six });

@@ -188,8 +188,12 @@ export function createSession(deps: SessionDeps): SessionHandle {
 
   async function prepareQuestions(count: number, locale: Locale) {
     if (!defense) return;
+    // While the greeting still plays, the waiting line waits behind it (and the questions may replace it).
     const cancelWaiting = schedule(() => {
-      if (state.phase === 'preparing') play(--localLineId, { text: kitMessages[locale]['defense.waiting'], locale });
+      if (state.phase !== 'preparing') return;
+      const waiting = { id: --localLineId, ref: { text: kitMessages[locale]['defense.waiting'], locale } };
+      if (line?.playing) queued = [...queued, waiting];
+      else play(waiting.id, waiting.ref);
     }, WAITING_MS);
     const ctx = { excerpts: defense.excerpts, locale, count };
     const req: LLMRequest = {
@@ -337,7 +341,9 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (next === before && effects.length === 0 && !lineChanged) return;
     state = next;
     const lines = effects.flatMap((e) => (e.type === 'speak' ? [{ id: e.lineId, ref: e.line }] : []));
-    if (lines.length > 0) {
+    if (lines.length > 0 && event.type === 'questions-ready' && line?.playing) {
+      queued = lines; // the greeting (or the waiting line) finishes first, then the first question (Req 4.2)
+    } else if (lines.length > 0) {
       queued = lines.slice(1);
       play(lines[0].id, lines[0].ref);
     }

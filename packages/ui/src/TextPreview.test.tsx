@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TextPreview, type TextPreviewProps } from './TextPreview';
 
@@ -60,5 +61,11 @@ describe('TextPreview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     expect(onRemove).toHaveBeenCalledOnce();
     expect(onStart).toHaveBeenCalledOnce();
+  });
+  it('passes its heading on as a focus target, for the app to move focus to when the screen opens', () => {
+    const ref = createRef<HTMLHeadingElement>();
+    setup({ ref });
+    expect(ref.current).toBe(screen.getByRole('heading', { level: 2, name: 'What the ghost will read' }));
+    expect(ref.current?.getAttribute('tabindex')).toBe('-1');
   });
 });

@@ -45,7 +45,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 8. `InlineConfirm`, `QuoteBlock`, `ModeLabel` and `DefenseSummary`
   - **Done when:** component tests show Send focused on mount with the text and method in its description; Enter confirms; Edit and Answer again call their handlers; quotes carry the file's `lang`; the summary's headings, labels and Copy summary (clipboard feature-detected, polite confirmation); the demo label text.
   - _Design §6.2, §6.3; Requirements: 6.7, 7.2, 7.4, 8.2, 8.5, 10.3_ · Skills: `a11y-review`
-- [ ] 9. ghost-defense: the offline flow **[Browser + axe]**
+- [x] 9. ghost-defense: the offline flow **[Browser + axe]**
   - Privacy notice, upload, preview, the offline choice (consent arrives in task 16), questions with quotes, voice and typed answers with inline confirmation, replies, summary; `preview: false`; `ghostState` mapping for reply kinds.
   - **Done when:** the walk-through by keyboard with the speech fakes, in EN and ES at 320 and 1280 px, completes a 4-question session; stop then Enter confirms a spoken answer; axe passes on every screen; no console errors.
   - _Design §6, §7; Requirements: 2, 4, 7, 8, 14_ · Skills: `a11y-review`, `ghost-persona`, `testing-strategy`

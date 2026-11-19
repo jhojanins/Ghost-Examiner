@@ -4,7 +4,7 @@ import { installFakeRecognition } from './fakes/speech-recognition';
 import { installFakeSpeech } from './fakes/speech-synthesis';
 
 /**
- * The full axe matrix (spec a task 38, Req 12.3): every slice screen and the ghost-defense shell,
+ * The full axe matrix (spec a task 38, Req 12.3): every slice screen and the ghost-defense intro screen,
  * in EN and ES, each with reduced motion `no-preference` and `reduce`. WCAG 2.2 AA tags.
  */
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -103,13 +103,13 @@ for (const lang of ['en', 'es'] as const) {
     expect(errors).toEqual([]);
   });
 
-  test(`ghost-defense shell in ${lang}: the shell and its privacy notice`, async ({ page }) => {
+  test(`ghost-defense intro in ${lang}: the intro screen and its privacy notice`, async ({ page }) => {
     const errors = watchErrors(page);
     const found: string[] = [];
     await page.goto(DEFENSE_URL);
     if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
     await expect(page.getByRole('heading', { level: 1, name: t.defenseTitle })).toBeVisible();
-    found.push(...(await matrix(page, 'defense shell')));
+    found.push(...(await matrix(page, 'defense intro')));
 
     await page.getByRole('button', { name: t.privacy }).press('Enter');
     const dialog = page.getByRole('dialog', { name: t.privacy });

@@ -1,5 +1,5 @@
 import { format, kitMessages, type Locale } from '@ghost-examiner/core';
-import { useId, type ReactNode } from 'react';
+import { useId, type ReactNode, type Ref } from 'react';
 import './tokens.css';
 import './TextPreview.css';
 
@@ -18,6 +18,8 @@ export interface TextPreviewProps {
   onCount: (count: number) => void;
   onRemove: () => void;
   onStart: () => void;
+  /** The heading, so the app can move focus to it when the screen opens. */
+  ref?: Ref<HTMLHeadingElement>;
 }
 
 const COUNTS = [3, 4, 5, 6, 7, 8];
@@ -44,14 +46,14 @@ function blocks(text: string): ReactNode[] {
  * language (for screen readers, Req 2.4), the number of questions, and Remove or Start.
  */
 export function TextPreview(props: TextPreviewProps) {
-  const { locale, text, truncated, parts, sample, fileLang, count } = props;
+  const { locale, text, truncated, parts, sample, fileLang, count, onFileLang, onCount, onRemove, onStart, ref } = props;
   const m = kitMessages[locale];
   const id = useId();
   const number = new Intl.NumberFormat(locale);
   const hasHeadings = text.split('\n').some((line) => HEADING.test(line));
   return (
     <section className="ge-preview-panel" aria-labelledby={`${id}-heading`}>
-      <h2 id={`${id}-heading`} className="ge-preview-heading">
+      <h2 id={`${id}-heading`} ref={ref} tabIndex={-1} className="ge-preview-heading">
         {m['defense.preview.heading']}
       </h2>
       <p>{format(m['defense.preview.counts'], { chars: number.format(text.length), parts: number.format(parts) })}</p>
@@ -66,7 +68,7 @@ export function TextPreview(props: TextPreviewProps) {
         <legend>{m['defense.preview.fileLang']}</legend>
         {(['en', 'es'] as const).map((lang) => (
           <label key={lang} className="ge-preview-radio">
-            <input type="radio" name={`${id}-lang`} value={lang} checked={fileLang === lang} onChange={() => props.onFileLang(lang)} />
+            <input type="radio" name={`${id}-lang`} value={lang} checked={fileLang === lang} onChange={() => onFileLang(lang)} />
             <span lang={lang}>{m[`language.${lang}`]}</span>
           </label>
         ))}
@@ -74,7 +76,7 @@ export function TextPreview(props: TextPreviewProps) {
       <label htmlFor={`${id}-count`} className="ge-preview-label">
         {m['defense.preview.count']}
       </label>
-      <select id={`${id}-count`} className="ge-preview-select" value={count} onChange={(e) => props.onCount(Number(e.target.value))}>
+      <select id={`${id}-count`} className="ge-preview-select" value={count} onChange={(e) => onCount(Number(e.target.value))}>
         {COUNTS.map((n) => (
           <option key={n} value={n}>
             {n}
@@ -82,10 +84,10 @@ export function TextPreview(props: TextPreviewProps) {
         ))}
       </select>
       <div className="ge-preview-actions">
-        <button type="button" className="ge-button ge-button--primary" onClick={props.onStart}>
+        <button type="button" className="ge-button ge-button--primary" onClick={onStart}>
           {m['defense.preview.start']}
         </button>
-        <button type="button" className="ge-button" onClick={props.onRemove}>
+        <button type="button" className="ge-button" onClick={onRemove}>
           {m['defense.preview.remove']}
         </button>
       </div>

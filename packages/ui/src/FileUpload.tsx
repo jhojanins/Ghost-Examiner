@@ -1,5 +1,5 @@
 import { format, kitMessages, type KitMessageKey, type Locale } from '@ghost-examiner/core';
-import { useId, useState, type DragEvent } from 'react';
+import { useId, useState, type DragEvent, type Ref } from 'react';
 import './tokens.css';
 import './FileUpload.css';
 
@@ -14,6 +14,8 @@ export interface FileUploadProps {
   /** Bundled fictional samples (Req 1.10); the app loads a chosen one through the same path as pasted text. */
   samples?: readonly FileSample[];
   onSample?: (sample: FileSample) => void;
+  /** The heading, so the app can move focus to it when the screen opens. */
+  ref?: Ref<HTMLHeadingElement>;
 }
 export interface FileSample {
   lang: Locale;
@@ -26,7 +28,7 @@ export interface FileSample {
  * and a "paste text instead" disclosure. Parsing happens in the app (packages/web); this only
  * passes the file or text on. Errors go to one polite region that is always present.
  */
-export function FileUpload({ locale, provider, error, onFile, onPaste, samples = [], onSample }: FileUploadProps) {
+export function FileUpload({ locale, provider, error, onFile, onPaste, samples = [], onSample, ref }: FileUploadProps) {
   const m = kitMessages[locale];
   const id = useId();
   const [pasting, setPasting] = useState(false);
@@ -38,7 +40,7 @@ export function FileUpload({ locale, provider, error, onFile, onPaste, samples =
   };
   return (
     <section className="ge-upload" role="group" aria-labelledby={`${id}-heading`} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
-      <h2 id={`${id}-heading`} className="ge-upload-heading">
+      <h2 id={`${id}-heading`} ref={ref} tabIndex={-1} className="ge-upload-heading">
         {m['defense.upload.heading']}
       </h2>
       <p className="ge-upload-warning">{m['defense.upload.warning']}</p>

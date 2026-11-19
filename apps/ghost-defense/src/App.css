@@ -3,29 +3,47 @@
 :root {
   --accent: #ffd27a;
 }
-
+/* Ghost and captions on top, the mode label, the current step, then the transcript. Normal flow
+   only, so captions never cover the focused element. */
+.gd-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .gd-ghost {
   width: 150px;
   margin: 0 auto;
 }
-
-.gd-panel {
+/* Narrow screens: a smaller ghost, so the question and the answer field fit at 320 px. */
+@media (max-width: 30rem) {
+  .gd-ghost {
+    width: 120px;
+  }
+}
+.gd-panel,
+.ge-feedback {
   max-width: 42rem;
   margin: 1.5rem auto 0;
+}
+.gd-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 1.25rem 1.5rem;
+  /* Drawn edge, as the kit panels: 3.5:1 on --bg-end (spec b tasks 33b, 35b). */
+  border: 1px solid var(--panel-edge);
   border-radius: 0.75rem;
   background: var(--surface);
 }
+.gd-panel h2,
+.gd-panel p {
+  margin: 0;
+}
 .gd-panel h2 {
-  margin: 0 0 0.5rem;
   font-size: 1.25rem;
 }
-
-/* A real link (it goes to another page), sized as a target >= 24 px (WCAG 2.5.8). */
-.gd-link {
-  display: inline-block;
-  padding: 0.25rem 0;
-  color: var(--accent);
-  font-weight: 600;
-  text-underline-offset: 0.2em;
+.gd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
