@@ -1,0 +1,10 @@
+{
+  "kind": "short essay",
+  "lang": "es",
+  "minQuestions": 4,
+  "questionHeadings": ["Introducción", "Argumento principal", "Una objeción", "Conclusión"],
+  "mustAskAbout": ["Argumento principal"],
+  "neverQuote": [],
+  "neverSay": [],
+  "wrongClaim": null
+}

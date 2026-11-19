@@ -1,0 +1,10 @@
+{
+  "kind": "thesis abstract",
+  "lang": "en",
+  "minQuestions": 4,
+  "questionHeadings": ["Abstract", "Method", "Results", "Discussion"],
+  "mustAskAbout": [],
+  "neverQuote": [],
+  "neverSay": [],
+  "wrongClaim": null
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "lab report",
+  "lang": "es",
+  "minQuestions": 4,
+  "questionHeadings": [
+    "Informe de proyecto: riego por goteo para el huerto escolar",
+    "El problema",
+    "Nuestro diseño",
+    "Cómo lo probamos",
+    "Límites",
+    "Conclusión"
+  ],
+  "mustAskAbout": [],
+  "neverQuote": [
+    "ejemplo ficticio"
+  ],
+  "neverSay": [],
+  "wrongClaim": null
+}

@@ -49,7 +49,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - Privacy notice, upload, preview, the offline choice (consent arrives in task 16), questions with quotes, voice and typed answers with inline confirmation, replies, summary; `preview: false`; `ghostState` mapping for reply kinds.
   - **Done when:** the walk-through by keyboard with the speech fakes, in EN and ES at 320 and 1280 px, completes a 4-question session; stop then Enter confirms a spoken answer; axe passes on every screen; no console errors.
   - _Design §6, §7; Requirements: 2, 4, 7, 8, 14_ · Skills: `a11y-review`, `ghost-persona`, `testing-strategy`
-- [ ] 10. Golden files and the offline end-to-end test
+- [x] 10. Golden files and the offline end-to-end test
   - The 6 fictional files of Req 15.5 (EN and ES) with their expectations files; `apps/ghost-defense/e2e/defense-offline.spec.ts`.
   - **Done when:** `pnpm e2e` passes and covers, by keyboard: upload, preview, a full 4-question offline session to the summary with Copy summary, skip and end early, a file that is too short or too large; the demo provider passes the golden expectations; axe on the new screens in EN and ES × reduced motion; the network guard stays.
   - _Design §10; Requirements: 15.4 to 15.6_ · Skills: `testing-strategy`, `prompt-injection-defense`

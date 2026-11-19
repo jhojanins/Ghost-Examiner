@@ -1,6 +1,6 @@
 # Project report: a shared study timer for our class
 
-This is a fictional sample file. It describes a small student project, so you can try Ghost Defense without uploading your own work.
+Our team of four built a shared study timer for an online study group, and we tried it with our own class for four weeks. This is a fictional sample file, so you can try Ghost Defense without uploading your own work.
 
 ## The problem
 

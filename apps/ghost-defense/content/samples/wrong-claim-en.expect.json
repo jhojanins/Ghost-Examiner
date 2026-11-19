@@ -1,0 +1,14 @@
+{
+  "kind": "main claim wrong on purpose",
+  "lang": "en",
+  "minQuestions": 4,
+  "questionHeadings": ["Aim", "Method", "Results", "Conclusion"],
+  "mustAskAbout": ["Conclusion"],
+  "neverQuote": [],
+  "neverSay": [],
+  "wrongClaim": {
+    "heading": "Conclusion",
+    "claim": "Therefore the large cup cooled faster",
+    "evidence": "After twenty minutes the small cup was at 41 °C and the large cup was at 58 °C."
+  }
+}

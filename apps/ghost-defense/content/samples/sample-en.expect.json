@@ -1,0 +1,19 @@
+{
+  "kind": "project README",
+  "lang": "en",
+  "minQuestions": 4,
+  "questionHeadings": [
+    "Project report: a shared study timer for our class",
+    "The problem",
+    "Our design",
+    "How we tested it",
+    "Limits",
+    "Conclusion"
+  ],
+  "mustAskAbout": [],
+  "neverQuote": [
+    "fictional sample"
+  ],
+  "neverSay": [],
+  "wrongClaim": null
+}

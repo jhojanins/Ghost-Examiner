@@ -1,6 +1,6 @@
 # Informe de proyecto: riego por goteo para el huerto escolar
 
-Este es un archivo de ejemplo ficticio. Describe un pequeño proyecto de estudiantes, para que puedas probar la Defensa fantasma sin subir tu propio trabajo.
+Nuestro equipo de cuatro personas armó un sistema de riego para el huerto de la escuela y lo probó durante ocho semanas. Este es un archivo de ejemplo ficticio: con él puedes probar la Defensa fantasma sin subir tu propio trabajo.
 
 ## El problema
 
