@@ -82,7 +82,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - The transcript announces the waiting line to screen readers; today its negative line id is skipped (found in task 9; owner decision 2026-11-19). Test first.
   - **Done when:** the walk-through with `/api/llm` served by a scripted route shows consent before any request, a correction with a verified quote, a "not in the file" reply, a dropped invalid quote, and a fallback to demo with its persistent label, in EN and ES at 320 and 1280 px; axe passes; no console errors.
   - _Design §1, §6, §8; Requirements: 3.3, 3.4, 6, 10_ · Skills: `a11y-review`, `ghost-persona`, `testing-strategy`
-- [ ] 18. End-to-end test of real mode with a fake proxy
+- [x] 18. End-to-end test of real mode with a fake proxy
   - `apps/ghost-defense/e2e/defense-live.spec.ts`.
   - The speech and recognition fakes move from `apps/ghost-interview/e2e/fakes` to a common place both apps' tests import (owner decision 2026-11-19).
   - **Done when:** `pnpm e2e` passes and covers the cases of task 17 plus: no request before consent (the route records calls), the kill switch response, a 429, the offline choice, and the injection golden file producing only content-shaped output; axe on the consent and fallback states in EN and ES × reduced motion.

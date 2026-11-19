@@ -1,7 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { installFakeRecognition } from '@ghost-examiner/web/testing/speech-recognition';
 import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
+import { guardNetwork, h2, matrix, tabTo, watchErrors } from './helpers';
 
 /**
  * The offline ghost-defense flow (ghost-defense-live task 10, Req 15.4 for phase 1): by keyboard,
@@ -9,7 +9,6 @@ import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis'
  * early, files that are too short or too large. axe (WCAG 2.2 AA) on every screen in EN and ES
  * with reduced motion on and off. Nothing may leave the site's origin (Req 12, the network guard).
  */
-const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const T = {
   en: {
     file: 'thesis-abstract-en.md',
@@ -78,45 +77,6 @@ const T = {
 } as const;
 type Lang = keyof typeof T;
 
-/** Every request to another origin is blocked before it goes out and recorded. */
-async function guardNetwork(page: Page, baseURL: string) {
-  const origin = new URL(baseURL).origin;
-  const foreign: string[] = [];
-  await page.route(
-    (url) => (url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== origin,
-    (route) => {
-      foreign.push(route.request().url());
-      return route.abort('blockedbyclient');
-    },
-  );
-  return foreign;
-}
-function watchErrors(page: Page) {
-  const errors: string[] = [];
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-  page.on('pageerror', (e) => errors.push(e.message));
-  return errors;
-}
-/** axe on the current screen with both motion settings; returns the violations found. */
-async function matrix(page: Page, screen: string) {
-  const found: string[] = [];
-  for (const reducedMotion of ['no-preference', 'reduce'] as const) {
-    await page.emulateMedia({ reducedMotion });
-    const { violations } = await new AxeBuilder({ page }).withTags(WCAG).analyze();
-    found.push(...violations.map((v) => `${screen} ${reducedMotion}: ${v.id} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`));
-  }
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  return found;
-}
-/** Keyboard only: presses Tab until `target` has focus. */
-async function tabTo(page: Page, target: Locator, max = 40) {
-  for (let i = 0; i < max; i++) {
-    await page.keyboard.press('Tab');
-    if (await target.evaluate((el) => el === document.activeElement)) return;
-  }
-  throw new Error(`Tab never reached ${target}`);
-}
-const h2 = (page: Page, name: string | RegExp) => page.getByRole('heading', { level: 2, name });
 /** A golden file of this app, by name (Req 15.5). */
 const goldenFile = (name: string) => `${test.info().project.testDir}/../content/samples/${name}`;
 /** A text file made in memory, for the size and length limits. Playwright accepts any byte buffer. */
