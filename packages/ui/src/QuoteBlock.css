@@ -1,0 +1,25 @@
+/* A quote from the user's file: set apart by a border and a label, not by color alone. --text on --surface is 16.0:1. */
+.ge-quote {
+  margin: 0.75rem 0 0;
+}
+.ge-quote-label {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.ge-quote-text {
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  border-left: 4px solid var(--accent);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+/* The mode label: plain text with a dashed edge, so it reads as a notice, not a control. */
+.ge-mode-label {
+  max-width: 42rem;
+  margin: 1rem auto 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--text-muted);
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+}

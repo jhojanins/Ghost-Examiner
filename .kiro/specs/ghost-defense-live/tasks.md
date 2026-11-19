@@ -42,7 +42,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - Two fictional samples in `apps/ghost-defense/content/samples/` (`sample-en.md`, `sample-es.md`), each long enough for 4 grounded questions; a `samples` prop on `FileUpload` with one button per sample.
   - **Done when:** component tests show the two buttons with their languages, and that choosing one calls the same handler as an upload with the sample's text and language; a core test shows each sample splits into at least 4 excerpts and passes the 300 to 60,000 character limits.
   - _Design §6.1, §7; Requirements: 1.10, 15.5_ · Skills: `a11y-review`, `ghost-persona`
-- [ ] 8. `InlineConfirm`, `QuoteBlock`, `ModeLabel` and `DefenseSummary`
+- [x] 8. `InlineConfirm`, `QuoteBlock`, `ModeLabel` and `DefenseSummary`
   - **Done when:** component tests show Send focused on mount with the text and method in its description; Enter confirms; Edit and Answer again call their handlers; quotes carry the file's `lang`; the summary's headings, labels and Copy summary (clipboard feature-detected, polite confirmation); the demo label text.
   - _Design §6.2, §6.3; Requirements: 6.7, 7.2, 7.4, 8.2, 8.5, 10.3_ · Skills: `a11y-review`
 - [ ] 9. ghost-defense: the offline flow **[Browser + axe]**
