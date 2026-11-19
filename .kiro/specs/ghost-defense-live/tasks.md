@@ -35,7 +35,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - `prepare-questions`, dynamic `evaluate` and `summarize` through the provider; each reply sentence spoken as its own line; the local waiting line after 1.5 s; the client request budget.
   - **Done when:** runtime tests with the demo provider and the fake speech output show a 4-question session with one follow-up reaching the summary, each sentence as one transcript line, quotes not spoken, and the waiting line only when the provider is slow.
   - _Design §4.3; Requirements: 4.4, 4.9, 4.10, 5.6, 8.3_ · Skills: `testing-strategy`
-- [ ] 7. `FileUpload` and `TextPreview`
+- [x] 7. `FileUpload` and `TextPreview`
   - **Done when:** component tests show the warning above the file input, a labeled native input, paste as an alternative, errors in one polite region, the preview's counts and warnings, headings exposed as headings, the file-language radios, the number-of-questions select (default 4), and Remove file clearing the text.
   - _Design §6.1; Requirements: 1.1, 1.2, 1.7, 2.1 to 2.5, 4.1_ · Skills: `a11y-review`, `ghost-persona`
 - [ ] 7b. Sample files and "Try with a sample file" (owner decision 6)

@@ -133,6 +133,7 @@ export const kitMessages = defineCatalog(
     'defense.error.short': 'This text is too short to ask about. Use at least 300 characters.',
     'defense.error.encoding': "I can't read the text in this file. Save it as UTF-8 text, or paste it.",
     'defense.preview.heading': 'What the ghost will read',
+    'defense.preview.textLabel': 'The text of your file',
     'defense.preview.counts': '{chars} characters in {parts} parts',
     'defense.preview.onlyText':
       'The ghost sees only this text: no images, no layout, and nothing the app could not extract.',
@@ -282,6 +283,7 @@ export const kitMessages = defineCatalog(
     'defense.error.short': 'Este texto es muy corto para hacer preguntas. Usa al menos 300 caracteres.',
     'defense.error.encoding': 'No puedo leer el texto de este archivo. Guárdalo como texto UTF-8 o pégalo.',
     'defense.preview.heading': 'Lo que leerá el fantasma',
+    'defense.preview.textLabel': 'El texto de tu archivo',
     'defense.preview.counts': '{chars} caracteres en {parts} partes',
     'defense.preview.onlyText':
       'El fantasma ve solo este texto: ni imágenes, ni diseño, ni nada que la app no pudo extraer.',

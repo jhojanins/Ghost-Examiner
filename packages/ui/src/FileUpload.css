@@ -1,0 +1,55 @@
+/* --text on --surface is 16.0:1; --text-muted 10.8:1; --error on --surface is 10.2:1 (design §5.3). */
+.ge-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin: 1.5rem auto 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--panel-edge);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+.ge-upload-heading {
+  margin: 0;
+  font-size: 1.25rem;
+}
+/* The warning is set apart by a border as well as weight, not by color alone. */
+.ge-upload-warning {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--accent);
+  font-weight: 600;
+}
+.ge-upload-provider {
+  margin: 0;
+  color: var(--text-muted);
+}
+.ge-upload-label {
+  font-weight: 600;
+}
+/* A native input; the browser draws the button. Target >= 24 px (WCAG 2.5.8). */
+.ge-upload-file {
+  min-height: 2.75rem;
+  color: var(--text);
+  font: inherit;
+}
+.ge-upload-toggle {
+  align-self: flex-start;
+}
+.ge-upload-paste:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ge-upload-paste .ge-button {
+  align-self: flex-start;
+}
+.ge-upload-error {
+  margin: 0;
+  color: var(--error);
+  font-weight: 600;
+}
+.ge-upload-error:empty {
+  display: none;
+}
