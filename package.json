@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
+    "@netlify/edge-functions": "4.0.4",
     "@playwright/test": "1.65.0",
     "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",
@@ -21,5 +22,8 @@
     "typescript-eslint": "8.72.2",
     "vite": "8.3.7",
     "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "@netlify/blobs": "11.1.9"
   }
 }
