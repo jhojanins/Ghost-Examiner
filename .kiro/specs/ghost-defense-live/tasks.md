@@ -31,7 +31,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 5. Parsing `.txt`, `.md` and pasted text
   - **Done when:** tests on fixtures show: accepted types; 2 MB, 300-character and 60,000-character limits with their messages and the truncation flag; invalid UTF-8 gives a message; nothing is sent anywhere (no `fetch` in the module).
   - _Design §4.1; Requirements: 1.2, 1.6 to 1.8_ · Skills: `testing-strategy`
-- [ ] 6. Session runtime: the defense effects, line by line
+- [x] 6. Session runtime: the defense effects, line by line
   - `prepare-questions`, dynamic `evaluate` and `summarize` through the provider; each reply sentence spoken as its own line; the local waiting line after 1.5 s; the client request budget.
   - **Done when:** runtime tests with the demo provider and the fake speech output show a 4-question session with one follow-up reaching the summary, each sentence as one transcript line, quotes not spoken, and the waiting line only when the provider is slow.
   - _Design §4.3; Requirements: 4.4, 4.9, 4.10, 5.6, 8.3_ · Skills: `testing-strategy`
