@@ -1,5 +1,5 @@
 # Tasks: Ghost Defense live
-Implements `requirements.md` and `design.md` in this folder: 28 tasks. Each task is one logical unit with one checkable **Done when**. The definition of done in `.kiro/steering/workflow.md` applies to every task. Always load `lean-code`, plus the skills listed per task.
+Implements `requirements.md` and `design.md` in this folder: 29 tasks (28 plus 7b). Each task is one logical unit with one checkable **Done when**. The definition of done in `.kiro/steering/workflow.md` applies to every task. Always load `lean-code`, plus the skills listed per task.
 Working rules (owner):
 - Tests first.
 - Mutation checks on new logic: back up each file, mutate it, run the tests, restore it, and diff it against the backup.
@@ -38,6 +38,10 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [ ] 7. `FileUpload` and `TextPreview`
   - **Done when:** component tests show the warning above the file input, a labeled native input, paste as an alternative, errors in one polite region, the preview's counts and warnings, headings exposed as headings, the file-language radios, the number-of-questions select (default 4), and Remove file clearing the text.
   - _Design §6.1; Requirements: 1.1, 1.2, 1.7, 2.1 to 2.5, 4.1_ · Skills: `a11y-review`, `ghost-persona`
+- [ ] 7b. Sample files and "Try with a sample file" (owner decision 6)
+  - Two fictional samples in `apps/ghost-defense/content/samples/` (`sample-en.md`, `sample-es.md`), each long enough for 4 grounded questions; a `samples` prop on `FileUpload` with one button per sample.
+  - **Done when:** component tests show the two buttons with their languages, and that choosing one calls the same handler as an upload with the sample's text and language; a core test shows each sample splits into at least 4 excerpts and passes the 300 to 60,000 character limits.
+  - _Design §6.1, §7; Requirements: 1.10, 15.5_ · Skills: `a11y-review`, `ghost-persona`
 - [ ] 8. `InlineConfirm`, `QuoteBlock`, `ModeLabel` and `DefenseSummary`
   - **Done when:** component tests show Send focused on mount with the text and method in its description; Enter confirms; Edit and Answer again call their handlers; quotes carry the file's `lang`; the summary's headings, labels and Copy summary (clipboard feature-detected, polite confirmation); the demo label text.
   - _Design §6.2, §6.3; Requirements: 6.7, 7.2, 7.4, 8.2, 8.5, 10.3_ · Skills: `a11y-review`
@@ -54,7 +58,8 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** P27 passes; examples show a document containing the tag, an EN and an ES injection attempt (flag count only), control and zero-width characters removed, and instructions before and a reminder after the blocks; mutations are caught (a fixed tag, the tag not stripped).
   - _Design §3.3, §9; Requirements: 13.1, 13.2_ · Skills: `prompt-injection-defense`, `ghost-persona`
 - [ ] 12. Accounts, key and dependencies **[Owner]**
-  - The owner: approves the dependencies of design §13.4; creates a Gemini API key in AI Studio on a project with **no billing**, and notes the free-tier limits shown there; imports the repo into Netlify if not done yet (docs/DEPLOY.md; this import is the one pre-approved production deploy, 15 credits); sets `GEMINI_API_KEY` and `GEMINI_MODEL` as Netlify environment variables (never with a `VITE_` prefix) and turns on branch deploys for `main`.
+  - Dependencies (approved): `@netlify/edge-functions` (types, dev) and `@netlify/blobs`, at exact versions, with install scripts not allowed, and checked in `pnpm-lock.yaml`.
+  - The owner: creates a Gemini API key in AI Studio on a project with **no billing**, and notes the free-tier limits shown there; imports the repo into Netlify if not done yet (docs/DEPLOY.md; this import is the one pre-approved production deploy, 15 credits); sets `GEMINI_API_KEY` and `GEMINI_MODEL` as Netlify environment variables (never with a `VITE_` prefix) and turns on branch deploys for `main`.
   - **Done when:** the owner confirms each step; the agent logs the model name, the limits seen in AI Studio and the date in `docs/KIRO_USAGE.md` (never the key).
   - _Design §2.1, §2.2, §5; Requirements: 11.2, 11.3_
 - [ ] 13. Edge Function: validation, limits and the upstream call
@@ -62,7 +67,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** handler tests with a mocked upstream show each status of design §5 (403, 415, 413, 400 per bad shape, 200), the per-task output cap, upstream 429 and timeout mapped without forwarding bodies, and only task, status and latency logged; `config.rateLimit` is present; the key scan fails on a planted `AIza` string; a spike confirms the Edge bundler resolves the core templates.
   - _Design §2.2, §5; Requirements: 11.1 to 11.3, 11.5_ · Skills: `netlify-proxy-safety`, `prompt-injection-defense`
 - [ ] 14. Edge Function: daily cap and kill switch
-  - **Done when:** tests with a fake Blobs store show the kill switch returning 503 `disabled`, the daily counter incrementing with a conditional write, one retry on an ETag conflict, the cap returning 429, and no user content in any stored value; after the first branch deploy, the Blobs usage is checked in the dashboard and logged.
+  - **Done when:** tests with a fake Blobs store show the kill switch returning 503 `disabled`, the cap read from the `cap` key (300 when missing or invalid), the daily counter incrementing with a conditional write, one retry on an ETag conflict, the cap returning 429, and no user content in any stored value; after the first branch deploy, the Blobs usage is checked in the dashboard and logged.
   - _Design §2.3, §5; Requirements: 11.3, 11.4, 12.2_ · Skills: `netlify-proxy-safety`
 - [ ] 15. `ProxyProvider` and the provider chain
   - **Done when:** tests with a mocked `fetch` show success, 429, 503 `disabled`, 413, timeout and malformed JSON, each mapped as in design §4.2; `withFallback(proxy, demo)` keeps the turn; demo stays pinned after the first fallback.

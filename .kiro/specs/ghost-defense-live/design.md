@@ -54,7 +54,7 @@ Decision: the proxy is a **Netlify Edge Function** at `/api/llm` (`netlify/edge-
 Steering note: `structure.md` lists `/netlify/functions/`; this adds `/netlify/edge-functions/`. Owner decision 1 in §13.
 ### 2.3 Global cap and kill switch
 - Netlify Blobs is available on the Free plan [N3], from Edge Functions as well as Functions, with conditional writes (`onlyIfMatch` with an ETag, `onlyIfNew`) and eventual consistency where updates reach every edge location within 60 s; strong consistency is opt-in per store or read [N6]. The Netlify CLI can write blobs [N6].
-- Decision, global daily cap: one Blobs key per UTC day (`count-YYYY-MM-DD`) holding a number, incremented with a conditional write (one retry on an ETag conflict; on a second conflict the request is allowed, so the count is approximate under bursts). It holds no user data (requirement 12.2). Default cap 300 requests a day (owner decision 3 in §13). Gemini's own daily quota is a second, hard cap.
+- Decision, global daily cap: one Blobs key per UTC day (`count-YYYY-MM-DD`) holding a number, incremented with a conditional write (one retry on an ETag conflict; on a second conflict the request is allowed, so the count is approximate under bursts). It holds no user data (requirement 12.2). The cap itself is a Blobs key `cap` (initial value 300, owner decision 3), read with the kill switch, so the owner changes it with one CLI command and no deploy; a missing or invalid value means 300. At the cap the proxy returns 429 and the client continues in labeled demo mode (requirement 10). Gemini's own daily quota is a second, hard cap.
 - Decision, kill switch: a Blobs key `kill` read on every request; the owner turns it on with one CLI command (`netlify blobs:set llm-control kill on`), with no deploy (a production deploy costs 15 credits). It takes effect within 60 s (eventual consistency). For an immediate stop, the owner deletes or restricts the API key in AI Studio; the proxy then gets an auth error, maps it to `unavailable`, and every session goes to demo.
 - Blobs operations are not listed in the credit table we read [N3]; task 14 checks the usage dashboard after the first deploy.
 ### 2.4 PDF text in the browser **[Cuttable]**
@@ -155,7 +155,7 @@ Order of checks, each with its own status: method POST; `Origin` is the site or 
 - New dependencies (owner approval, task 12): `@netlify/edge-functions` (types, dev only) and `@netlify/blobs` (runtime, in the Edge Function only). `pdfjs-dist` only if the PDF task runs.
 ## 6. packages/ui
 ### 6.1 Screens before the session
-- `FileUpload`: the warning (Req 1.1) above a native `<input type="file" accept=".txt,.md[,.pdf]">` with a visible label; drag and drop on the same area; a "Paste text instead" disclosure with a textarea; errors in one polite region.
+- `FileUpload`: the warning (Req 1.1) above a native `<input type="file" accept=".txt,.md[,.pdf]">` with a visible label; drag and drop on the same area; a "Paste text instead" disclosure with a textarea; a "Try with a sample file" group with one button per sample (English, Spanish), which loads the sample through the same path as an upload (Req 1.10); errors in one polite region.
 - `TextPreview`: the extracted text in a scrollable region (`tabindex="0"`, labeled), with headings from the file as real headings, the counts and warnings, the file-language radio group, the number-of-questions select (3 to 8, default 4), and Remove file.
 - `ConsentScreen`: the points of Req 3.1 as a list, the provider's data-use text, and two equal buttons; no preselection; focus on the heading when it opens.
 ### 6.2 Inline confirmation (`InlineConfirm`, Req 7)
@@ -171,11 +171,11 @@ Order of checks, each with its own status: method POST; `Origin` is the site or 
 - Edit returns to answering with the text in the typed field (spec a 7.3); Answer again restarts the method used (spec b 6.3).
 - Spec (a)'s `ConfirmAnswer` stays for ghost-interview.
 ### 6.3 During and after the session
-- `QuoteBlock`: label "From your file" / "De tu archivo" and a `blockquote lang={fileLang}`. Also used in the transcript.
+- `QuoteBlock`: label "From your file" / "De tu archivo" and a `blockquote lang={fileLang}` (the file's language, chosen in the preview). Quotes are shown, never spoken (owner decision 5). Also used in the transcript.
 - `ModeLabel`: the persistent "Demo mode: questions and feedback come from simple rules, not AI" label after a fallback (Req 10.3), and "AI: Google Gemini" in real mode.
 - `DefenseSummary`: headings and lists (Req 8.3), the practice-feedback and source labels, Start again (same file, new file) and Copy summary (`navigator.clipboard.writeText`, feature-detected; without it the button is hidden and the text stays selectable), with a polite "Summary copied" message.
 ## 7. Apps
-- `apps/ghost-defense`: the flow above, with `preview: false` once phase 1 lands (Req 14.4), keyboard and voice inputs, and fictional golden files in `content/samples/` (Req 15.5).
+- `apps/ghost-defense`: the flow above, with `preview: false` once phase 1 lands (Req 14.4), keyboard and voice inputs, and fictional golden files in `content/samples/` (Req 15.5). Two of them are the bundled samples of Req 1.10 (`sample-en.md`, `sample-es.md`), imported as text with Vite's `?raw`, so they add no request.
 - `apps/ghost-interview` **[Cuttable, cut second]**: `createLlmEvaluator(withFallback(proxy, demo))` behind the same `ConsentScreen`, which then names only the question and the answer (Req 16).
 ## 8. Error handling
 | Case | Behavior |
@@ -230,9 +230,10 @@ Numbering continues after the paused spec (c), which reserved P15 to P22.
 | 16 | ghost-interview evaluator chain and consent |
 ## 12. Scope cut and order
 Phases 1 and 2 are mandatory; phase 3 (streaming) is cut last. Cuttable, in order: BYOK (task 25), real AI in ghost-interview (task 26), PDF parsing (task 27), then phase 3 (tasks 21 to 24, keeping whole replies spoken line by line). Each cut removes whole tasks.
-## 13. Points for the owner to confirm
-1. The proxy as an **Edge Function** in `netlify/edge-functions/` (about 2 credits per 10,000 requests) instead of a serverless Function (compute-metered), with a matching line in steering `structure.md` and an update of the `netlify-proxy-safety` skill.
-2. **Gemini** as the proxy's provider, with its free-tier data use (including human review) stated on the consent screen; Groq only as BYOK.
-3. A **daily cap of 300 requests** for the whole site (about 30 sessions of 4 questions), plus Gemini's own quota.
-4. New dependencies: `@netlify/edge-functions` (dev) and `@netlify/blobs`; `pdfjs-dist` only if the PDF task runs.
-5. Quotes **shown, not spoken** (the ghost's voice is in the interface language; quotes are in the file's language).
+## 13. Owner decisions (2026-11-18, design and tasks approved)
+1. The proxy is a **Netlify Edge Function** in `netlify/edge-functions/`; steering `structure.md` has the line.
+2. **Gemini** for the proxy; Groq only as BYOK.
+3. A **daily cap of 300 requests** to start, stored in Netlify Blobs like the kill switch so it changes without a deploy; at the cap the ghost continues in labeled demo mode.
+4. Dependencies approved: `@netlify/edge-functions` (types only) and `@netlify/blobs`; `pdfjs-dist` only if the PDF task runs. Exact versions, no install scripts, checked in the lockfile.
+5. Quotes **shown, not spoken**, with the `lang` of the file's language.
+6. A **"Try with a sample file"** button with two fictional samples (EN and ES), used in demos and in the golden tests (Req 1.10, task 7b).

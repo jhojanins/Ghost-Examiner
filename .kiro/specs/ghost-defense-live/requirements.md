@@ -43,6 +43,7 @@ Acceptance criteria:
 7. THE app SHALL offer a paste-text alternative to upload, with the same limits, for users who can't use the file picker or have another format.
 8. Parsing SHALL NOT send the file or its text anywhere. The file and the extracted text SHALL exist only in memory (requirement 12).
 9. THE app SHALL split the extracted text locally into excerpts with stable ids, keeping headings and paragraph boundaries where the format has them.
+10. THE upload screen SHALL offer "Try with a sample file" with two fictional sample files bundled in the app, one in English and one in Spanish. Choosing one SHALL load it exactly like an upload (the same preview and consent), without the file picker, and the preview SHALL label it as a fictional sample (owner decision 7).
 ## Requirement 2: Showing what was extracted
 **User story:** As a user, I want to see the text the ghost will work from, so that I know what it can and can't see.
 Acceptance criteria:
@@ -149,7 +150,7 @@ Acceptance criteria:
 2. THE provider key SHALL live only in a Netlify environment variable for Functions; it SHALL never be in the repo, the client bundle (no `VITE_` prefix), logs or responses. A build check SHALL fail if a key pattern appears in `dist/`.
 3. Limits, all enforced on the server:
    - per visitor: a request rate limit per IP and domain (Netlify rate limiting);
-   - global: a daily cap on requests for the whole site, after which every request gets `rate-limited`;
+   - global: a daily cap on requests for the whole site, 300 to start, stored with the kill switch so the owner can change it without a deploy; at the cap every request gets `rate-limited` and the ghost continues in labeled demo mode (requirement 10);
    - per request: the input caps of 9.4 and a `maxOutputTokens` cap per task;
    - per session: a maximum number of requests (questions plus replies plus the summary), enforced as far as a stateless function can, and always enforced by the client.
 4. A kill switch SHALL make the proxy answer every request with a refusal that the client turns into demo mode (requirement 10). THE design SHALL say how fast it takes effect and whether it needs a deploy (research).
@@ -188,7 +189,7 @@ Acceptance criteria:
 2. THE web package SHALL test the parsers (`.txt`, `.md`, and PDF if built) on small fixtures, the providers with a mocked `fetch` (success, stream, 429, timeout, malformed JSON, a stream cut midway), and `withFallback` with the new tasks.
 3. THE proxy SHALL have handler tests with a mocked upstream: every rejected shape (bad task, locale, oversized input, extra fields, wrong content type, bad origin), the limits, the kill switch, and that no body is logged.
 4. THE end-to-end suite SHALL use a fake provider (intercepting the proxy path) with scripted, streamed replies, and SHALL cover by keyboard: upload, preview, consent (and that nothing is sent before it), a full 4-question session (the default) to the summary, with Copy summary, a correction with a verified quote, a "not in the file" reply, an invalid quote dropped, a fallback to demo with its label, and the offline choice. It SHALL keep failing on any request to another origin, and SHALL run axe on every new screen in EN and ES with reduced motion on and off.
-5. A golden set of 6 fictional example files SHALL live in the repo, in EN and ES: a short essay, a project README, a thesis abstract (also as a PDF if PDF is built), a lab report, a file with injected instructions and fake delimiters, and a file whose main claim is wrong on purpose. For each, the expected properties of good questions are written down (which excerpts they may cite, which wrong claim a correction must catch).
+5. A golden set of 6 fictional example files SHALL live in the repo, in EN and ES, including the two sample files of 1.10: a short essay, a project README, a thesis abstract (also as a PDF if PDF is built), a lab report, a file with injected instructions and fake delimiters, and a file whose main claim is wrong on purpose. For each, the expected properties of good questions are written down (which excerpts they may cite, which wrong claim a correction must catch).
 6. With the demo provider, the golden set SHALL pass automatically (schema, grounding, quotes). With the real provider, a manual evaluation script SHALL run the golden set before release, and its results (grounded questions, verified quotes, caught wrong claims, injections ignored) SHALL be logged in `docs/KIRO_USAGE.md`.
 7. THE owner SHALL check the live flow by hand in Chrome and Safari, with voice and sound, measuring the latency budget of 5.2 against the chosen provider, and SHALL log the numbers.
 ## Requirement 16: Real AI in ghost-interview **[Cuttable, cut second]**
@@ -219,3 +220,4 @@ Acceptance criteria:
 4. **Summary**: no file download; a Copy summary button only (8.5).
 5. **ghost-interview**: a small task at the end gives it the same provider through the same consent, cuttable right after BYOK (requirement 16).
 6. **BYOK keys**: memory only; the `netlify-proxy-safety` skill is updated to match (no `sessionStorage`).
+7. **Sample files** (2026-11-18, design approval): a "Try with a sample file" button with two fictional samples (EN and ES), used in demos and in the golden tests (1.10, 15.5).
