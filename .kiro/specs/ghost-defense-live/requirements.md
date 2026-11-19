@@ -105,7 +105,7 @@ Acceptance criteria:
 4. IF a question's quote isn't found, THEN THE question SHALL be dropped and replaced by the next valid one, or by a demo question when none is left.
 5. WHEN the user's answer refers to something the file doesn't cover, THE ghost SHALL say that it is not in the file, instead of confirming or correcting it from general knowledge.
 6. THE ghost MAY add general knowledge only when it is labeled as not from the file, and SHALL never present it as a correction.
-7. Quotes SHALL be shown as quotes (a `blockquote` with the file's `lang`), with a short label ("From your file" / "De tu archivo"), and SHALL be part of the transcript.
+7. Quotes SHALL be shown as quotes (a `blockquote` with the file's `lang`), with a short label ("From your file" / "De tu archivo"). THE transcript SHALL list spoken lines only: quotes are not spoken, so they stay visible in the question and reply panels instead (owner decision 8).
 ## Requirement 7: The confirmation step in a conversation
 **User story:** As a user, I want to check what the app understood without slowing the conversation down, so that I'm never judged on a mistake and still feel I'm talking.
 Acceptance criteria:
@@ -221,3 +221,4 @@ Acceptance criteria:
 5. **ghost-interview**: a small task at the end gives it the same provider through the same consent, cuttable right after BYOK (requirement 16).
 6. **BYOK keys**: memory only; the `netlify-proxy-safety` skill is updated to match (no `sessionStorage`).
 7. **Sample files** (2026-11-18, design approval): a "Try with a sample file" button with two fictional samples (EN and ES), used in demos and in the golden tests (1.10, 15.5).
+8. **Transcript** (2026-11-19, phase 1 approval): the transcript lists spoken lines only; quotes are not spoken and stay visible in the question and reply panels (6.7).

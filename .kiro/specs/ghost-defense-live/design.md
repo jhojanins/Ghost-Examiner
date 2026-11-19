@@ -171,7 +171,7 @@ Order of checks, each with its own status: method POST; `Origin` is the site or 
 - Edit returns to answering with the text in the typed field (spec a 7.3); Answer again restarts the method used (spec b 6.3).
 - Spec (a)'s `ConfirmAnswer` stays for ghost-interview.
 ### 6.3 During and after the session
-- `QuoteBlock`: label "From your file" / "De tu archivo" and a `blockquote lang={fileLang}` (the file's language, chosen in the preview). Quotes are shown, never spoken (owner decision 5). Also used in the transcript.
+- `QuoteBlock`: label "From your file" / "De tu archivo" and a `blockquote lang={fileLang}` (the file's language, chosen in the preview). Quotes are shown, never spoken (owner decision 5), so they are not in the transcript, which lists spoken lines only (Req 6.7).
 - `ModeLabel`: the persistent "Demo mode: questions and feedback come from simple rules, not AI" label after a fallback (Req 10.3), and "AI: Google Gemini" in real mode.
 - `DefenseSummary`: headings and lists (Req 8.3), the practice-feedback and source labels, Start again (same file, new file) and Copy summary (`navigator.clipboard.writeText`, feature-detected; without it the button is hidden and the text stays selectable), with a polite "Summary copied" message.
 ## 7. Apps
