@@ -99,7 +99,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 21. Reply reader and sentence splitter, with P25 and P26
   - **Done when:** P25 and P26 pass; examples cover abbreviations in EN and ES, a sentence over 300 characters (ends the stream as `bad-output`), and a head that arrives across chunks; mutations are caught (a sentence emitted before the head).
   - _Design §3.4, §9; Requirements: 5.1, 5.4, 9.6_ · Skills: `testing-strategy`
-- [ ] 22. Streaming in the Edge Function and `ProxyProvider`
+- [x] 22. Streaming in the Edge Function and `ProxyProvider`
   - **Done when:** tests show the Edge Function piping upstream text deltas (mocked SSE) with the byte cap and abort on client disconnect, and `ProxyProvider.stream` delivering chunks, the 8 s first-byte timeout, and a stream cut midway mapped to a fallback that keeps the turn.
   - _Design §4.2, §5; Requirements: 5.1, 5.3, 10.5_ · Skills: `netlify-proxy-safety`
 - [ ] 23. Sentence-by-sentence speech in the app **[Browser + axe]**

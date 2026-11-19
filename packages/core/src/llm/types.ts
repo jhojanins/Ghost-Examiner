@@ -30,4 +30,10 @@ export interface LLMProvider {
   readonly id: 'demo' | 'proxy' | 'gemini' | 'groq';
   readonly isDemo: boolean;
   complete(req: LLMRequest): Promise<LLMResult>;
+  /**
+   * Optional streaming (ghost-defense-live Req 9.5): calls `onChunk` with each piece of text as it
+   * arrives, then resolves with the whole text. A stream cut midway resolves with an error after
+   * the pieces already delivered. Providers without it (the demo provider) are used whole.
+   */
+  stream?(req: LLMRequest, onChunk: (chunk: string) => void): Promise<LLMResult>;
 }

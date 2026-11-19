@@ -84,16 +84,16 @@ function setup(over: Partial<LlmDeps> = {}, upstream: (init?: RequestInit) => Pr
   };
   return { deps, calls, logs };
 }
-function post(body: unknown, { origin = BRANCH, host = BRANCH, type = 'application/json', headers = {} as Record<string, string>, signal = undefined as AbortSignal | undefined } = {}) {
+function post(body: unknown, { origin = BRANCH, host = BRANCH, type = 'application/json', headers = {} as Record<string, string>, signal = undefined as AbortSignal | undefined, path = '/api/llm' } = {}) {
   const h: Record<string, string> = { 'content-type': type, ...headers };
   if (origin) h.origin = origin;
-  return new Request(`${host}/api/llm`, { method: 'POST', headers: h, body: typeof body === 'string' ? body : JSON.stringify(body), signal });
+  return new Request(`${host}${path}`, { method: 'POST', headers: h, body: typeof body === 'string' ? body : JSON.stringify(body), signal });
 }
 const errorOf = async (r: Response) => ((await r.json()) as { error: string }).error;
 
 describe('Edge Function /api/llm: config (design §5, Req 11.1)', () => {
-  it('serves /api/llm with the per-IP and domain rate limit', () => {
-    expect(config.path).toBe('/api/llm');
+  it('serves /api/llm and /api/llm/stream with the per-IP and domain rate limit', () => {
+    expect(config.path).toEqual(['/api/llm', '/api/llm/stream']);
     expect(config.rateLimit).toEqual({ windowLimit: 20, windowSize: 60, aggregateBy: ['ip', 'domain'] });
   });
 });
@@ -322,5 +322,104 @@ describe('Edge Function /api/llm: kill switch and daily cap in Netlify Blobs (de
     const store = fakeStore();
     store.failing = true;
     expect(await run(store)).toEqual({ status: 503, error: 'unavailable', calls: 0 });
+  });
+});
+
+describe('Edge Function /api/llm/stream: streamed replies (design §5, task 22)', () => {
+  const sse = (events: unknown[], { split = 0, raw = '' } = {}) => {
+    const text = events.map((e) => `data: ${JSON.stringify(e)}\r\n\r\n`).join('') + raw;
+    const bytes = new TextEncoder().encode(text);
+    const step = split || bytes.length;
+    return new Response(
+      new ReadableStream({
+        start(c) {
+          for (let i = 0; i < bytes.length; i += step) c.enqueue(bytes.slice(i, i + step));
+          c.close();
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'text/event-stream' } },
+    );
+  };
+  const part = (text: string, extra: object = {}) => ({ candidates: [{ content: { parts: [{ text, ...extra }] }, ...extra }] });
+  const done = (text: string) => ({ candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }] });
+  const stream = (deps: LlmDeps, body: unknown = BODIES['defense-reply'], signal?: AbortSignal) => handleLlm(post(body, { path: '/api/llm/stream', signal }), deps);
+
+  it('pipes the text deltas of the SSE events as plain text, in order, for any byte split', async () => {
+    for (const split of [0, 1, 7]) {
+      const { deps, calls } = setup({}, async () => sse([part('{"kind":"ackno'), part('wledgment","say":'), done('["Muy «bien», está claro."]}')], { split }));
+      const r = await stream(deps);
+      expect(r.status).toBe(200);
+      expect(r.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+      expect(r.headers.get('cache-control')).toBe('no-store');
+      expect(await r.text()).toBe('{"kind":"acknowledgment","say":["Muy «bien», está claro."]}'); // multi-byte characters split by bytes stay whole
+      expect(calls[0].url).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:streamGenerateContent?alt=sse');
+      expect(JSON.parse(String(calls[0].init.body)).generationConfig.maxOutputTokens).toBe(400);
+    }
+  });
+  it('leaves out thought parts', async () => {
+    const { deps } = setup({}, async () => sse([part('thinking about it', { thought: true }), done('{"a":1}')]));
+    expect(await (await stream(deps)).text()).toBe('{"a":1}');
+  });
+  it('streams replies only: questions and summaries are refused here (400), before any upstream call or count', async () => {
+    const store = fakeStore();
+    const { deps, calls } = setup({ control: store });
+    expect((await stream(deps, BODIES['defense-questions'])).status).toBe(400);
+    expect((await stream(deps, BODIES['defense-summary'])).status).toBe(400);
+    expect(calls).toHaveLength(0);
+    expect(store.writes).toEqual([]);
+  });
+  it('the same checks and gate as /api/llm: origin, size, kill switch, cap, upstream errors before the first byte', async () => {
+    const { deps } = setup();
+    expect((await handleLlm(post(BODIES['defense-reply'], { path: '/api/llm/stream', origin: 'https://evil.example', host: 'https://evil.example' }), deps)).status).toBe(403);
+    expect((await stream(setup({ control: fakeStore({ kill: 'on' }) }).deps)).status).toBe(503);
+    expect((await stream(setup({ control: fakeStore({ cap: '0' }) }).deps)).status).toBe(429);
+    expect((await stream(setup({}, async () => new Response('quota 12345', { status: 429 })).deps)).status).toBe(429);
+    const r = await stream(setup({}, async () => new Response('secret detail 12345', { status: 500 })).deps);
+    expect(r.status).toBe(502);
+    expect(await r.text()).not.toContain('12345');
+  });
+  it('ends the stream early (a cut, not an error body) when the model stops abnormally, sends no text, or passes the byte cap', async () => {
+    const blocked = setup({}, async () => sse([part('{"kind":"ack'), { candidates: [{ content: { parts: [] }, finishReason: 'SAFETY' }] }, part('nowledgment"}')]));
+    expect(await (await stream(blocked.deps)).text()).toBe('{"kind":"ack');
+    const nothing = setup({}, async () => sse([{ candidates: [{ finishReason: 'STOP' }] }]));
+    expect((await stream(nothing.deps)).status).toBe(502); // nothing at all: an error before the first byte
+    const big = setup({}, async () => sse([part('x'.repeat(10_000)), part('y'.repeat(10_000)), done('z')]));
+    const text = await (await stream(big.deps)).text();
+    expect(text.length).toBeLessThanOrEqual(16_000);
+    expect(text).not.toContain('z');
+    const junk = setup({}, async () => sse([part('{"a":')], { raw: `data: {not json\n\ndata: ${JSON.stringify(part('1}'))}\n\n` }));
+    expect(await (await stream(junk.deps)).text()).toBe('{"a":');
+  });
+  it('aborts the upstream call when the client goes away mid-stream', async () => {
+    let upstreamSignal: AbortSignal | undefined;
+    const { deps } = setup({}, async (init) => {
+      upstreamSignal = init?.signal ?? undefined;
+      return new Response(
+        new ReadableStream({
+          start(c) {
+            c.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(part('{"kind":'))}\n\n`)); // then nothing more
+          },
+        }),
+        { status: 200 },
+      );
+    });
+    const r = await stream(deps);
+    const reader = r.body!.getReader();
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe('{"kind":');
+    await reader.cancel(); // the platform cancels the body when the client disconnects
+    expect(upstreamSignal?.aborted).toBe(true);
+    // And the request's own abort signal is passed on too.
+    const second = setup({}, async (init) => {
+      const signal = init?.signal ?? undefined;
+      client2.abort();
+      return Promise.reject(signal?.aborted ? new DOMException('aborted', 'AbortError') : new Error('not aborted'));
+    });
+    const client2 = new AbortController();
+    expect((await stream(second.deps, BODIES['defense-reply'], client2.signal)).status).toBe(502);
+  });
+  it('times out with 504 when the first event is slow, and logs task, status and latency only', async () => {
+    const { deps, logs } = setup({ timeoutMs: 30 }, (init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+    expect((await stream(deps)).status).toBe(504);
+    expect(logs.map((l) => Object.keys(JSON.parse(l)))).toEqual([['task', 'status', 'ms']]);
   });
 });

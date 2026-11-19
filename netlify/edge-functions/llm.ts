@@ -32,7 +32,7 @@ export default (req: Request, context: Context) =>
   });
 
 export const config: Config = {
-  path: '/api/llm',
+  path: ['/api/llm', '/api/llm/stream'], // one rate limit for both (design §5)
   // Code-based rate limit, per IP and domain (Free plan). Check the deploy log for the rule.
   rateLimit: { windowLimit: 20, windowSize: 60, aggregateBy: ['ip', 'domain'] },
 };

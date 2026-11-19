@@ -68,6 +68,95 @@ describe('ProxyProvider (design §4.2)', () => {
   });
 });
 
+describe('ProxyProvider.stream (design §4.2, task 22)', () => {
+  // Each read gets the next piece; a cut fails the read after the last one, as a dropped connection does.
+  const chunked = (pieces: string[], { cut = false } = {}) => {
+    let i = 0;
+    return new Response(
+      new ReadableStream({
+        pull(c) {
+          if (i < pieces.length) c.enqueue(new TextEncoder().encode(pieces[i++]));
+          else if (cut) c.error(new TypeError('network error'));
+          else c.close();
+        },
+      }),
+      { status: 200 },
+    );
+  };
+  it('posts the same body to /api/llm/stream and delivers each chunk as it arrives, then the whole text', async () => {
+    const { provider, calls } = proxy(async () => chunked(['{"kind":"ackno', 'wledgment","say":["Gu', 'ay é."]}']));
+    const seen: string[] = [];
+    const r = await provider.stream!(reply, (chunk) => seen.push(chunk));
+    expect(r).toEqual({ ok: true, text: '{"kind":"acknowledgment","say":["Guay é."]}' });
+    expect(seen.join('')).toBe('{"kind":"acknowledgment","say":["Guay é."]}');
+    expect(seen.length).toBeGreaterThan(1);
+    expect(calls[0].url).toBe('/api/llm/stream');
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ task: reply.task, locale: reply.locale, input: reply.input });
+  });
+  it('maps the statuses as complete does, before any chunk', async () => {
+    for (const [status, error] of [[429, 'rate-limited'], [503, 'unavailable'], [413, 'too-large'], [404, 'unavailable']] as const) {
+      const { provider } = proxy(async () => json(status, { error: 'x' }));
+      const seen: string[] = [];
+      expect(await provider.stream!(reply, (c) => seen.push(c))).toEqual({ ok: false, error });
+      expect(seen).toEqual([]);
+    }
+  });
+  it('an empty stream is bad-output; a multi-byte character split across byte chunks stays whole', async () => {
+    expect(await proxy(async () => chunked([])).provider.stream!(reply, () => {})).toEqual({ ok: false, error: 'bad-output' });
+    const bytes = new TextEncoder().encode('{"say":["Está «bien»."]}');
+    let i = 0;
+    const byByte = proxy(async () => new Response(new ReadableStream({ pull(c) { if (i < bytes.length) c.enqueue(bytes.slice(i, ++i)); else c.close(); } }), { status: 200 }));
+    expect(await byByte.provider.stream!(reply, () => {})).toEqual({ ok: true, text: '{"say":["Está «bien»."]}' });
+  });
+  it('a stream cut midway resolves unavailable, after the chunks already delivered', async () => {
+    const { provider } = proxy(async () => chunked(['{"kind":"ack'], { cut: true }));
+    const seen: string[] = [];
+    expect(await provider.stream!(reply, (c) => seen.push(c))).toEqual({ ok: false, error: 'unavailable' });
+    expect(seen).toEqual(['{"kind":"ack']);
+  });
+  it('times out after 8 s without a first byte, aborting the request; once bytes flow, the 20 s total applies', async () => {
+    vi.useFakeTimers();
+    try {
+      let signal: AbortSignal | undefined;
+      const { provider } = proxy((init) => {
+        signal = init.signal ?? undefined;
+        return new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+      }, 20_000);
+      const pending = provider.stream!(reply, () => {});
+      await vi.advanceTimersByTimeAsync(7_999);
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await pending).toEqual({ ok: false, error: 'unavailable' });
+      expect(signal?.aborted).toBe(true);
+      // A slow but flowing stream: the first byte at 7 s, the end at 15 s, is fine.
+      let push!: (s: string) => void;
+      let close!: () => void;
+      // Like a real fetch, the body errors when the request's signal aborts.
+      const slow = proxy(async (init) =>
+        new Response(
+          new ReadableStream({
+            start(c) {
+              push = (s) => c.enqueue(new TextEncoder().encode(s));
+              close = () => c.close();
+              init.signal?.addEventListener('abort', () => c.error(new DOMException('aborted', 'AbortError')));
+            },
+          }),
+          { status: 200 },
+        ),
+      20_000);
+      const flowing = slow.provider.stream!(reply, () => {});
+      await vi.advanceTimersByTimeAsync(7_000);
+      push('{"a":');
+      await vi.advanceTimersByTimeAsync(8_000);
+      push('1}');
+      close();
+      expect(await flowing).toEqual({ ok: true, text: '{"a":1}' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('the provider chain in a session (Req 10.1, 10.3, 10.5)', () => {
   const DOC = `# Design\n\nWe chose a message queue because the payment service could not keep up with the evening peak.\n\n# Results\n\nWe measured the checkout time for two weeks with forty volunteers from the club.\n\n# Costs\n\nThe queue runs on the same small server, so the monthly cost did not change at all.\n\n# Conclusion\n\nTherefore a queue was enough for our size, and a second server was not needed.`;
   const docExcerpts = splitExcerpts(DOC, { maxChars: 1500 });
