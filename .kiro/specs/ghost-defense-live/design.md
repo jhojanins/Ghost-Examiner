@@ -135,7 +135,7 @@ New keys in `en` and `es` (ghost-persona skill): upload screen and warning, limi
 ### 4.2 Providers (Req 9, 10, 11)
 - `ProxyProvider`: `POST /api/llm` with `{ task, locale, input }`; 20 s timeout with `AbortController` (8 s to the first byte in phase 3, Req 5.3). Maps 429 → `rate-limited`, 503 with `{ error: 'disabled' }` → `unavailable`, 413 → `too-large`, anything else → `unavailable`. Optional `stream(req, onChunk)` in phase 3.
 - `GeminiProvider` (BYOK) **[Cuttable]**: the same templates, called from the browser with the user's key; a spike first checks browser access (CORS) to the REST endpoint.
-- The chain is `withFallback(byok?, proxy, demo)`. From the first fallback to demo, the session pins demo (Req 10.3).
+- The chain: the app gives the session one real provider (the proxy; BYOK in task 25). The session runtime asks it, checks the output with the core guard, and on the first failure (an error, a timeout or output that fails its guard) asks the demo rules for the same turn and pins demo for the rest of the session (Req 10.1, 10.3, 10.5). `withFallback` is not used for this chain: wrapping demo inside it would report a demo answer as AI.
 - Per-session request budget in the client: `2 × count + 2` requests (questions, replies with follow-ups, summary).
 ### 4.3 Session runtime
 - Handles `prepare-questions`, the dynamic `evaluate`, and `summarize` through the provider chain, then dispatches `questions-ready`, `reply-ready` or `summary-ready`.
@@ -221,7 +221,7 @@ Numbering continues after the paused spec (c), which reserved P15 to P22.
 | 7 | ui `InlineConfirm`; engine unchanged confirm |
 | 8 | engine `summarize`; ui `DefenseSummary` |
 | 9 | core tasks, guards; web providers |
-| 10 | `withFallback`, demo pinning; ui `ModeLabel` |
+| 10 | session runtime fallback and demo pinning (web); ui `ModeLabel` |
 | 11 | Edge Function; Blobs cap and kill switch; BYOK provider |
 | 12 | memory-only state; Edge Function logging rule; privacy texts |
 | 13 | core templates, `prepareUntrusted`, guards, plain-text rendering |

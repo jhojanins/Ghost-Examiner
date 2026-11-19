@@ -138,7 +138,7 @@ Acceptance criteria:
 ## Requirement 10: Honest fallback to demo mode
 **User story:** As a user, I want the session to keep going when the AI is unavailable, and to be told, so that I'm never misled about who is answering.
 Acceptance criteria:
-1. THE provider chain SHALL be BYOK (when set) → proxy → demo, with the kit's `withFallback`: one pass, no retry loops.
+1. THE provider chain SHALL be BYOK (when set) → proxy → demo: one pass, no retry loops. THE session runtime SHALL try the real provider and, on its first failure, let the demo rules answer that same turn and stay in demo for the rest of the session. THE kit's `withFallback` SHALL NOT wrap the demo rules into the AI chain, so a demo answer is never reported as AI (owner decision 2026-11-19, after phase 2).
 2. WHEN a request fails (`rate-limited`, `unavailable`, `bad-output`, `too-large`, a timeout, the kill switch, or a limit of requirement 11), THE turn SHALL continue with the next provider, and the ghost SHALL say so in one short line in its voice (for example "My crystal ball is busy. I'll continue with my own notes.").
 3. FROM the first fallback to demo, THE rest of the session SHALL stay in demo mode, and THE screen SHALL show a persistent label: "Demo mode: questions and feedback come from simple rules, not AI" / its ES version. The user MAY try AI again from the next session.
 4. Demo feedback SHALL keep the existing "keyword-based demo" labeling (spec a) and SHALL never be presented as AI output.
