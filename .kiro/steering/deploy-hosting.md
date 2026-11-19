@@ -8,7 +8,8 @@ fileMatchPattern: ["netlify.toml", "netlify/**", ".github/workflows/**", "script
 The always-included rules still apply: free hosting, URL live until Jan 29, 2027, and every production deploy needs the owner's explicit approval (`workflow.md`).
 
 ## Netlify site
-- One site (Free plan) serves `/` (landing from `site/`), `/interview/` and `/defense/`, plus `netlify/functions/llm.mts` from spec (e).
+- One site (Free plan) serves `/` (landing from `site/`), `/interview/` and `/defense/`, plus the LLM proxy at `/api/llm`: the Edge Function `netlify/edge-functions/llm.ts` over `netlify/llm/handler.ts` (spec ghost-defense-live; rules in the `netlify-proxy-safety` skill).
+- `GEMINI_API_KEY` and `GEMINI_MODEL` are Netlify environment variables (scope includes Functions), set before the first deploy (docs/DEPLOY.md).
 - **Production branch is `release`.** Iterate on `main` with branch deploys and deploy previews, which are not metered.
 - Budget: at most 10 production deploys per month.
 
