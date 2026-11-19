@@ -332,7 +332,7 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         ref={heading}
         locale={locale}
         fileLang={fileLang}
-        source={view.defense?.mode ?? 'demo'}
+        source={view.defense?.summaryFrom ?? 'demo'}
         provider={k['defense.provider.gemini']}
         questions={(state.turns ?? []).map((t) => t.question)}
         summary={state.summary}

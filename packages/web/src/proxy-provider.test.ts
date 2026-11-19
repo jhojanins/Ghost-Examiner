@@ -110,7 +110,7 @@ describe('the provider chain in a session (Req 10.1, 10.3, 10.5)', () => {
     await flush();
     await flush();
     const after = handle.getSnapshot();
-    expect(after.defense).toEqual({ mode: 'demo' });
+    expect(after.defense).toEqual({ mode: 'mixed' }); // AI questions, a demo reply
     expect(after.state.phase).toBe('feedback'); // the turn was not lost
     expect(after.state.turns?.[0].answer).toBe('Because the evening peak was too much for the payment service.');
     handle.dispatch({ type: 'end' });

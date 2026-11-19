@@ -54,6 +54,12 @@ describe('ModeLabel', () => {
     rerender(<ModeLabel locale="en" mode="demo" />);
     expect(screen.getByText('Demo mode: questions and feedback come from simple rules, not AI.')).toBe(label);
   });
+  it('says so when the session mixes AI and the demo rules, in EN and ES (owner decision 2026-11-19)', () => {
+    const { rerender } = render(<ModeLabel locale="en" mode="mixed" provider="Google Gemini" />);
+    expect(screen.getByText('Mixed: some questions or replies come from simple rules, the rest from AI (Google Gemini).').getAttribute('aria-live')).toBe('polite');
+    rerender(<ModeLabel locale="es" mode="mixed" provider="Google Gemini" />);
+    expect(screen.getByText('Mixto: algunas preguntas o respuestas salen de reglas simples y el resto de IA (Google Gemini).')).toBeTruthy();
+  });
 });
 
 describe('DefenseSummary', () => {

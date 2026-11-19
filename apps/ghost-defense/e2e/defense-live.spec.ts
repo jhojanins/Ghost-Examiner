@@ -32,6 +32,7 @@ const T = {
     quote: 'From your file',
     aiLabel: "Questions and replies come from AI: Google Gemini, through this site's server.",
     demoLabel: 'Demo mode: questions and feedback come from simple rules, not AI.',
+    mixedLabel: "Mixed: some questions or replies come from simple rules, the rest from AI (Google Gemini, through this site's server).",
     fallback: "My crystal ball is busy. I'll continue with my own notes.",
     demoSource: 'Written by the offline demo rules.',
     prompt: 'What does this part show about your project?',
@@ -58,6 +59,7 @@ const T = {
     quote: 'De tu archivo',
     aiLabel: 'Las preguntas y respuestas salen de IA: Google Gemini, a través del servidor de este sitio.',
     demoLabel: 'Modo demo: las preguntas y los comentarios salen de reglas simples, no de IA.',
+    mixedLabel: 'Mixto: algunas preguntas o respuestas salen de reglas simples y el resto de IA (Google Gemini, a través del servidor de este sitio).',
     fallback: 'Mi bola de cristal está ocupada. Seguiré con mis propias notas.',
     demoSource: 'Escrito por las reglas de la demo sin conexión.',
     prompt: '¿Qué muestra esta parte sobre tu proyecto?',
@@ -162,6 +164,7 @@ for (const lang of ['en', 'es'] as const) {
         return ok({ kind: 'correction', excerptId: e.id, quote: body.input.quote, say: T[body.locale].correction });
       }
       if (n['defense-reply'] === 2) return ok({ kind: 'not-in-file', say: T[body.locale].notInFile });
+      // From the third reply on: a 429. The label turns to mixed (task 17 after phase 2, owner decision 3).
       return { status: 429, body: { error: 'rate-limited' } };
     });
     await toConsent(page, lang);
@@ -189,14 +192,14 @@ for (const lang of ['en', 'es'] as const) {
 
     await expect(h2(page, t.question(3))).toBeFocused();
     await answer(page, lang); // the proxy answers 429: the demo rules take the same turn
-    await expect(page.getByText(t.demoLabel)).toBeVisible();
+    await expect(page.getByText(t.mixedLabel)).toBeVisible(); // AI questions and replies so far, demo from now on
     await expect(page.getByRole('region', { name: lang === 'en' ? 'Transcript' : 'Transcripción' })).toContainText(t.fallback);
     found.push(...(await matrix(page, `${lang} fallback`)));
     await tabTo(page, page.getByRole('button', { name: t.end }));
     await page.keyboard.press('Enter');
     await expect(h2(page, t.summary)).toBeFocused();
     await expect(page.getByText(t.demoSource, { exact: false })).toBeVisible();
-    await expect(page.getByText(t.demoLabel)).toBeVisible(); // persistent
+    await expect(page.getByText(t.mixedLabel)).toBeVisible(); // persistent
 
     // Demo stayed pinned: no reply after the 429 and no summary went to the proxy.
     expect(bodies.map((b) => b.task)).toEqual(['defense-questions', 'defense-reply', 'defense-reply', 'defense-reply']);

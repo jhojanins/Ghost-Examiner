@@ -247,7 +247,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     const { provider } = scripted({ 'defense-questions': () => six });
     const s = setup(provider); // count 4: six questions pass the guard (at most count + 2)
     await s.begin();
-    expect(s.view().defense).toEqual({ mode: 'ai' }); // the provider's list was accepted
+    expect(s.view().defense).toEqual({ mode: 'ai' }); // the provider's list was accepted, with no demo fill-in
     expect(s.view().state.pack.questions.map((q) => q.prompt.en)).toEqual(fourQuestions().questions.map((q) => q.prompt));
     const oneBad = { questions: [{ ...fourQuestions().questions[0], quote: 'a sentence that is not in the file' }, ...fourQuestions().questions.slice(1)] };
     const t = setup(scripted({ 'defense-questions': () => oneBad }).provider, { pack: { ...pack, dynamic: { count: 3 } } });
@@ -296,18 +296,46 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     await s.answer('It seemed like a good idea.');
     expect(s.lines.some((l) => l.text === kitMessages.en['defense.fallback'])).toBe(false);
   });
-  it('reports the mode: AI until the first fallback, then demo for the rest of the session', async () => {
+  it('reports the mode: AI until the first fallback, then mixed (AI questions, demo replies), with demo pinned', async () => {
     const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
     const s = setup(provider);
     await s.begin();
     expect(s.view().defense).toEqual({ mode: 'ai' });
     await s.answer('Because of the peak.'); // the provider fails: demo answers
-    expect(s.view().defense).toEqual({ mode: 'demo' });
+    expect(s.view().defense).toEqual({ mode: 'mixed' });
     await s.finishLine();
     s.handle.dispatch({ type: 'next' });
     await flush();
     await s.answer('Because of the peak.');
     expect(calls.filter((c) => c.task === 'defense-reply')).toHaveLength(1); // demo stays pinned
     expect(setup(createDemoProvider()).view().defense).toEqual({ mode: 'demo' });
+  });
+  it('is demo, not mixed, when the very first request already fails: nothing came from the AI', async () => {
+    const s = setup(scripted({}).provider);
+    await s.begin();
+    expect(s.view().defense).toEqual({ mode: 'demo' });
+  });
+  it('is mixed as soon as demo questions fill in for questions the guard dropped (Req 6.4)', async () => {
+    const one = { questions: [fourQuestions().questions[2]] };
+    const s = setup(scripted({ 'defense-questions': () => one, 'defense-reply': () => ({ kind: 'acknowledgment', say: ['Good.'] }) }).provider);
+    await s.begin();
+    expect(s.view().defense).toEqual({ mode: 'mixed' });
+    await s.answer('Because of the peak.'); // the AI still answers: no fallback, still mixed
+    expect(s.view().defense).toEqual({ mode: 'mixed' });
+    expect(s.lines.some((l) => l.text === kitMessages.en['defense.fallback'])).toBe(false);
+  });
+  it('names who wrote the summary on its own: the AI, or the demo rules after a fallback', async () => {
+    const ai = setup(scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => ({ kind: 'acknowledgment', say: ['Good.'] }), 'defense-summary': () => ({ strength: 'Clear.', review: [] }) }).provider);
+    await ai.begin();
+    await ai.answer('Because of the peak.');
+    ai.handle.dispatch({ type: 'end' });
+    await flush();
+    expect(ai.view().defense).toEqual({ mode: 'ai', summaryFrom: 'ai' });
+    const fell = setup(scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => ({ kind: 'acknowledgment', say: ['Good.'] }) }).provider);
+    await fell.begin();
+    await fell.answer('Because of the peak.');
+    fell.handle.dispatch({ type: 'end' });
+    await flush();
+    expect(fell.view().defense).toEqual({ mode: 'mixed', summaryFrom: 'demo' });
   });
 });

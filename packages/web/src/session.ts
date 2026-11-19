@@ -81,7 +81,12 @@ export interface SessionView {
    */
   preview?: { missing: InputMethodId[] };
   /** Dynamic sessions: whether replies now come from AI or from the demo rules (Req 10.3). */
-  defense?: { mode: 'ai' | 'demo' };
+  defense?: {
+    /** Where the questions and replies so far came from: all AI, all demo rules, or some of each (Req 10.3). */
+    mode: 'ai' | 'demo' | 'mixed';
+    /** Who wrote the summary, once it is there (Req 8.2). */
+    summaryFrom?: 'ai' | 'demo';
+  };
 }
 
 export type SessionHandle =
@@ -167,7 +172,15 @@ export function createSession(deps: SessionDeps): SessionHandle {
   let demoPinned = defense?.provider.isDemo ?? true; // after the first fallback, demo for the rest (Req 10.3)
   let localLineId = 0; // runtime lines (the waiting line) count down, so they never meet an engine line id
   let fallbackPending = false; // the fallback line goes before the next lines the ghost says (Req 10.2)
-  const defenseView = () => (defense ? { mode: demoPinned ? ('demo' as const) : ('ai' as const) } : undefined);
+  // What actually answered so far: the mode label must never call a demo answer AI, nor hide that
+  // some answers were AI (Req 10.3).
+  const used = { ai: false, demo: false };
+  let summaryFrom: 'ai' | 'demo' | undefined;
+  const defenseView = (): SessionView['defense'] => {
+    if (!defense) return undefined;
+    const mode = used.ai && used.demo ? 'mixed' : used.ai || (!used.demo && !demoPinned) ? 'ai' : 'demo';
+    return summaryFrom ? { mode, summaryFrom } : { mode };
+  };
   let view: SessionView = { state, transcript, preview, defense: defenseView() };
   const listeners = new Set<() => void>();
 
@@ -179,10 +192,16 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (!demoPinned && defense) {
       const r = await defense.provider.complete(req).catch(() => ({ ok: false }) as const);
       const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
-      if (parsed?.ok) return parsed.value;
+      if (parsed?.ok) {
+        used.ai = true;
+        if (req.task === 'defense-summary') summaryFrom = 'ai';
+        return parsed.value;
+      }
       demoPinned = true;
       fallbackPending = true;
     }
+    used.demo = true;
+    if (req.task === 'defense-summary') summaryFrom = 'demo';
     const r = await demo.complete(req);
     const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
     return parsed?.ok ? parsed.value : fallback;
@@ -210,8 +229,10 @@ export function createSession(deps: SessionDeps): SessionHandle {
       // Too few left after the guard: fill up with demo questions on passages not used yet (Req 6.4).
       const r = await demo.complete(req);
       const extra = r.ok ? parse(parseJson(r.text)) : undefined;
-      const used = new Set(questions.map((q) => q.excerptId));
-      for (const q of extra?.ok ? extra.value : []) if (questions.length < count && !used.has(q.excerptId)) questions = [...questions, q];
+      const taken = new Set(questions.map((q) => q.excerptId));
+      const before = questions.length;
+      for (const q of extra?.ok ? extra.value : []) if (questions.length < count && !taken.has(q.excerptId)) questions = [...questions, q];
+      if (questions.length > before) used.demo = true;
     }
     cancelWaiting();
     dispatch({ type: 'questions-ready', questions: questions.map(toQuestion) });
