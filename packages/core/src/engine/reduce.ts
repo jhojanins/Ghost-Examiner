@@ -19,7 +19,7 @@ function speakAll(state: SessionState, lines: LineRef[]): Result {
 // ---- Dynamic sessions (ghost-defense-live design §3.5) -----------------------------------
 /** The summary phase: ask for a summary when there are turns, otherwise just say goodbye. */
 function enterSummary(state: SessionState): Result {
-  const cleared = { ...state, phase: 'summary' as const, candidate: undefined, confirmed: undefined, reply: undefined, followUp: undefined, draft: undefined };
+  const cleared = { ...state, phase: 'summary' as const, candidate: undefined, confirmed: undefined, reply: undefined, replyStreaming: undefined, followUp: undefined, draft: undefined };
   const turns = state.turns ?? [];
   if (turns.length === 0) return speak(cleared, { localized: state.pack.closing });
   return { state: cleared, effects: [{ type: 'summarize', turns, locale: state.locale }] };
@@ -109,22 +109,26 @@ export function reduce(state: SessionState, event: SessionEvent): Result {
           )
         : unchanged;
 
+    case 'reply-partial':
     case 'reply-ready': {
-      if (!dynamic || state.phase !== 'evaluating' || !state.confirmed) return unchanged;
+      // The reply's own turn: right after confirm, or while it is still streaming (task 23).
+      const inTurn = state.phase === 'evaluating' || (state.phase === 'feedback' && state.replyStreaming);
+      if (!dynamic || !inTurn || !state.confirmed) return unchanged;
       // A follow-up's reply can't ask another follow-up (Req 4.6): it stands as an acknowledgment.
       const reply =
         question.followUpOf !== undefined && event.reply.kind === 'follow-up'
           ? { kind: 'acknowledgment' as const, say: event.reply.say }
           : event.reply;
+      // Only the sentences not said yet: a streamed reply grows one sentence at a time.
+      const said = state.replyStreaming ? (state.reply?.say.length ?? 0) : 0;
+      const lines = reply.say.slice(said).map((text) => ({ text, locale: state.locale }));
+      if (event.type === 'reply-partial') return speakAll({ ...state, phase: 'feedback', reply, replyStreaming: true }, lines);
       const turn = { question: question.prompt[state.locale], answer: state.confirmed.text, kind: reply.kind };
-      return speakAll(
-        { ...state, phase: 'feedback', reply, turns: [...(state.turns ?? []), turn] },
-        reply.say.map((text) => ({ text, locale: state.locale })),
-      );
+      return speakAll({ ...state, phase: 'feedback', reply, replyStreaming: undefined, turns: [...(state.turns ?? []), turn] }, lines);
     }
 
     case 'next': {
-      if (state.phase !== 'feedback') return unchanged;
+      if (state.phase !== 'feedback' || state.replyStreaming) return unchanged;
       if (dynamic) {
         // Only a main question's reply can be a follow-up (see reply-ready), so this asks at most one.
         const followUpText = state.reply?.kind === 'follow-up' ? state.reply.followUp : undefined;

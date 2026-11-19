@@ -112,6 +112,7 @@ function isValid(state: SessionState, event: SessionEvent): boolean {
       return true;
     case 'questions-ready':
     case 'reply-ready':
+    case 'reply-partial':
     case 'summary-ready':
     case 'skip':
     case 'end':

@@ -4,6 +4,8 @@ import {
   initialState,
   kitMessages,
   parseDefenseQuestions,
+  createReplyReader,
+  inLanguage,
   parseDefenseReply,
   parseDefenseSummary,
   selectExcerpts,
@@ -108,6 +110,16 @@ const EXCERPT_BUDGET = 6000; // characters of file text per request (Req 9.4)
 const ANSWER_MAX = 2000;
 const SUMMARY_ANSWER_MAX = 400;
 const WAITING_MS = 1500;
+const FIRST_SENTENCE_MS = 8000; // Req 5.3
+/** Latency marks for the owner's check (design §4.3): read them with performance.getEntriesByType('mark'). */
+const mark = (name: string) => globalThis.performance?.mark?.(`ghost-defense:${name}`);
+/**
+ * How a streamed reply ended (task 23): `done` with the reply to record (whole, or cut after
+ * sentences were said), `unsupported` (a correction whose quote isn't in the file), `demo` (nothing
+ * was said and the demo rules answer: a timeout, a rate limit, a bad head or first sentence), or
+ * `whole` (the stream failed before anything was said: try the non-streaming request).
+ */
+type StreamOutcome = { kind: 'done'; reply: DefenseReply } | { kind: 'unsupported' } | { kind: 'demo' } | { kind: 'whole' };
 const MAX_OUTPUT_TOKENS: Record<Exclude<LLMRequest['task'], 'evaluate-answer'>, number> = {
   'defense-questions': 800,
   'defense-reply': 400,
@@ -171,6 +183,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
   const demo = createDemoProvider();
   let demoPinned = defense?.provider.isDemo ?? true; // after the first fallback, demo for the rest (Req 10.3)
   let localLineId = 0; // runtime lines (the waiting line) count down, so they never meet an engine line id
+  let awaitingFirstPlay = false; // for the latency mark of the first streamed sentence
   let fallbackPending = false; // the fallback line goes before the next lines the ghost says (Req 10.2)
   // What actually answered so far: the mode label must never call a demo answer AI, nor hide that
   // some answers were AI (Req 10.3).
@@ -255,13 +268,118 @@ export function createSession(deps: SessionDeps): SessionHandle {
       },
     };
     const m = kitMessages[locale];
-    let r: DefenseReply = await ask(req, (v) => parseDefenseReply(v, { excerpts: defense.excerpts, locale, followUpAllowed }), {
+    const ctx = { excerpts: defense.excerpts, locale, followUpAllowed };
+    mark('reply-requested');
+    if (!demoPinned && defense.provider.stream) {
+      const outcome = await streamReply(req, ctx);
+      if (outcome.kind === 'done' || outcome.kind === 'unsupported') {
+        used.ai = true;
+        const r = outcome.kind === 'done' ? outcome.reply : { kind: 'unsupported' as const, say: [m['defense.cantPoint']] };
+        return dispatch({ type: 'reply-ready', reply: r });
+      }
+      if (outcome.kind === 'demo') {
+        demoPinned = true;
+        fallbackPending = true;
+      }
+    }
+    let r: DefenseReply = await ask(req, (v) => parseDefenseReply(v, ctx), {
       kind: 'acknowledgment',
       say: [m['defense.demo.partly']],
     });
     // A correction without a verified quote: the ghost says so in its own words (Req 6.3).
     if (r.kind === 'unsupported') r = { kind: 'unsupported', say: [m['defense.cantPoint']] };
     dispatch({ type: 'reply-ready', reply: r });
+  }
+
+  /**
+   * A streamed reply (design §4.3, Req 5.1, 5.4): the head is checked with the full guard, with the
+   * first sentence, before anything is shown, so a quote appears only once verified. Each sentence
+   * then passes the per-sentence check and the language check before it is said. No first sentence
+   * within 8 s means the demo rules answer (Req 5.3). A stream cut after sentences were said keeps
+   * them and the turn, and the rest of the session is demo (Req 10.5).
+   */
+  function streamReply(req: LLMRequest, ctx: { excerpts: readonly Excerpt[]; locale: Locale; followUpAllowed: boolean }): Promise<StreamOutcome> {
+    const provider = defense!.provider;
+    return new Promise((resolve) => {
+      const reader = createReplyReader();
+      const abort = new AbortController();
+      let settled = false;
+      let firstByte = true;
+      let head: { kind: string; excerptId?: string; quote?: string } | undefined;
+      let shown: DefenseReply | undefined; // the head as checked, with the sentences said so far
+      const cancelTimer = schedule(() => {
+        if (!shown) settle({ kind: 'demo' });
+      }, FIRST_SENTENCE_MS);
+      function settle(outcome: StreamOutcome) {
+        if (settled) return;
+        settled = true;
+        cancelTimer();
+        abort.abort(); // nothing more is read: stop the request
+        resolve(outcome);
+      }
+      /** The stream broke: keep what was said, or let the demo rules answer when nothing was. */
+      function cut() {
+        if (!shown) return settle({ kind: 'demo' });
+        demoPinned = true;
+        fallbackPending = true;
+        settle({ kind: 'done', reply: shown }); // a cut follow-up asks nothing more: next goes on
+      }
+      function sentence(text: string) {
+        if (!inLanguage(text, ctx.locale)) return cut();
+        if (!shown) {
+          // The head, checked as a whole reply with this first sentence (a follow-up gets a stand-in question).
+          const probe = { ...head, say: [text], ...(head?.kind === 'follow-up' && { followUp: kitMessages[ctx.locale]['defense.demo.followUp'] }) };
+          const checked = parseDefenseReply(probe, ctx);
+          if (!checked.ok) return settle({ kind: 'demo' });
+          if (checked.value.kind === 'unsupported') return settle({ kind: 'unsupported' });
+          cancelTimer();
+          shown = { ...checked.value };
+          delete shown.followUp; // only the stand-in so far; the real one comes with the end
+          mark('first-sentence');
+          awaitingFirstPlay = true;
+        } else {
+          shown = { ...shown, say: [...shown.say, text] };
+        }
+        dispatch({ type: 'reply-partial', reply: shown });
+      }
+      function onEvents(events: ReturnType<typeof reader.push>) {
+        for (const e of events) {
+          if (settled) return;
+          if (e.type === 'head') head = e.head;
+          else if (e.type === 'sentence') sentence(e.text);
+          else if (e.type === 'error') cut();
+          else {
+            // The whole reply, through the full guard; it must say exactly what was said.
+            const final = parseDefenseReply(e.value, ctx);
+            // The reader emitted exactly its say items, and the head was already checked, so the guard agrees.
+            if (final.ok) settle({ kind: 'done', reply: final.value });
+            else cut();
+          }
+        }
+      }
+      provider
+        .stream!(
+          req,
+          (chunk) => {
+            if (settled) return;
+            if (firstByte) mark('first-byte');
+            firstByte = false;
+            onEvents(reader.push(chunk));
+          },
+          abort.signal,
+        )
+        .then(
+          (r) => {
+            if (settled) return;
+            if (r.ok) onEvents(reader.end());
+            if (settled) return;
+            if (shown) return cut();
+            const quick = !r.ok && (r.error === 'rate-limited' || r.error === 'too-large');
+            settle({ kind: quick ? 'demo' : 'whole' });
+          },
+          () => (shown ? cut() : settle({ kind: 'whole' })),
+        );
+    });
   }
 
   async function summarize(turns: Turn[], locale: Locale) {
@@ -306,6 +424,10 @@ export function createSession(deps: SessionDeps): SessionHandle {
   }
 
   function play(id: number, ref: LineRef) {
+    if (awaitingFirstPlay && state.replyStreaming) {
+      awaitingFirstPlay = false;
+      mark('first-sentence-played');
+    }
     if (line && line.id !== id) stopLine(); // a newer line replaces the older one (a replay keeps it)
     const { text, locale } = resolveLine(ref, state.locale);
     const timeline = buildTimeline(text, locale);
@@ -364,11 +486,15 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (next === before && effects.length === 0 && !lineChanged) return;
     state = next;
     const lines = effects.flatMap((e) => (e.type === 'speak' ? [{ id: e.lineId, ref: e.line }] : []));
-    if (fallbackPending && lines.length > 0) {
+    // A cut stream ends with a reply-ready that may add no line: the fallback line is said anyway.
+    if (fallbackPending && (lines.length > 0 || event.type === 'reply-ready')) {
       fallbackPending = false;
       lines.unshift({ id: --localLineId, ref: { text: kitMessages[state.locale]['defense.fallback'], locale: state.locale } });
     }
-    if (lines.length > 0 && event.type === 'questions-ready' && line?.playing) {
+    const streamed = event.type === 'reply-partial' || (event.type === 'reply-ready' && before.replyStreaming);
+    if (lines.length > 0 && streamed && line?.playing) {
+      queued = [...queued, ...lines]; // a streamed sentence waits for the one playing (Req 5.1)
+    } else if (lines.length > 0 && event.type === 'questions-ready' && line?.playing) {
       queued = lines; // the greeting (or the waiting line) finishes first, then the first question (Req 4.2)
     } else if (lines.length > 0) {
       queued = lines.slice(1);

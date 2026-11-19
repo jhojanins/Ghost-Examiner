@@ -108,6 +108,18 @@ describe('ProxyProvider.stream (design §4.2, task 22)', () => {
     const byByte = proxy(async () => new Response(new ReadableStream({ pull(c) { if (i < bytes.length) c.enqueue(bytes.slice(i, ++i)); else c.close(); } }), { status: 200 }));
     expect(await byByte.provider.stream!(reply, () => {})).toEqual({ ok: true, text: '{"say":["Está «bien»."]}' });
   });
+  it("aborting the caller's signal stops the request and resolves unavailable", async () => {
+    let requestSignal: AbortSignal | undefined;
+    const { provider } = proxy((init) => {
+      requestSignal = init.signal ?? undefined;
+      return new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+    }, 60_000); // long, so only the caller's signal can end it within the test
+    const stop = new AbortController();
+    const pending = provider.stream!(reply, () => {}, stop.signal);
+    stop.abort();
+    expect(await pending).toEqual({ ok: false, error: 'unavailable' });
+    expect(requestSignal?.aborted).toBe(true);
+  });
   it('a stream cut midway resolves unavailable, after the chunks already delivered', async () => {
     const { provider } = proxy(async () => chunked(['{"kind":"ack'], { cut: true }));
     const seen: string[] = [];

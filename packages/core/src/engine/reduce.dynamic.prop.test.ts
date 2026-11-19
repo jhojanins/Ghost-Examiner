@@ -24,6 +24,7 @@ const step = fc.oneof<fc.Arbitrary<Step>[]>(
   fc.constant({ type: 'retry' } as const),
   fc.constant({ type: 'edit' } as const),
   reply.map((r) => ({ type: 'reply-ready', reply: r }) as const),
+  reply.map((r) => ({ type: 'reply-partial', reply: r }) as const), // a streamed reply (task 23)
   fc.constant({ type: 'next' } as const),
   fc.constant({ type: 'skip' } as const),
   fc.constant({ type: 'end' } as const),

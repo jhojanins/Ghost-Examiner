@@ -352,9 +352,12 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         ))}
         {reply.quote && <QuoteBlock locale={locale} quote={reply.quote} lang={fileLang} />}
         <div className="gd-actions">
-          <button type="button" className="ge-button ge-button--primary" onClick={() => dispatch({ type: 'next' })}>
-            {k['feedback.next']}
-          </button>
+          {/* While a streamed reply still arrives, Continue waits for it (task 23); End always works. */}
+          {!state.replyStreaming && (
+            <button type="button" className="ge-button ge-button--primary" onClick={() => dispatch({ type: 'next' })}>
+              {k['feedback.next']}
+            </button>
+          )}
           {endButton}
         </div>
       </section>

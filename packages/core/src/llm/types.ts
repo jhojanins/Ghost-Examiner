@@ -25,6 +25,12 @@ export type LLMRequest =
 
 export type LLMResult = { ok: true; text: string } | { ok: false; error: 'rate-limited' | 'unavailable' | 'bad-output' | 'too-large' };
 
+/** The part of a DOM `AbortSignal` a provider listens to; core has no DOM lib, so it is spelled out. */
+export interface StopSignal {
+  readonly aborted: boolean;
+  addEventListener(type: 'abort', listener: () => void): void;
+}
+
 /** All LLM access goes through this interface (Req 8.1). */
 export interface LLMProvider {
   readonly id: 'demo' | 'proxy' | 'gemini' | 'groq';
@@ -34,6 +40,7 @@ export interface LLMProvider {
    * Optional streaming (ghost-defense-live Req 9.5): calls `onChunk` with each piece of text as it
    * arrives, then resolves with the whole text. A stream cut midway resolves with an error after
    * the pieces already delivered. Providers without it (the demo provider) are used whole.
+   * Aborting `signal` stops the request and resolves `unavailable`.
    */
-  stream?(req: LLMRequest, onChunk: (chunk: string) => void): Promise<LLMResult>;
+  stream?(req: LLMRequest, onChunk: (chunk: string) => void, signal?: StopSignal): Promise<LLMResult>;
 }

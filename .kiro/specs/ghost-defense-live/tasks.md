@@ -102,7 +102,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 22. Streaming in the Edge Function and `ProxyProvider`
   - **Done when:** tests show the Edge Function piping upstream text deltas (mocked SSE) with the byte cap and abort on client disconnect, and `ProxyProvider.stream` delivering chunks, the 8 s first-byte timeout, and a stream cut midway mapped to a fallback that keeps the turn.
   - _Design §4.2, §5; Requirements: 5.1, 5.3, 10.5_ · Skills: `netlify-proxy-safety`
-- [ ] 23. Sentence-by-sentence speech in the app **[Browser + axe]**
+- [x] 23. Sentence-by-sentence speech in the app **[Browser + axe]**
   - The runtime speaks each sentence as it arrives; latency marks.
   - The non-streaming path stays and is the fallback: a provider without `stream`, a stream that fails before its head, or a missing streaming endpoint uses `complete` as today (owner note 2026-11-19, Req 5.6).
   - **Done when:** the walk-through with a chunked scripted route shows the quote appearing only after the head is verified, captions and mouth following each sentence, the transcript announcing each line once, and the timeout falling back after 8 s (page clock); axe passes; e2e covers the streamed reply.

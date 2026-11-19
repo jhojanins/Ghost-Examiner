@@ -69,6 +69,8 @@ export type SessionEvent =
   // Dynamic sessions only (ghost-defense-live design §3.5); pack sessions ignore them.
   | { type: 'questions-ready'; questions: Question[] }
   | { type: 'reply-ready'; reply: DefenseReply }
+  /** A streamed reply so far (task 23): its head and the sentences that passed their checks. */
+  | { type: 'reply-partial'; reply: DefenseReply }
   | { type: 'summary-ready'; summary: DefenseSummary }
   | { type: 'skip' }
   | { type: 'end' };
@@ -93,6 +95,8 @@ export interface SessionState {
   /** Dynamic sessions: the follow-up being asked, the last reply, the turns and the summary. */
   followUp?: Question;
   reply?: DefenseReply;
+  /** A streamed reply is still arriving: `next` waits for it (task 23). */
+  replyStreaming?: true;
   turns?: Turn[];
   summary?: DefenseSummary;
 }

@@ -63,8 +63,9 @@ export function createProxyProvider(deps: ProxyProviderDeps = {}): LLMProvider {
         clearTimeout(timer);
       }
     },
-    async stream(req, onChunk): Promise<LLMResult> {
+    async stream(req, onChunk, signal): Promise<LLMResult> {
       const abort = new AbortController();
+      signal?.addEventListener('abort', () => abort.abort()); // the session stopped listening
       const total = setTimeout(() => abort.abort(), deps.timeoutMs ?? TIMEOUT_MS);
       const firstByte = setTimeout(() => abort.abort(), deps.firstByteMs ?? FIRST_BYTE_MS);
       try {

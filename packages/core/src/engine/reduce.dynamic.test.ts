@@ -122,6 +122,48 @@ describe('reduce: dynamic sessions', () => {
     expect(switched.state.locale).toBe('es');
   });
 
+  describe('streamed replies (ghost-defense-live task 23, Req 5.1)', () => {
+    const asked = () => run([...started, { type: 'questions-ready', questions: [q(1), q(2)] }, 'line-done', answer('Because.'), 'confirm']);
+    const partial = (say: string[], extra: Partial<DefenseReply> = {}): SessionEvent => ({ type: 'reply-partial', reply: { kind: 'acknowledgment', say, ...extra } });
+    it('each partial shows the reply so far and speaks only the new sentences; the final reply speaks the rest and records the turn once', () => {
+      const first = run([partial(['One.'], { excerptId: 'e1', quote: 'quoted passage 1' })], asked().state);
+      expect(first.state).toMatchObject({ phase: 'feedback', replyStreaming: true, reply: { say: ['One.'], quote: 'quoted passage 1' } });
+      expect(spoken(first.effects)).toEqual(['One.']);
+      expect(first.state.turns).toEqual([]);
+      const second = run([partial(['One.', 'Two.'], { excerptId: 'e1', quote: 'quoted passage 1' })], first.state);
+      expect(spoken(second.effects)).toEqual(['Two.']);
+      const done = run([{ type: 'reply-ready', reply: { kind: 'acknowledgment', excerptId: 'e1', quote: 'quoted passage 1', say: ['One.', 'Two.', 'Three.'] } }], second.state);
+      expect(spoken(done.effects)).toEqual(['Three.']);
+      expect(done.state.replyStreaming).toBeUndefined();
+      expect(done.state.turns).toEqual([{ question: 'Question 1?', answer: 'Because.', kind: 'acknowledgment' }]);
+    });
+    it('a final reply with no new sentence (a cut stream) still records the turn, and speaks nothing', () => {
+      const first = run([partial(['One.'])], asked().state);
+      const done = run([{ type: 'reply-ready', reply: { kind: 'acknowledgment', say: ['One.'] } }], first.state);
+      expect(done.effects).toEqual([]);
+      expect(done.state.turns).toHaveLength(1);
+    });
+    it('next waits until the reply is done; end still goes to the summary at once', () => {
+      const first = run([partial(['One.'])], asked().state);
+      expect(reduce(first.state, { type: 'next' }).state).toBe(first.state);
+      const ended = run([{ type: 'end' }], first.state);
+      expect(ended.state).toMatchObject({ phase: 'summary', replyStreaming: undefined, reply: undefined });
+      expect(reduce(ended.state, { type: 'reply-ready', reply: { kind: 'acknowledgment', say: ['Late.'] } }).state).toBe(ended.state); // a late end is ignored
+    });
+    it('a partial is ignored outside its turn: before confirm, after the reply is done, in pack sessions', () => {
+      const before = run([...started, { type: 'questions-ready', questions: [q(1)] }, 'line-done']).state;
+      expect(reduce(before, partial(['Early.'])).state).toBe(before);
+      const done = run([{ type: 'reply-ready', reply: { kind: 'acknowledgment', say: ['Done.'] } }], asked().state).state;
+      expect(reduce(done, partial(['Again.'])).state).toBe(done);
+      const packState = { ...initialState({ ...pack, dynamic: undefined, questions: [q(1)] }, 'en'), phase: 'evaluating' as const };
+      expect(reduce(packState, partial(['X.'])).state).toBe(packState);
+    });
+    it("a follow-up's streamed reply can't ask another follow-up either", () => {
+      const followed = run([{ type: 'reply-ready', reply: reply('follow-up', { followUp: 'Why exactly?' }) }, { type: 'next' }, 'line-done', answer('Hmm.'), 'confirm'], asked().state);
+      const r = run([partial(['Part.'], { kind: 'follow-up', followUp: 'More?' })], followed.state);
+      expect(r.state.reply?.kind).toBe('acknowledgment');
+    });
+  });
   it('pack sessions ignore the new events', () => {
     const packState = { ...initialState({ ...pack, dynamic: undefined, questions: [q(1)] }, 'en'), phase: 'answering' as const };
     for (const event of [{ type: 'skip' }, { type: 'end' }, { type: 'reply-ready', reply: reply('acknowledgment') }] as SessionEvent[]) {

@@ -6,6 +6,8 @@ import {
   type Evaluator,
   type LLMProvider,
   type LLMRequest,
+  type LLMResult,
+  type StopSignal,
   type QuestionPack,
   type Timeline,
 } from '@ghost-examiner/core';
@@ -337,5 +339,194 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     fell.handle.dispatch({ type: 'end' });
     await flush();
     expect(fell.view().defense).toEqual({ mode: 'mixed', summaryFrom: 'demo' });
+  });
+  describe('streamed replies (task 23, Req 5)', () => {
+    /** A provider whose reply stream the test drives: push chunks, then finish. */
+    function streaming() {
+      const calls: string[] = [];
+      const ctl: { push: (s: string) => Promise<void>; finish: (r?: LLMResult) => Promise<void>; signal?: StopSignal } = {
+        push: async () => {},
+        finish: async () => {},
+      };
+      const provider: LLMProvider = {
+        id: 'proxy',
+        isDemo: false,
+        async complete(req) {
+          calls.push(`complete:${req.task}`);
+          if (req.task === 'defense-questions') return { ok: true, text: JSON.stringify(fourQuestions()) };
+          if (req.task === 'defense-reply') return { ok: true, text: JSON.stringify({ kind: 'acknowledgment', say: ['Whole reply.'] }) };
+          return { ok: false, error: 'unavailable' };
+        },
+        stream(req, onChunk, signal) {
+          calls.push(`stream:${req.task}`);
+          return new Promise((resolve) => {
+            let text = '';
+            ctl.signal = signal;
+            ctl.push = async (chunk) => {
+              text += chunk;
+              onChunk(chunk);
+              await flush();
+            };
+            ctl.finish = async (r) => {
+              resolve(r ?? { ok: true, text });
+              await flush();
+              await flush();
+            };
+          });
+        },
+      };
+      return { provider, calls, ctl };
+    }
+    const head = (kind: string, quote?: string) => `{"kind":"${kind}"${quote ? `,"excerptId":"${excerpts[0].id}","quote":"${quote}"` : ''},"say":[`;
+    const fallback = kitMessages.en['defense.fallback'];
+
+    it('shows the verified quote with the first sentence, and speaks each sentence as it arrives, queued, never cutting the one playing', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      expect(s.view().state.phase).toBe('evaluating');
+      await f.ctl.push(head('correction', quoteOf(0)));
+      expect(s.view().state.phase).toBe('evaluating'); // the head alone shows nothing
+      await f.ctl.push('"Your file says otherwise.",');
+      expect(s.view().state).toMatchObject({ phase: 'feedback', replyStreaming: true, reply: { quote: quoteOf(0), say: ['Your file says otherwise.'] } });
+      expect(s.lines.at(-1)?.text).toBe('Your file says otherwise.');
+      const spoken = s.lines.length;
+      await f.ctl.push('"Compare it with your answer."');
+      expect(s.lines).toHaveLength(spoken); // still playing; the next one waits in the queue
+      await s.finishLine();
+      expect(s.lines.at(-1)?.text).toBe('Compare it with your answer.');
+      await f.ctl.push(']}');
+      await f.ctl.finish();
+      expect(s.view().state.replyStreaming).toBeUndefined();
+      expect(s.view().state.turns).toHaveLength(1);
+      await s.finishLine();
+      const said = s.view().transcript.map((t) => t.text);
+      expect(said.filter((t) => t === 'Your file says otherwise.')).toHaveLength(1);
+      expect(said.filter((t) => t === 'Compare it with your answer.')).toHaveLength(1);
+      expect(f.calls).toEqual(['complete:defense-questions', 'stream:defense-reply']);
+      expect(s.view().defense).toEqual({ mode: 'ai' });
+    });
+    it("a correction whose quote isn't in the file says the local line and none of its sentences", async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('A guess.');
+      await f.ctl.push(`${head('correction', 'a sentence that is not in the file')}"Wrong."`);
+      expect(s.view().state.reply?.kind).toBe('unsupported');
+      expect(s.lines.at(-1)?.text).toBe(kitMessages.en['defense.cantPoint']);
+      expect(s.lines.some((l) => l.text === 'Wrong.')).toBe(false);
+      expect(f.ctl.signal?.aborted).toBe(true);
+    });
+    it('no first sentence within 8 s: the fallback line, then the demo reply for the same turn; the stream is stopped', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('It seemed like a good idea.');
+      const timer = s.timers.find((t) => t.ms === 8000);
+      expect(timer).toBeDefined();
+      const mark = vi.spyOn(performance, 'mark');
+      timer!.fn();
+      await flush();
+      await flush();
+      expect(s.lines.at(-1)?.text).toBe(fallback);
+      expect(f.ctl.signal?.aborted).toBe(true);
+      await s.finishLine();
+      expect(s.lines.at(-1)?.text).toBe(s.view().state.reply?.say[0]); // the demo's reply
+      await f.ctl.push(`${head('acknowledgment')}"Too late."`);
+      expect(s.lines.some((l) => l.text === 'Too late.')).toBe(false);
+      expect(mark.mock.calls.map(([n]) => n)).not.toContain('ghost-defense:first-byte'); // a late chunk is not measured
+      mark.mockRestore();
+      expect(s.view().defense).toEqual({ mode: 'mixed' });
+      expect(f.calls).not.toContain('complete:defense-reply');
+    });
+    it('the 8 s timer is cancelled once the first sentence is shown', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.push(`${head('acknowledgment')}"Good."`);
+      expect(s.timers.find((t) => t.ms === 8000)?.cancelled).toBe(true);
+    });
+    it('a stream cut after a sentence keeps it and the turn, says the fallback line, and stays in demo', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.push(`${head('acknowledgment')}"That matches your file.",`);
+      await f.ctl.finish({ ok: false, error: 'unavailable' });
+      expect(s.view().state).toMatchObject({ phase: 'feedback', reply: { say: ['That matches your file.'] } });
+      expect(s.view().state.replyStreaming).toBeUndefined();
+      expect(s.view().state.turns).toHaveLength(1);
+      await s.finishLine();
+      expect(s.lines.at(-1)?.text).toBe(fallback);
+      await s.finishLine();
+      s.handle.dispatch({ type: 'next' });
+      await flush();
+      await s.answer('Because of the peak.');
+      expect(f.calls.filter((c) => c.startsWith('stream:'))).toHaveLength(1); // demo pinned
+      expect(s.view().defense).toEqual({ mode: 'mixed' });
+    });
+    it('a stream that fails before any sentence with unavailable tries the whole reply instead (non-streaming fallback)', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.finish({ ok: false, error: 'unavailable' });
+      expect(f.calls).toContain('complete:defense-reply');
+      expect(s.view().state.reply?.say).toEqual(['Whole reply.']);
+      expect(s.view().defense).toEqual({ mode: 'ai' });
+      expect(s.lines.some((l) => l.text === fallback)).toBe(false);
+    });
+    it('a 429 before any sentence goes straight to the demo rules, without a second request', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.finish({ ok: false, error: 'rate-limited' });
+      expect(f.calls).not.toContain('complete:defense-reply');
+      expect(s.lines.at(-1)?.text).toBe(fallback);
+    });
+    it('a first sentence in the wrong language, or a head the guard rejects, is never shown: demo answers', async () => {
+      for (const chunk of [`${head('acknowledgment')}"Tu archivo dice que la respuesta no es la que esperaba en este caso."`, '{"kind":"praise","say":["Great."']) {
+        const f = streaming();
+        const s = setup(f.provider);
+        await s.begin();
+        await s.answer('Because of the peak.');
+        await f.ctl.push(chunk);
+        await flush();
+        expect(s.lines.some((l) => l.text.startsWith('Tu archivo') || l.text === 'Great.')).toBe(false);
+        expect(s.lines.some((l) => l.text === fallback)).toBe(true);
+        expect(f.ctl.signal?.aborted).toBe(true);
+      }
+    });
+    it('a later sentence in the wrong language, or a whole reply the final guard rejects, cuts the stream after what was said', async () => {
+      const tooLong = Array(40).fill('why').join(' ');
+      for (const rest of [',"Tu archivo dice que la respuesta no es la que esperaba en este caso."]}', `],"followUp":"${tooLong}?"}`]) {
+        const f = streaming();
+        const s = setup(f.provider);
+        await s.begin();
+        await s.answer('Because of the peak.');
+        await f.ctl.push(`${head('follow-up')}"That is a start."`);
+        await f.ctl.push(rest); // valid JSON in both cases: only the checks can cut it
+        await f.ctl.finish();
+        expect(s.view().state.reply?.say).toEqual(['That is a start.']);
+        expect(s.view().state.turns).toHaveLength(1);
+        await s.finishLine();
+        expect(s.lines.at(-1)?.text).toBe(fallback);
+      }
+    });
+    it('records latency marks: requested, first byte, first sentence shown, first sentence played', async () => {
+      const mark = vi.spyOn(performance, 'mark');
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.push(head('acknowledgment'));
+      await f.ctl.push('"Good."');
+      const names = mark.mock.calls.map(([n]) => n);
+      expect(names).toEqual(['ghost-defense:reply-requested', 'ghost-defense:first-byte', 'ghost-defense:first-sentence', 'ghost-defense:first-sentence-played']);
+      mark.mockRestore();
+    });
   });
 });

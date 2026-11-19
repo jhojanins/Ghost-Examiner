@@ -76,17 +76,23 @@ interface Body {
 }
 type Reply = { status: number; body: unknown };
 
-/** The fake proxy: answers each call from `script` and records the raw bodies. */
+/**
+ * The fake proxy: answers each call from `script` and records the raw bodies. Replies go to
+ * `/api/llm/stream` (task 23); the route sends the scripted text whole, which the app reads as a
+ * one-chunk stream. Truly chunked streams are in the streaming tests below.
+ */
 async function fakeProxy(page: Page, script: (body: Body, n: Record<string, number>) => Reply) {
   const bodies: Record<string, unknown>[] = [];
   const n: Record<string, number> = {};
-  await page.route('**/api/llm', (route: Route) => {
+  const serve = (route: Route) => {
     const raw = JSON.parse(route.request().postData() ?? '{}');
     bodies.push(raw);
     n[raw.task] = (n[raw.task] ?? 0) + 1;
     const { status, body } = script(raw as Body, n);
     return route.fulfill({ status, contentType: status === 200 ? 'text/plain' : 'application/json', body: JSON.stringify(body) });
-  });
+  };
+  await page.route('**/api/llm', serve);
+  await page.route('**/api/llm/stream', serve);
   return bodies;
 }
 /** The first sentence of an excerpt's text, without its heading: a quote that verifies. */

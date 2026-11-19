@@ -34,7 +34,7 @@ export type { VoiceInfo } from './speech/voices';
 export { pickVoice, speechLang } from './speech/voices';
 export type { Expression, GhostActivity, GhostPose, GhostState } from './ghost/pose';
 export { ghostPose } from './ghost/pose';
-export type { EvaluateInput, LLMProvider, LLMRequest, LLMResult, LLMTask } from './llm/types';
+export type { EvaluateInput, LLMProvider, LLMRequest, LLMResult, LLMTask, StopSignal } from './llm/types';
 export { withFallback } from './llm/with-fallback';
 export { FEEDBACK_TEXT_MAX, isFeedback } from './llm/is-feedback';
 export type { KitMessageKey } from './i18n/kit-messages';
