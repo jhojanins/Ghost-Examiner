@@ -165,6 +165,7 @@ A running log of how Ghost Examiner is built with Kiro: steering, specs, skills,
 - **Ghost Defense panel and the header (found in spec b task 35b, owner decision after spec a task 38)**: `.gd-panel` and the header bar use the same `--surface` fill without an edge. Give them the `--panel-edge` border in the polish pass, with the same pixel-contrast e2e check as tasks 33b and 35b.
 - **Ease on the motion toggle (owner decision after spec a task 37)**: pressing "Pause motion" snaps the ghost from its float offset (up to 4 px) to rest. Add a 150 ms ease to that move, and no ease at all under `prefers-reduced-motion`.
 
+- **Shorter ghost-defense answer screen (owner note after ghost-defense-live phase 1, only if time allows)**: the answer screen stacks the typed field, the voice section and the "Your words" box, so a question and its quote scroll away on small screens. Reuse the Speak | Type method selector of spec (c) design §2.2 to show one method at a time.
 ## Steering (`.kiro/steering/`)
 All files use `inclusion: always` and are kept short (about 1,600 words total) because they load on every turn. Deep guidance lives in skills, which load on demand.
 
