@@ -15,10 +15,11 @@ inclusion: always
 /.kiro/
 /apps/ghost-interview/  /apps/ghost-defense/
 /packages/core/  /packages/web/  /packages/ui/
-/netlify/functions/  /site/  /scripts/  /docs/
+/netlify/functions/  /netlify/edge-functions/  /site/  /scripts/  /docs/
 LICENSE  README.md
 ```
 Folder contents: `docs/ARCHITECTURE.md` section 4.
+- The LLM proxy is a Netlify Edge Function in `/netlify/edge-functions/` (billed per request, not as compute; spec ghost-defense-live design §2.2).
 
 ## Dependency direction
 - `apps → ui → web → core`. `core` depends on nothing in the repo.
