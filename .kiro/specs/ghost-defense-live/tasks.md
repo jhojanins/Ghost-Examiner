@@ -89,6 +89,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - _Design §10; Requirements: 15.4_ · Skills: `testing-strategy`, `prompt-injection-defense`
 - [ ] 19. Golden-set evaluation against the real provider **[Owner]**
   - `scripts/eval-defense.mjs`. The owner pushes `main` so a branch deploy (free) has the Edge Function; the agent runs the script against that URL.
+  - The Edge bundler check (task 13 spike) runs here. If the bundler can't load core's TypeScript (imports without extensions), a small build step that bundles the Edge Function first may be needed (owner note 2026-11-19).
   - **Done when:** the script runs the 6 golden files and the log records grounded questions, verified quotes, caught wrong claims and ignored injections, with any failure turned into a test or a prompt fix.
   - _Design §10; Requirements: 15.6_ · Skills: `prompt-injection-defense`, `testing-strategy`
 - [ ] 20. Owner check, phase 2 **[Owner]**
@@ -103,6 +104,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - _Design §4.2, §5; Requirements: 5.1, 5.3, 10.5_ · Skills: `netlify-proxy-safety`
 - [ ] 23. Sentence-by-sentence speech in the app **[Browser + axe]**
   - The runtime speaks each sentence as it arrives; latency marks.
+  - The non-streaming path stays and is the fallback: a provider without `stream`, a stream that fails before its head, or a missing streaming endpoint uses `complete` as today (owner note 2026-11-19, Req 5.6).
   - **Done when:** the walk-through with a chunked scripted route shows the quote appearing only after the head is verified, captions and mouth following each sentence, the transcript announcing each line once, and the timeout falling back after 8 s (page clock); axe passes; e2e covers the streamed reply.
   - _Design §4.3; Requirements: 5.1 to 5.5_ · Skills: `a11y-review`, `ghost-svg-animation`, `testing-strategy`
 - [ ] 24. Latency check **[Owner]**
