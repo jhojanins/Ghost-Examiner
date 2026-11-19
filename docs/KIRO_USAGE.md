@@ -206,7 +206,7 @@ We read each `SKILL.md` and its license before deciding. Nothing was imported. U
 ## MCP (`.kiro/settings/mcp.json`)
 | Server | Use | Status |
 |---|---|---|
-| Playwright MCP (`npx @playwright/mcp@latest --browser chromium`) | Open the running app, drive it by keyboard, read the accessibility tree, check captions and console errors before a task is marked done | **Connected and tested 2026-11-11.** Config written by the owner (agent writes to `.kiro/settings/` are blocked by a permission rule). Chromium was already in the Playwright cache, so no install was run. |
+| Playwright MCP (`npx @playwright/mcp@0.0.86 --browser chromium`; pinned 2026-11-19 after `latest` moved to a new Chromium build mid-phase, owner decision) | Open the running app, drive it by keyboard, read the accessibility tree, check captions and console errors before a task is marked done | **Connected and tested 2026-11-11.** Config written by the owner (agent writes to `.kiro/settings/` are blocked by a permission rule). Chromium was already in the Playwright cache, so no install was run. |
 
 ### Playwright MCP smoke test (2026-11-11)
 - `browser_navigate` to `https://example.com`, then `browser_snapshot`: page title "Example Domain", accessibility tree with six paragraphs (the same notice in English, Arabic, Chinese, French, Russian and Spanish) and one link, "Learn more" → `https://iana.org/help/example-domains`. `browser_close` closed the page.
