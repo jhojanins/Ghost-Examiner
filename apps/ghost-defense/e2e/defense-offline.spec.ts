@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { installFakeRecognition } from '../../ghost-interview/e2e/fakes/speech-recognition';
-import { installFakeSpeech } from '../../ghost-interview/e2e/fakes/speech-synthesis';
+import { installFakeRecognition } from '@ghost-examiner/web/testing/speech-recognition';
+import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
 
 /**
  * The offline ghost-defense flow (ghost-defense-live task 10, Req 15.4 for phase 1): by keyboard,

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { installFakeRecognition } from './fakes/speech-recognition';
-import { installFakeSpeech } from './fakes/speech-synthesis';
+import { installFakeRecognition } from '@ghost-examiner/web/testing/speech-recognition';
+import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
 
 // WCAG 2.2 AA (testing-strategy skill).
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];

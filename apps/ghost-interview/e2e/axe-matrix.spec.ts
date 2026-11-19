@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { installFakeRecognition } from './fakes/speech-recognition';
-import { installFakeSpeech } from './fakes/speech-synthesis';
+import { installFakeRecognition } from '@ghost-examiner/web/testing/speech-recognition';
+import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
 
 /**
  * The full axe matrix (spec a task 38, Req 12.3): every slice screen and the ghost-defense intro screen,

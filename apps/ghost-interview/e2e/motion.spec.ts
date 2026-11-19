@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { installFakeRecognition } from './fakes/speech-recognition';
-import { installFakeSpeech } from './fakes/speech-synthesis';
+import { installFakeRecognition } from '@ghost-examiner/web/testing/speech-recognition';
+import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
 
 /**
  * Floating and the motion toggle in the app (spec a task 37, Req 3.6, 3.7, 3.10). Real time: the

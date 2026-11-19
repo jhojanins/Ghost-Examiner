@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { installFakeSpeech, speechLog } from './fakes/speech-synthesis';
+import { installFakeSpeech, speechLog } from '@ghost-examiner/web/testing/speech-synthesis';
 
 /**
  * The ghost's voice in the app (spec b task 19). The fake runs in manual mode and the page clock

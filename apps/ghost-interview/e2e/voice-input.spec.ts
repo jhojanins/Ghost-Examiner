@@ -1,8 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { edgeContrast } from './edge-contrast';
-import { installFakeRecognition, recognitionLog, type FakeRecognitionVariant } from './fakes/speech-recognition';
-import { installFakeSpeech } from './fakes/speech-synthesis';
+import { installFakeRecognition, recognitionLog, type FakeRecognitionVariant } from '@ghost-examiner/web/testing/speech-recognition';
+import { installFakeSpeech } from '@ghost-examiner/web/testing/speech-synthesis';
 
 /**
  * Voice answers in the app (spec b task 33). Fake speech recognition and a manual fake voice, with
