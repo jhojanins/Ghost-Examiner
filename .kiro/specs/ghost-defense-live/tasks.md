@@ -77,7 +77,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 16. `ConsentScreen` and the real-mode privacy texts
   - **Done when:** component tests show every point of Req 3.1 in EN and ES with Gemini's free-tier data use (including human review), two equal buttons with no preselection, focus on the heading; the reworded `privacy.local` and the new real-mode point in the privacy dialog.
   - _Design §6.1; Requirements: 3.1, 3.2, 3.5, 12.4_ · Skills: `a11y-review`, `ghost-persona`, `netlify-proxy-safety`
-- [ ] 17. ghost-defense: real mode, consent and fallback **[Browser + axe]**
+- [x] 17. ghost-defense: real mode, consent and fallback **[Browser + axe]**
   - The consent gate before the first request, the proxy chain, the mode label, the fallback lines.
   - The transcript announces the waiting line to screen readers; today its negative line id is skipped (found in task 9; owner decision 2026-11-19). Test first.
   - **Done when:** the walk-through with `/api/llm` served by a scripted route shows consent before any request, a correction with a verified quote, a "not in the file" reply, a dropped invalid quote, and a fallback to demo with its persistent label, in EN and ES at 320 and 1280 px; axe passes; no console errors.

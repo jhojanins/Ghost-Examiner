@@ -129,7 +129,7 @@ describe('demo provider: defense-summary', () => {
 });
 
 describe('defense copy follows the ghost persona', () => {
-  const VERDICT = /\b(fail|failed|wrong|incorrect|grade|score|reject|suspend|reprob|incorrect[oa]|nota|calificaci)/i;
+  const VERDICT = /\b(fail|failed|wrong|incorrect|grade|score|reject|suspend|reprob|incorrect[oa]|nota\b|calificaci)/i; // "nota" is a grade; "notas" (notes) is not
   for (const locale of ['en', 'es'] as const) {
     it(`${locale}: no verdict words; demo questions ask one thing in at most 25 words`, () => {
       const entries = Object.entries(kitMessages[locale]).filter(([k]) => k.startsWith('defense.'));

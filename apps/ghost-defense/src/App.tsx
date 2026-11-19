@@ -15,6 +15,7 @@ import {
 import {
   AppShell,
   Captions,
+  ConsentScreen,
   DefenseSummary,
   FileUpload,
   Ghost,
@@ -38,6 +39,7 @@ import {
   browserLocale,
   createSession,
   createVoiceAdapter,
+  createProxyProvider,
   createWebSpeechOutput,
   parsePastedText,
   parseTextFile,
@@ -71,7 +73,9 @@ type Step =
   | { name: 'intro' } // until the privacy notice is accepted
   | { name: 'upload'; error?: KitMessageKey }
   | { name: 'preview'; doc: Doc }
+  | { name: 'consent'; doc: Doc } // before every session: AI or offline (Req 3.1, 3.2)
   | { name: 'session'; doc: Doc; run: Run };
+type Mode = 'ai' | 'demo';
 
 const GHOST_SEED = 11; // fixed blink pattern; any number works
 const EXCERPT_CHARS = 1500; // the longest excerpt (Req 1.9)
@@ -106,19 +110,20 @@ function packFor(count: number): QuestionPack {
 }
 
 /**
- * The offline session (phase 1): keyboard and voice, the demo provider (it runs on the device and
- * needs no key). The privacy notice was accepted before the upload, so the session starts at once:
- * the greeting, then the first question.
+ * A session: keyboard and voice, with the site's proxy (AI, after consent) or the demo rules
+ * (offline, on the device). With the proxy, the session falls back to the demo rules on the first
+ * failure and stays there (Req 10). The privacy notice was accepted before the upload, so the
+ * session starts at once: the greeting, then the first question.
  */
-function startRun(doc: Doc, locale: Locale, id: number, unavailable: readonly InputMethodId[]): Run {
+function startRun(doc: Doc, locale: Locale, id: number, unavailable: readonly InputMethodId[], mode: Mode): Run {
   const keyboard = createKeyboardAdapter();
-  const provider = createDemoProvider();
+  const provider = mode === 'ai' ? createProxyProvider() : createDemoProvider();
   const handle = createSession({
     pack: packFor(doc.count),
     adapters: [keyboard, voice],
     unavailable,
     preview: config.preview,
-    evaluator: createLlmEvaluator(provider), // required by SessionDeps; dynamic sessions reply through `defense`
+    evaluator: createLlmEvaluator(createDemoProvider()), // required by SessionDeps; dynamic sessions reply through `defense`
     speech,
     locale,
     defense: { provider, excerpts: splitExcerpts(doc.text, { maxChars: EXCERPT_CHARS }), fileLang: doc.fileLang },
@@ -152,18 +157,17 @@ export function App() {
   }, []);
   // A new screen moves focus to its heading (the control that opened it is gone).
   useEffect(() => {
-    if (step.name === 'upload' || step.name === 'preview') heading.current?.focus();
+    if (step.name === 'upload' || step.name === 'preview') heading.current?.focus(); // the consent screen focuses its own
   }, [step.name]);
 
   const toPreview = (parsed: ParsedText, sample?: Locale) => {
     if (!parsed.ok) return setStep({ name: 'upload', error: parsed.error });
     setStep({ name: 'preview', doc: { text: parsed.text, truncated: parsed.truncated, sample: sample !== undefined, fileLang: sample ?? locale, count: DEFAULT_COUNT } });
   };
-  const start = (doc: Doc, at: Locale) => {
+  const start = (doc: Doc, mode: Mode) => {
     if (!unavailable) return;
     speech.unlock(); // a click: the user activation browsers need before speaking
-    setLocale(at);
-    setStep({ name: 'session', doc, run: startRun(doc, at, ++runs.current, unavailable) });
+    setStep({ name: 'session', doc, run: startRun(doc, locale, ++runs.current, unavailable, mode) });
   };
 
   if (step.name === 'session') {
@@ -176,7 +180,10 @@ export function App() {
         motionPaused={motionPaused}
         onMotionChange={setMotionPaused}
         onLocale={setLocale}
-        onAgain={(at) => start(doc, at)}
+        onAgain={(at) => {
+          setLocale(at);
+          setStep({ name: 'consent', doc }); // a new session asks again (Req 3.1)
+        }}
         onNew={(at) => {
           setLocale(at);
           setStep({ name: 'upload' }); // the file and its text are dropped (Req 8.4, 12.3)
@@ -203,7 +210,7 @@ export function App() {
       <FileUpload
         ref={heading}
         locale={locale}
-        provider={kitMessages[locale]['defense.provider.demo']}
+        provider={kitMessages[locale]['defense.provider.choice']}
         error={step.error}
         onFile={(file) => void parseTextFile(file).then((parsed) => toPreview(parsed))}
         onPaste={(text) => toPreview(parsePastedText(text))}
@@ -211,6 +218,9 @@ export function App() {
         onSample={(sample) => toPreview(parsePastedText(sample.text), sample.lang)}
       />
     );
+  } else if (step.name === 'consent') {
+    const { doc } = step;
+    panel = <ConsentScreen locale={locale} provider="proxy" onAI={() => start(doc, 'ai')} onOffline={() => start(doc, 'demo')} />;
   } else {
     const { doc } = step;
     const update = (patch: Partial<Doc>) => setStep({ name: 'preview', doc: { ...doc, ...patch } });
@@ -227,7 +237,7 @@ export function App() {
         count={doc.count}
         onCount={(count) => update({ count })}
         onRemove={() => setStep({ name: 'upload' })}
-        onStart={() => start(doc, locale)}
+        onStart={() => setStep({ name: 'consent', doc })}
       />
     );
   }
@@ -323,6 +333,7 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         locale={locale}
         fileLang={fileLang}
         source={view.defense?.mode ?? 'demo'}
+        provider={k['defense.provider.gemini']}
         questions={(state.turns ?? []).map((t) => t.question)}
         summary={state.summary}
         onAgain={() => onAgain(locale)}
@@ -430,7 +441,7 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         </div>
         <Captions line={line} />
       </div>
-      <ModeLabel locale={locale} mode={view.defense?.mode ?? 'demo'} />
+      <ModeLabel locale={locale} mode={view.defense?.mode ?? 'demo'} provider={k['defense.provider.gemini']} />
       {panel}
       <Transcript lines={transcript} locale={locale} />
       <PrivacyDialog open={readOnlyPrivacy} locale={locale} mode="read-only" onAccept={() => {}} onDismiss={() => setReadOnlyPrivacy(false)} />

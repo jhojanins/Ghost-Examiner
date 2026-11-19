@@ -34,6 +34,8 @@ const T = {
     copy: 'Copy summary',
     copied: 'Summary copied.',
     again: 'Start again with this file',
+    consent: 'Before the AI reads your file',
+    offline: 'Continue offline (demo)',
     another: 'Use another file',
     demoLabel: 'Demo mode: questions and feedback come from simple rules, not AI.',
     tooShort: 'This text is too short to ask about. Use at least 300 characters.',
@@ -64,6 +66,8 @@ const T = {
     copy: 'Copiar resumen',
     copied: 'Resumen copiado.',
     again: 'Empezar de nuevo con este archivo',
+    consent: 'Antes de que la IA lea tu archivo',
+    offline: 'Seguir sin conexión (demo)',
     another: 'Usar otro archivo',
     demoLabel: 'Modo demo: las preguntas y los comentarios salen de reglas simples, no de IA.',
     tooShort: 'Este texto es muy corto para hacer preguntas. Usa al menos 300 caracteres.',
@@ -144,6 +148,12 @@ async function chooseFile(page: Page, lang: Lang, files: Parameters<import('@pla
   await page.keyboard.press('Space');
   await (await chooser).setFiles(files);
 }
+/** The consent screen (ghost-defense-live task 17): focus on its heading, then the offline choice. */
+async function chooseOffline(page: Page, lang: Lang) {
+  await expect(h2(page, T[lang].consent)).toBeFocused();
+  await tabTo(page, page.getByRole('button', { name: T[lang].offline }));
+  await page.keyboard.press('Enter');
+}
 /** Answers the question on screen: by voice (speak, stop, then Enter on Send) or typed. */
 async function answer(page: Page, lang: Lang, how: 'voice' | 'typed', text: string) {
   const t = T[lang];
@@ -190,6 +200,7 @@ for (const lang of ['en', 'es'] as const) {
     found.push(...(await matrix(page, `${lang} preview`)));
     await tabTo(page, page.getByRole('button', { name: t.start }));
     await page.keyboard.press('Enter');
+    await chooseOffline(page, lang);
 
     await expect(page.getByText(t.demoLabel)).toBeVisible();
     const asked: number[] = [];
@@ -245,6 +256,7 @@ for (const lang of ['en', 'es'] as const) {
     await expect(h2(page, t.preview)).toBeFocused();
     await tabTo(page, page.getByRole('button', { name: t.start }));
     await page.keyboard.press('Enter');
+    await chooseOffline(page, lang);
     await expect(h2(page, t.question(1))).toBeFocused();
     await tabTo(page, page.getByRole('button', { name: t.skip }));
     await page.keyboard.press('Enter');
@@ -258,6 +270,7 @@ for (const lang of ['en', 'es'] as const) {
     await expect(page.locator('.ge-feedback ol li')).toHaveCount(1); // only the answered question
     await tabTo(page, page.getByRole('button', { name: t.again }));
     await page.keyboard.press('Enter');
+    await chooseOffline(page, lang); // a new session asks again (Req 3.1)
     await expect(h2(page, t.question(1))).toBeFocused(); // a new session with the same file
     await tabTo(page, page.getByRole('button', { name: t.end }));
     await page.keyboard.press('Enter');

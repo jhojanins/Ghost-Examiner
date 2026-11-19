@@ -166,6 +166,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
   const demo = createDemoProvider();
   let demoPinned = defense?.provider.isDemo ?? true; // after the first fallback, demo for the rest (Req 10.3)
   let localLineId = 0; // runtime lines (the waiting line) count down, so they never meet an engine line id
+  let fallbackPending = false; // the fallback line goes before the next lines the ghost says (Req 10.2)
   const defenseView = () => (defense ? { mode: demoPinned ? ('demo' as const) : ('ai' as const) } : undefined);
   let view: SessionView = { state, transcript, preview, defense: defenseView() };
   const listeners = new Set<() => void>();
@@ -180,6 +181,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
       const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
       if (parsed?.ok) return parsed.value;
       demoPinned = true;
+      fallbackPending = true;
     }
     const r = await demo.complete(req);
     const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
@@ -341,6 +343,10 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (next === before && effects.length === 0 && !lineChanged) return;
     state = next;
     const lines = effects.flatMap((e) => (e.type === 'speak' ? [{ id: e.lineId, ref: e.line }] : []));
+    if (fallbackPending && lines.length > 0) {
+      fallbackPending = false;
+      lines.unshift({ id: --localLineId, ref: { text: kitMessages[state.locale]['defense.fallback'], locale: state.locale } });
+    }
     if (lines.length > 0 && event.type === 'questions-ready' && line?.playing) {
       queued = lines; // the greeting (or the waiting line) finishes first, then the first question (Req 4.2)
     } else if (lines.length > 0) {

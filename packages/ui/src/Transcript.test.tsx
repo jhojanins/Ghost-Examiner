@@ -79,6 +79,15 @@ describe('Transcript', () => {
     expect(liveRegion().children).toHaveLength(1);
   });
 
+  it('announces a runtime line with a negative id, such as the waiting line, once (ghost-defense-live task 17)', () => {
+    const waiting: TranscriptLine = { id: -1, text: 'Let me read your file.', locale: 'en', heard: false };
+    const { rerender } = render(<Transcript lines={[greeting]} locale="en" />);
+    rerender(<Transcript lines={[greeting, waiting]} locale="en" />);
+    expect(within(liveRegion()).getAllByText(waiting.text)).toHaveLength(1);
+    rerender(<Transcript lines={[greeting, waiting, question]} locale="en" />);
+    expect(within(liveRegion()).queryByText(waiting.text)).toBeNull();
+    expect(within(liveRegion()).getAllByText(question.text)).toHaveLength(1);
+  });
   it('lines that were already there when it mounted are listed but not announced', () => {
     render(<Transcript lines={[greeting, question]} locale="en" />);
     expect(screen.getAllByRole('listitem')).toHaveLength(2);

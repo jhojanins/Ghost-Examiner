@@ -265,6 +265,37 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     expect(new Set(ids).size).toBe(4);
   });
 
+  it('says the fallback line once, before the demo takes the turn, when the provider first fails (Req 10.2)', async () => {
+    const { provider } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
+    const s = setup(provider);
+    await s.begin();
+    await s.answer('Because of the peak.');
+    const fallback = kitMessages.en['defense.fallback'];
+    expect(s.lines.at(-1)?.text).toBe(fallback); // first, then the demo's reply
+    await s.finishLine();
+    expect(s.lines.at(-1)?.text).toBe(s.view().state.reply?.say[0]);
+    await s.finishLine();
+    s.handle.dispatch({ type: 'next' });
+    await flush();
+    await s.answer('Because of the peak.');
+    expect(s.lines.filter((l) => l.text === fallback)).toHaveLength(1); // once per session
+    expect(s.view().transcript.some((t) => t.text === fallback)).toBe(true);
+  });
+  it('a failed question request says the fallback line after the greeting, then the first demo question', async () => {
+    const s = setup(scripted({}).provider);
+    await s.begin();
+    await s.finishLine(); // the greeting
+    expect(s.lines.at(-1)?.text).toBe(kitMessages.en['defense.fallback']);
+    await s.finishLine();
+    expect(s.lines.at(-1)?.text).toBe(s.view().state.pack.questions[0].prompt.en);
+  });
+  it('the demo provider from the start says no fallback line', async () => {
+    const s = setup(createDemoProvider());
+    await s.begin();
+    await s.finishLine();
+    await s.answer('It seemed like a good idea.');
+    expect(s.lines.some((l) => l.text === kitMessages.en['defense.fallback'])).toBe(false);
+  });
   it('reports the mode: AI until the first fallback, then demo for the rest of the session', async () => {
     const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
     const s = setup(provider);

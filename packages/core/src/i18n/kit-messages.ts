@@ -148,6 +148,8 @@ export const kitMessages = defineCatalog(
     'defense.waiting': 'Let me read your file. Ghosts read slowly, but carefully.',
     'defense.noQuestions': "I couldn't find enough in this text to ask about. Try a longer file.",
     'defense.cantPoint': "I can't point to that part of your file, so I won't correct you on it.",
+    // Said once, when the first request fails and the demo rules take over (Req 10.2; ghost-persona phrase bank).
+    'defense.fallback': "My crystal ball is busy. I'll continue with my own notes.",
     'defense.confirm.heading': 'Your answer',
     'defense.confirm.send': 'Send',
     'defense.skip': 'Next question',
@@ -167,6 +169,8 @@ export const kitMessages = defineCatalog(
     'defense.summary.new': 'Use another file',
     // Consent before real mode (design §6.1, Req 3.1). Plain and exact; no jokes.
     'defense.provider.gemini': "Google Gemini, through this site's server",
+    // The upload screen names both possible providers: the choice comes after the preview (Req 1.1, 3.2).
+    'defense.provider.choice': "Google Gemini, through this site's server, if you choose AI after the preview; otherwise simple rules on your device (offline demo)",
     'defense.consent.heading': 'Before the AI reads your file',
     'defense.consent.provider': 'Who answers: {provider}.',
     'defense.consent.sent':
@@ -313,6 +317,7 @@ export const kitMessages = defineCatalog(
     'defense.waiting': 'Déjame leer tu archivo. Los fantasmas leemos despacio, pero con cuidado.',
     'defense.noQuestions': 'No encontré lo suficiente en este texto para preguntar. Prueba con un archivo más largo.',
     'defense.cantPoint': 'No puedo señalar esa parte de tu archivo, así que no te corregiré en eso.',
+    'defense.fallback': 'Mi bola de cristal está ocupada. Seguiré con mis propias notas.',
     'defense.confirm.heading': 'Tu respuesta',
     'defense.confirm.send': 'Enviar',
     'defense.skip': 'Siguiente pregunta',
@@ -331,6 +336,7 @@ export const kitMessages = defineCatalog(
     'defense.summary.again': 'Empezar de nuevo con este archivo',
     'defense.summary.new': 'Usar otro archivo',
     'defense.provider.gemini': 'Google Gemini, a través del servidor de este sitio',
+    'defense.provider.choice': 'Google Gemini, a través del servidor de este sitio, si eliges IA después de la vista previa; si no, reglas simples en tu dispositivo (demo sin conexión)',
     'defense.consent.heading': 'Antes de que la IA lea tu archivo',
     'defense.consent.provider': 'Quién responde: {provider}.',
     'defense.consent.sent':

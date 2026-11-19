@@ -29,9 +29,11 @@ export interface TranscriptProps {
  */
 export function Transcript({ lines, locale }: TranscriptProps) {
   const headingId = useId();
-  const [firstNewId] = useState(() => Math.max(0, ...lines.map((l) => l.id)) + 1);
+  // The lines present at mount, by id: runtime lines (the waiting line) have negative ids, so
+  // "newer than the highest id" would miss them.
+  const [atMount] = useState(() => new Set(lines.map((l) => l.id)));
   const newest = lines.at(-1);
-  const announce = newest && newest.id >= firstNewId && !newest.heard ? newest : undefined;
+  const announce = newest && !atMount.has(newest.id) && !newest.heard ? newest : undefined;
 
   return (
     <section className="ge-transcript" aria-labelledby={headingId}>
