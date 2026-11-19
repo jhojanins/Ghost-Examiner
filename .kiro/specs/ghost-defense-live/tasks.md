@@ -121,20 +121,13 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** the README describes Ghost Defense live honestly (what is AI, what is demo, what was cut, the privacy and consent points), `docs/ARCHITECTURE.md` D7 and D10 match the Edge Function and the parsing that shipped, the `netlify-proxy-safety` skill describes the Edge Function, and every command in the README still runs.
   - _Requirements: 3.5, 12, 14_ · Skills: `kiroween-checklist`, `netlify-proxy-safety`
 ## Credit estimate
-**What it is based on:** the agent can't read the Kiro usage page, and the owner's credit count after spec (a) task 27 (`docs/KIRO_USAGE.md`, "Credit check") is still empty. So the estimate is relative to that number, **C**, using the same weights as spec (b)'s estimate.
-| Type | Units |
-|---|---|
-| Logic or component task (tests and mutation checks) | 1 |
-| End-to-end test task | 2 |
-| Browser walk-through + axe | 3 |
-| Owner task (the agent writes the steps and the log) | 1 |
-Baseline: spec (a) tasks 1 to 27 = 37 units ≈ C.
-| Phase | Tasks | Units | Share of C |
-|---|---|---|---|
-| 1: offline conversation | 1–10 (8 at 1, 1 browser, 1 e2e) | 13 | ≈ 0.35 × C |
-| 2: real AI | 11–20 (8 at 1 incl. 3 owner, 1 browser, 1 e2e) | 13 | ≈ 0.35 × C |
-| 3: real-time feel | 21–24 (3 at 1 incl. 1 owner, 1 browser) | 6 | ≈ 0.16 × C |
-| Cuttable | 25 (2: spike plus feature), 26 (browser, 3), 27 (1) | 6 | ≈ 0.16 × C |
-| Release | 28 | 1 | ≈ 0.03 × C |
-| **Total** | 28 | 39 | **≈ 1.05 × C** |
-Cutting all three cuttable tasks saves about 0.16 × C; cutting phase 3 as well saves another 0.16 × C. Re-check after phase 1: if it cost much more than 0.35 × C, scale the rest by the same factor. Netlify credits: the import (15) plus production deploys at 15 each; the Edge Function costs about 2 credits per 10,000 requests (design §2.2).
+Owner figure (2026-11-18): about **22 Kiro credits per task**. For 28 tasks that is about **620 credits**; with task 7b added, 29 tasks, about **640**.
+| Part | Tasks | Credits (≈ 22 each) |
+|---|---|---|
+| Phase 1: offline conversation | 1–10 and 7b (11 tasks) | ≈ 240 |
+| Phase 2: real AI | 11–20 (10 tasks) | ≈ 220 |
+| Phase 3: real-time feel | 21–24 (4 tasks) | ≈ 90 |
+| Cuttable | 25–27 (3 tasks) | ≈ 65 |
+| Release | 28 | ≈ 20 |
+| **Total** | 29 | **≈ 640** |
+The agent can't read the Kiro usage page, so the owner checks the real figure after phase 1 and the rest is scaled from it. Netlify credits are separate: the import (15) plus 15 per production deploy; the Edge Function costs about 2 credits per 10,000 requests (design §2.2).
