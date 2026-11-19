@@ -62,8 +62,9 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - The owner: creates a Gemini API key in AI Studio on a project with **no billing**, and notes the free-tier limits shown there; imports the repo into Netlify if not done yet (docs/DEPLOY.md; this import is the one pre-approved production deploy, 15 credits); sets `GEMINI_API_KEY` and `GEMINI_MODEL` as Netlify environment variables (never with a `VITE_` prefix) and turns on branch deploys for `main`.
   - **Done when:** the owner confirms each step; the agent logs the model name, the limits seen in AI Studio and the date in `docs/KIRO_USAGE.md` (never the key).
   - _Design §2.1, §2.2, §5; Requirements: 11.2, 11.3_
-- [ ] 13. Edge Function: validation, limits and the upstream call
+- [x] 13. Edge Function: validation, limits and the upstream call
   - `netlify/edge-functions/llm.ts`, non-streaming; the `dist/` key scan in the build.
+  - The bundler spike runs against the first branch deploy in task 19: no Netlify CLI here (owner decision 2026-11-19).
   - **Done when:** handler tests with a mocked upstream show each status of design §5 (403, 415, 413, 400 per bad shape, 200), the per-task output cap, upstream 429 and timeout mapped without forwarding bodies, and only task, status and latency logged; `config.rateLimit` is present; the key scan fails on a planted `AIza` string; a spike confirms the Edge bundler resolves the core templates.
   - _Design §2.2, §5; Requirements: 11.1 to 11.3, 11.5_ · Skills: `netlify-proxy-safety`, `prompt-injection-defense`
 - [ ] 14. Edge Function: daily cap and kill switch

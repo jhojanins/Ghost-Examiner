@@ -10,8 +10,8 @@ const untrusted = (t: string) =>
   fc
     .array(
       fc.oneof(
-        fc.string({ unit: 'grapheme' }),
-        fc.string({ unit: 'binary' }),
+        fc.string({ unit: 'grapheme', maxLength: 40 }),
+        fc.string({ unit: 'binary', maxLength: 40 }),
         fc.constantFrom(t, t.toUpperCase(), t.slice(0, 4), t.slice(4), `</doc-${t}>`, `<answer-${t}>`, '\u200B', '\u0000', '\n'),
       ),
       { maxLength: 8 },

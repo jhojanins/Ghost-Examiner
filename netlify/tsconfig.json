@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // Edge Functions run on Deno with web APIs (fetch, Request, crypto); Deno needs the .ts extensions.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "allowImportingTsExtensions": true
+  },
+  "include": ["**/*.ts"]
+}

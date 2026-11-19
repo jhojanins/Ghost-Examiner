@@ -11,6 +11,8 @@ export default defineConfig({
       // Content checks only; the app's screens are covered by the browser walk-through and e2e.
       { test: { name: 'ghost-interview', root: 'apps/ghost-interview', environment: 'node', exclude: ['e2e/**', 'node_modules/**'] } },
       { test: { name: 'ghost-defense', root: 'apps/ghost-defense', environment: 'node', exclude: ['e2e/**', 'node_modules/**'] } },
+      // The Edge Function as a pure handler, and the build scripts (ghost-defense-live tasks 13, 14).
+      { test: { name: 'server', root: '.', environment: 'node', include: ['netlify/**/*.test.ts', 'scripts/**/*.test.mjs'] } },
     ],
   },
 });
