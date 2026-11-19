@@ -166,19 +166,25 @@ describe('PrivacyDialog', () => {
   it('says honestly what happens with the data, in EN and ES', () => {
     const { rerender } = setup();
     const en = document.querySelector('dialog')!.textContent!;
-    expect(en).toContain('Demo mode runs in your browser.');
-    expect(en).toContain('This app sends your answers to no server');
+    // True in both modes (ghost-defense-live Req 3.5): demo sends nothing; AI mode names what goes where.
+    expect(en).toContain('Demo mode runs in your browser and sends your answers to no server.');
+    expect(en).toContain('This app stores nothing');
     expect(en).toContain('personal or sensitive');
-    expect(en).toContain('free AI service');
-    expect(en).toContain('may use the text you send');
+    expect(en).toContain('sent to Google Gemini through this site\'s server');
+    expect(en).toContain('human reviewers may read it');
+    expect(en).toContain('Google may keep it under its own terms'); // Req 12.4
+    expect(en).toContain('asks you first');
 
     rerender({ locale: 'es' });
     const es = document.querySelector('dialog')!;
     expect(es.getAttribute('lang')).toBe('es');
     expect(screen.getByRole('dialog', { name: 'Aviso de privacidad' })).toBe(es);
-    expect(es.textContent).toContain('El modo demo funciona en tu navegador.');
+    expect(es.textContent).toContain('El modo demo funciona en tu navegador y no envía tus respuestas a ningún servidor.');
+    expect(es.textContent).toContain('Esta app no guarda nada');
     expect(es.textContent).toContain('datos personales ni sensibles');
-    expect(es.textContent).toContain('pueden usar el texto que les envíes');
+    expect(es.textContent).toContain('se envían a Google Gemini a través del servidor de este sitio');
+    expect(es.textContent).toContain('personas que lo revisan pueden leerlo');
+    expect(es.textContent).toContain('Google puede guardarlo según sus propias condiciones');
     expect(within(es).getAllByRole('button').map((b) => b.textContent)).toEqual(['Entendido, empezar', 'Ahora no']);
   });
 });

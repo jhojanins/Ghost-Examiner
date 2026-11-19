@@ -2,6 +2,8 @@ export type { AppShellProps } from './AppShell';
 export { AppShell } from './AppShell';
 export type { CaptionLine } from './Captions';
 export { Captions } from './Captions';
+export type { ConsentScreenProps } from './ConsentScreen';
+export { ConsentScreen } from './ConsentScreen';
 export type { ConfirmAnswerProps } from './ConfirmAnswer';
 export { ConfirmAnswer } from './ConfirmAnswer';
 export type { FeedbackPanelProps } from './FeedbackPanel';

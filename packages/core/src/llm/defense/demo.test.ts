@@ -134,8 +134,9 @@ describe('defense copy follows the ghost persona', () => {
     it(`${locale}: no verdict words; demo questions ask one thing in at most 25 words`, () => {
       const entries = Object.entries(kitMessages[locale]).filter(([k]) => k.startsWith('defense.'));
       expect(entries.length).toBeGreaterThan(20);
-      // The summary label names "grade" only to say this isn't one (Req 8.2).
-      for (const [key, text] of entries.filter(([k]) => k !== 'defense.summary.label')) expect(text, key).not.toMatch(VERDICT);
+      // These two name "grade" only to say this isn't one (Req 8.2, 3.1).
+      const notAGrade = ['defense.summary.label', 'defense.consent.practice'];
+      for (const [key, text] of entries.filter(([k]) => !notAGrade.includes(k))) expect(text, key).not.toMatch(VERDICT);
       for (const [key, text] of entries.filter(([k]) => k.startsWith('defense.demo.q.'))) {
         expect(text.match(/\?/g), key).toHaveLength(1);
         expect(text.split(/\s+/).length, key).toBeLessThanOrEqual(25);

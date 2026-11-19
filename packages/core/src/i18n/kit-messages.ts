@@ -47,7 +47,7 @@ export const kitMessages = defineCatalog(
     'privacy.intro': 'Before we start, here is what happens with what you type or say.',
     // Spec b Req 9.3: true for spoken answers too, because this app itself sends nothing anywhere.
     'privacy.local':
-      'Demo mode runs in your browser. This app sends your answers to no server, and they are gone when you close the page. If you answer by voice, read the next point.',
+      'Demo mode runs in your browser and sends your answers to no server. Ghost Defense also has an AI mode, which you choose before anything is sent; it is described below. This app stores nothing: your file, answers and feedback are gone when you close the page. If you answer by voice, read the next point.',
     // Spec b Req 9.1, 9.4 and the owner's wording (task 31): never claims recognition stays on the device.
     'privacy.voice':
       'Answering by voice is optional; typing always works. The microphone is asked for only when you press the voice button. To turn your speech into text, your browser may send your voice to the company that makes it, for example Google for Chrome or Apple for Safari. This app only receives the text. It never records or stores audio.',
@@ -57,7 +57,7 @@ export const kitMessages = defineCatalog(
     'privacy.noPersonalData':
       'Please do not enter personal or sensitive data, such as your full name, address, health or money details. Made-up examples work just as well.',
     'privacy.freeTier':
-      'A later version may offer a free AI service instead of demo mode. Free AI services may use the text you send to improve their products, and people at those companies may read it. The app will name the service and ask you before sending anything.',
+      "AI mode (Ghost Defense only): parts of your file's text and the answers you confirm are sent to Google Gemini through this site's server, which logs none of it. Gemini's free tier may use what it receives to improve Google's products, and human reviewers may read it; Google may keep it under its own terms. The app names the service and asks you first, and you can always continue offline.",
     'privacy.accept': 'I understand, start',
     'privacy.notNow': 'Not now',
     'privacy.close': 'Close',
@@ -165,6 +165,19 @@ export const kitMessages = defineCatalog(
     'defense.summary.copied': 'Summary copied.',
     'defense.summary.again': 'Start again with this file',
     'defense.summary.new': 'Use another file',
+    // Consent before real mode (design §6.1, Req 3.1). Plain and exact; no jokes.
+    'defense.provider.gemini': "Google Gemini, through this site's server",
+    'defense.consent.heading': 'Before the AI reads your file',
+    'defense.consent.provider': 'Who answers: {provider}.',
+    'defense.consent.sent':
+      "What is sent: parts of the text of your file, at most 6,000 characters per request (never the file itself), the examiner's questions, and the answers you confirm.",
+    'defense.consent.notSent': 'What is not sent: the file, the rest of its text, audio, camera images, and anything you typed but did not confirm.',
+    'defense.consent.storage': "This app stores nothing, and this site's server does not log what is sent.",
+    'defense.consent.dataUse.gemini':
+      "Google's free tier may use what it receives to improve its products, and human reviewers may read it. Do not include sensitive, confidential or personal information.",
+    'defense.consent.practice': 'Replies are practice feedback, not a grade.',
+    'defense.consent.ai': 'Continue with AI',
+    'defense.consent.offline': 'Continue offline (demo)',
     // The demo provider's lines (design §3.6). Questions never embed the quote: it is shown beside them.
     'defense.demo.q.why': 'Why did you make this choice?',
     'defense.demo.q.alternative': 'What other option did you consider, and why did you set it aside?',
@@ -209,7 +222,7 @@ export const kitMessages = defineCatalog(
     'privacy.title': 'Aviso de privacidad',
     'privacy.intro': 'Antes de empezar, esto es lo que pasa con lo que escribes o dices.',
     'privacy.local':
-      'El modo demo funciona en tu navegador. Esta app no envía tus respuestas a ningún servidor y desaparecen al cerrar la página. Si respondes por voz, lee el punto siguiente.',
+      'El modo demo funciona en tu navegador y no envía tus respuestas a ningún servidor. La Defensa fantasma también tiene un modo con IA, que eliges antes de que se envíe nada; se explica más abajo. Esta app no guarda nada: tu archivo, tus respuestas y los comentarios desaparecen al cerrar la página. Si respondes por voz, lee el punto siguiente.',
     'privacy.voice':
       'Responder por voz es opcional; escribir siempre funciona. El micrófono se pide solo cuando presionas el botón de voz. Para convertir tu voz en texto, tu navegador puede enviar tu voz a la empresa que lo creó, por ejemplo Google en Chrome o Apple en Safari. Esta app solo recibe el texto y nunca graba ni guarda audio.',
     'privacy.ghostVoice':
@@ -217,7 +230,7 @@ export const kitMessages = defineCatalog(
     'privacy.noPersonalData':
       'Por favor, no escribas datos personales ni sensibles, como tu nombre completo, tu dirección o datos de salud o de dinero. Los ejemplos inventados funcionan igual de bien.',
     'privacy.freeTier':
-      'Una versión futura podría ofrecer un servicio de IA gratuito en lugar del modo demo. Los servicios de IA gratuitos pueden usar el texto que les envíes para mejorar sus productos, y personas de esas empresas pueden leerlo. La app te dirá qué servicio es y te preguntará antes de enviar nada.',
+      'Modo con IA (solo en la Defensa fantasma): partes del texto de tu archivo y las respuestas que confirmas se envían a Google Gemini a través del servidor de este sitio, que no registra nada de eso. El nivel gratuito de Gemini puede usar lo que recibe para mejorar los productos de Google, y personas que lo revisan pueden leerlo; Google puede guardarlo según sus propias condiciones. La app te dice qué servicio es y te pregunta antes, y siempre puedes seguir sin conexión.',
     'privacy.accept': 'Entendido, empezar',
     'privacy.notNow': 'Ahora no',
     'privacy.close': 'Cerrar',
@@ -317,6 +330,18 @@ export const kitMessages = defineCatalog(
     'defense.summary.copied': 'Resumen copiado.',
     'defense.summary.again': 'Empezar de nuevo con este archivo',
     'defense.summary.new': 'Usar otro archivo',
+    'defense.provider.gemini': 'Google Gemini, a través del servidor de este sitio',
+    'defense.consent.heading': 'Antes de que la IA lea tu archivo',
+    'defense.consent.provider': 'Quién responde: {provider}.',
+    'defense.consent.sent':
+      'Qué se envía: partes del texto de tu archivo, como máximo 6.000 caracteres por solicitud (nunca el archivo en sí), las preguntas del examinador y las respuestas que confirmas.',
+    'defense.consent.notSent': 'Qué no se envía: el archivo, el resto de su texto, audio, imágenes de cámara y nada de lo que escribiste sin confirmar.',
+    'defense.consent.storage': 'Esta app no guarda nada, y el servidor de este sitio no registra lo que se envía.',
+    'defense.consent.dataUse.gemini':
+      'El nivel gratuito de Google puede usar lo que recibe para mejorar sus productos, y personas que lo revisan pueden leerlo. No incluyas información sensible, confidencial ni personal.',
+    'defense.consent.practice': 'Las respuestas son comentarios de práctica, no una calificación.',
+    'defense.consent.ai': 'Seguir con IA',
+    'defense.consent.offline': 'Seguir sin conexión (demo)',
     'defense.demo.q.why': '¿Por qué tomaste esta decisión?',
     'defense.demo.q.alternative': '¿Qué otra opción consideraste y por qué la dejaste de lado?',
     'defense.demo.q.conclusion': '¿Cómo se sigue esta conclusión de lo que hiciste?',

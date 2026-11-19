@@ -74,7 +74,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
 - [x] 15. `ProxyProvider` and the provider chain
   - **Done when:** tests with a mocked `fetch` show success, 429, 503 `disabled`, 413, timeout and malformed JSON, each mapped as in design §4.2; `withFallback(proxy, demo)` keeps the turn; demo stays pinned after the first fallback.
   - _Design §4.2; Requirements: 9.1, 10.1 to 10.5_ · Skills: `netlify-proxy-safety`
-- [ ] 16. `ConsentScreen` and the real-mode privacy texts
+- [x] 16. `ConsentScreen` and the real-mode privacy texts
   - **Done when:** component tests show every point of Req 3.1 in EN and ES with Gemini's free-tier data use (including human review), two equal buttons with no preselection, focus on the heading; the reworded `privacy.local` and the new real-mode point in the privacy dialog.
   - _Design §6.1; Requirements: 3.1, 3.2, 3.5, 12.4_ · Skills: `a11y-review`, `ghost-persona`, `netlify-proxy-safety`
 - [ ] 17. ghost-defense: real mode, consent and fallback **[Browser + axe]**
