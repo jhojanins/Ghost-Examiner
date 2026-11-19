@@ -54,7 +54,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** `pnpm e2e` passes and covers, by keyboard: upload, preview, a full 4-question offline session to the summary with Copy summary, skip and end early, a file that is too short or too large; the demo provider passes the golden expectations; axe on the new screens in EN and ES × reduced motion; the network guard stays.
   - _Design §10; Requirements: 15.4 to 15.6_ · Skills: `testing-strategy`, `prompt-injection-defense`
 ## Phase 2: real AI through the proxy
-- [ ] 11. Prompt templates and untrusted-text preparation, with P27
+- [x] 11. Prompt templates and untrusted-text preparation, with P27
   - **Done when:** P27 passes; examples show a document containing the tag, an EN and an ES injection attempt (flag count only), control and zero-width characters removed, and instructions before and a reminder after the blocks; mutations are caught (a fixed tag, the tag not stripped).
   - _Design §3.3, §9; Requirements: 13.1, 13.2_ · Skills: `prompt-injection-defense`, `ghost-persona`
 - [ ] 12. Accounts, key and dependencies **[Owner]**
