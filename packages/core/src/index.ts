@@ -22,6 +22,7 @@ export type {
   QuestionPack,
   SessionEvent,
   SessionState,
+  Turn,
 } from './engine/types';
 export { initialState, reduce } from './engine/reduce';
 export type { PackIssue } from './engine/validate-pack';

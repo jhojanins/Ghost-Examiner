@@ -16,9 +16,11 @@ export function validatePack(
   adapters: readonly InputAdapter[],
   opts: { preview: boolean },
 ): PackIssue[] {
-  if (pack.questions.length === 0) return [{ kind: 'no-questions', severity: 'error' }];
+  // A dynamic pack's questions arrive at runtime and are always free text (ghost-defense-live §3.5).
+  const questions = pack.dynamic ? [{ id: 'dynamic', kind: 'free-text' as const }] : pack.questions;
+  if (questions.length === 0) return [{ kind: 'no-questions', severity: 'error' }];
   const severity = opts.preview ? 'warning' : 'error';
-  return pack.questions.flatMap((q) => {
+  return questions.flatMap((q) => {
     const supportedBy = [...new Set(adapters.filter((a) => a.supports.includes(q.kind)).map((a) => a.id))];
     return supportedBy.length < 2 ? [{ kind: 'too-few-inputs' as const, questionId: q.id, severity, supportedBy }] : [];
   });

@@ -110,6 +110,12 @@ function isValid(state: SessionState, event: SessionEvent): boolean {
       return state.phase === 'feedback';
     case 'locale-changed':
       return true;
+    case 'questions-ready':
+    case 'reply-ready':
+    case 'summary-ready':
+    case 'skip':
+    case 'end':
+      return false; // dynamic sessions only (ghost-defense-live); these packs aren't dynamic
   }
 }
 

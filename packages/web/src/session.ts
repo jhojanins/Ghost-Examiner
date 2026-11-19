@@ -193,7 +193,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
     state = next;
     for (const effect of effects) {
       if (effect.type === 'speak') play(effect.lineId, effect.line);
-      else {
+      else if (effect.type === 'evaluate') {
+        // Dynamic-session effects (prepare-questions, summarize) arrive with ghost-defense-live task 6.
         void deps.evaluator
           .evaluate(effect.question, effect.answer, effect.locale)
           .then((feedback) => dispatch({ type: 'feedback-ready', feedback }));

@@ -62,3 +62,13 @@ describe('validatePack', () => {
     ]);
   });
 });
+
+describe('validatePack: dynamic packs (ghost-defense-live)', () => {
+  const dynamic = { ...pack([]), dynamic: { count: 4 } };
+  it('checks the runtime questions as free text: keyboard and voice pass, keyboard alone does not', () => {
+    expect(validatePack(dynamic, [fakeAdapter('keyboard', all), fakeAdapter('voice', ['free-text'])], { preview: false })).toEqual([]);
+    expect(validatePack(dynamic, [fakeAdapter('keyboard', all)], { preview: false })).toEqual([
+      { kind: 'too-few-inputs', questionId: 'dynamic', severity: 'error', supportedBy: ['keyboard'] },
+    ]);
+  });
+});

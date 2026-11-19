@@ -21,7 +21,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - `LLMTask` grows to the three defense tasks; `isDefenseQuestions`, `isDefenseReply`, `isDefenseSummary`; `inLanguage`.
   - **Done when:** P28 passes; examples show every reply kind, a follow-up when not allowed (rejected), markup and links (rejected), an unknown excerpt id (rejected), and the drop rules of design §3.2 (unverified question dropped, unverified correction turned into the local line); `inLanguage` passes short sentences and rejects a clear EN reply in an ES session.
   - _Design §3.2, §9; Requirements: 6.3, 6.4, 9.1 to 9.3, 14.1_ · Skills: `prompt-injection-defense`, `testing-strategy`
-- [ ] 3. Engine: dynamic questions, replies with one follow-up, skip, end and summary, with P29
+- [x] 3. Engine: dynamic questions, replies with one follow-up, skip, end and summary, with P29
   - **Done when:** P29 passes; every existing engine test and property passes unchanged (pack sessions behave as today); examples cover `preparing`, an empty question list, a follow-up asked once, skip, end early, and `summarize`; mutations are caught (two follow-ups allowed, `confirm` skipped).
   - _Design §3.5, §9; Requirements: 4.1, 4.5, 4.6, 4.8, 7.1, 8.1_ · Skills: `testing-strategy`
 - [ ] 4. Demo provider for the defense tasks, and the kit copy
