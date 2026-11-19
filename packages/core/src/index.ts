@@ -64,3 +64,6 @@ export { buildDefensePrompt, makeTag, prepareUntrusted, removeInvisible } from '
 export type { ParsedRequest, RequestProblem } from './llm/defense/request';
 export { MAX_OUTPUT_TOKENS, parseDefenseRequest } from './llm/defense/request';
 export { defenseSchema } from './llm/defense/schemas';
+export type { ReaderEvent, ReplyHead, ReplyReader } from './llm/stream/reply-reader';
+export { createReplyReader } from './llm/stream/reply-reader';
+export { checkSentence, splitSentences } from './llm/stream/sentences';

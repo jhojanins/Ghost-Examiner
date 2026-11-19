@@ -96,7 +96,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** the owner confirms, in Chrome and Safari on the branch deploy: a 4-question session with a real file in EN and in ES, by voice and by typing; corrections quote the file; the consent text reads correctly; turning on the kill switch moves new turns to demo within a minute. The result is logged.
   - _Requirements: 3, 6, 11.4, 15.7_
 ## Phase 3: real-time feel (cut last)
-- [ ] 21. Reply reader and sentence splitter, with P25 and P26
+- [x] 21. Reply reader and sentence splitter, with P25 and P26
   - **Done when:** P25 and P26 pass; examples cover abbreviations in EN and ES, a sentence over 300 characters (ends the stream as `bad-output`), and a head that arrives across chunks; mutations are caught (a sentence emitted before the head).
   - _Design §3.4, §9; Requirements: 5.1, 5.4, 9.6_ · Skills: `testing-strategy`
 - [ ] 22. Streaming in the Edge Function and `ProxyProvider`
