@@ -15,5 +15,7 @@ export type { SoundView, SynthLike, UtteranceCtor, UtteranceLike, VoiceOutput, W
 export { createWebSpeechOutput } from './web-speech-output';
 export type { LineView, SessionDeps, SessionHandle, SessionView, TranscriptEntry } from './session';
 export { createSession, unavailableInputs } from './session';
+export type { ProxyProviderDeps } from './proxy-provider';
+export { createProxyProvider } from './proxy-provider';
 export type { ParsedText } from './parse-text';
 export { MAX_BYTES, MAX_CHARS, MIN_CHARS, parsePastedText, parseTextFile } from './parse-text';

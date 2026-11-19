@@ -71,7 +71,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - The Blobs usage check in the dashboard runs after the first branch deploy, in task 19 (owner decision 2026-11-19).
   - **Done when:** tests with a fake Blobs store show the kill switch returning 503 `disabled`, the cap read from the `cap` key (300 when missing or invalid), the daily counter incrementing with a conditional write, one retry on an ETag conflict, the cap returning 429, and no user content in any stored value; after the first branch deploy, the Blobs usage is checked in the dashboard and logged.
   - _Design §2.3, §5; Requirements: 11.3, 11.4, 12.2_ · Skills: `netlify-proxy-safety`
-- [ ] 15. `ProxyProvider` and the provider chain
+- [x] 15. `ProxyProvider` and the provider chain
   - **Done when:** tests with a mocked `fetch` show success, 429, 503 `disabled`, 413, timeout and malformed JSON, each mapped as in design §4.2; `withFallback(proxy, demo)` keeps the turn; demo stays pinned after the first fallback.
   - _Design §4.2; Requirements: 9.1, 10.1 to 10.5_ · Skills: `netlify-proxy-safety`
 - [ ] 16. `ConsentScreen` and the real-mode privacy texts
