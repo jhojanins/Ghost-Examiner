@@ -65,6 +65,7 @@ Everything runs in demo mode, with no API key and no account:
 - The feedback comes from a **keyword-based demo evaluator** that runs in your browser. It checks whether your answer mentions the question's key points. It does not read or understand your answer like a person or an AI model would, and the app says so next to the feedback.
 - The question and the sample answers are fictional.
 - Real AI providers come later. They will be optional, named before use, and fall back to demo mode.
+- **GitHub Pages mirror:** the backup copy on GitHub Pages has no proxy (`/api/llm` exists only on Netlify). There, Ghost Defense's "Continue with AI" falls back to demo mode at the first request, and the screen says so with its demo label.
 
 ## Accessibility and privacy
 
