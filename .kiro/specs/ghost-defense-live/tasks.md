@@ -28,7 +28,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - The heuristics of design §3.6 and the catalog keys of §3.7 (EN and ES), without the consent and real-mode texts (task 16).
   - **Done when:** the demo output passes the guards on fixture texts; outputs are deterministic; typecheck shows `es` matching `en`; the ghost-persona rules hold (no verdict words, one question at a time, at most about 25 words per question).
   - _Design §3.6, §3.7; Requirements: 4.2, 4.3, 4.7, 9.7, 10.4_ · Skills: `ghost-persona`
-- [ ] 5. Parsing `.txt`, `.md` and pasted text
+- [x] 5. Parsing `.txt`, `.md` and pasted text
   - **Done when:** tests on fixtures show: accepted types; 2 MB, 300-character and 60,000-character limits with their messages and the truncation flag; invalid UTF-8 gives a message; nothing is sent anywhere (no `fetch` in the module).
   - _Design §4.1; Requirements: 1.2, 1.6 to 1.8_ · Skills: `testing-strategy`
 - [ ] 6. Session runtime: the defense effects, line by line
