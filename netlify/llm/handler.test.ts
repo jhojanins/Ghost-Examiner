@@ -235,8 +235,15 @@ describe('Edge Function /api/llm: the upstream call (design §5, Req 11.2, 11.5)
     const { deps } = setup({}, async () => res);
     expect(await (await handleLlm(post(BODIES['defense-questions']), deps)).text()).toBe('{"a":1}');
   });
-  it('503 when the key or the model is missing or the model name is not a plain id; nothing is called', async () => {
-    for (const env of [{}, { GEMINI_API_KEY: KEY }, { GEMINI_API_KEY: KEY, GEMINI_MODEL: '../evil?x=' }] as Record<string, string>[]) {
+  it('uses gemini-3.5-flash-lite when GEMINI_MODEL is not set or empty', async () => {
+    for (const env of [{ GEMINI_API_KEY: KEY }, { GEMINI_API_KEY: KEY, GEMINI_MODEL: '' }] as Record<string, string>[]) {
+      const { deps, calls } = setup({ env: (n) => env[n] });
+      expect((await handleLlm(post(BODIES['defense-questions']), deps)).status).toBe(200);
+      expect(calls[0].url).toContain('/models/gemini-3.5-flash-lite:generateContent');
+    }
+  });
+  it('503 when the key is missing or the model name is not a plain id; nothing is called', async () => {
+    for (const env of [{}, { GEMINI_MODEL: 'gemini-3.5-flash-lite' }, { GEMINI_API_KEY: KEY, GEMINI_MODEL: '../evil?x=' }] as Record<string, string>[]) {
       const { deps, calls } = setup({ env: (n) => env[n] });
       const r = await handleLlm(post(BODIES['defense-questions']), deps);
       expect(r.status).toBe(503);

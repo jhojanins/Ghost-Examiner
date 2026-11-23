@@ -39,6 +39,7 @@ const UPSTREAM_MAX_BYTES = 256 * 1024;
 const TEXT_MAX_CHARS = 16_000;
 const TIMEOUT_MS = 18_000;
 const MODEL_ID = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite'; // when GEMINI_MODEL is not set (docs/DEPLOY.md)
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_CAP = 300; // owner decision 3
 const WHOLE = /^\d+$/;
@@ -114,8 +115,8 @@ const TEXT_HEADERS = { 'content-type': 'text/plain; charset=utf-8', 'cache-contr
 
 async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
-  const model = deps.env('GEMINI_MODEL');
-  if (!key || !model || !MODEL_ID.test(model)) return fail(503, 'unavailable');
+  const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
+  if (!key || !MODEL_ID.test(model)) return fail(503, 'unavailable');
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), deps.timeoutMs ?? TIMEOUT_MS);
   const signal = AbortSignal.any([timeout.signal, clientSignal]); // a client that goes away stops the call
@@ -183,8 +184,8 @@ async function* deltas(body: ReadableStream<Uint8Array>): AsyncGenerator<string>
  */
 async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
-  const model = deps.env('GEMINI_MODEL');
-  if (!key || !model || !MODEL_ID.test(model)) return fail(503, 'unavailable');
+  const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
+  if (!key || !MODEL_ID.test(model)) return fail(503, 'unavailable');
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), deps.timeoutMs ?? TIMEOUT_MS);
   const upstreamAbort = new AbortController();
