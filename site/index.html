@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="data:," />
     <title>Ghost Examiner</title>
-    <meta name="description" content="Practice conversations with a calm ghost examiner. Demo mode runs in your browser." />
+    <meta name="description" content="Practice conversations with a calm ghost examiner: a job interview, or a defense of your own work." />
     <!--
       Landing page (design §6): bilingual, no JavaScript. Colors are the kit tokens
       (packages/ui/src/tokens.css), copied because this page has no build step.
@@ -42,7 +42,6 @@
       li + li { margin-top: 0.75rem; }
       a { color: var(--accent); font-weight: 600; text-underline-offset: 0.2em; }
       a.defense { color: var(--accent-defense); }
-      .status { color: var(--text-muted); }
       footer { margin-top: 2rem; color: var(--text-muted); }
       :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     </style>
@@ -57,26 +56,26 @@
           <h2 id="en-heading">English</h2>
           <ul>
             <li>
-              <a href="interview/">Ghost Interview</a> (Preview): practice a short job interview. Type your answer, check how it was understood, and get keyword-based practice feedback.
+              <a href="interview/">Ghost Interview</a>: practice a short job interview by voice or typing. Check how your answer was understood, then get keyword-based practice feedback.
             </li>
             <li>
-              <a class="defense" href="defense/">Ghost Defense</a>: <span class="status">work in progress, not available yet.</span>
+              <a class="defense" href="defense/">Ghost Defense</a>: defend your own thesis or project. The ghost asks about your file and quotes it. Use the offline demo, or an optional AI mode that asks for your consent first.
             </li>
           </ul>
-          <p>Demo mode runs in your browser, and this app sends your answers to no server. If you answer by voice, your browser may send your voice to its maker to turn it into text. Please do not enter personal or sensitive data.</p>
+          <p>Demo mode runs in your browser and sends nothing. In Ghost Defense's AI mode, parts of your file and your confirmed answers go to Google Gemini through our server; on its free tier, human reviewers may read them. Voice answers may go to your browser's maker. Do not enter personal or sensitive data. <a href="https://github.com/jhojanins/Ghost-Examiner#accessibility-and-privacy">Privacy details</a></p>
         </section>
 
         <section lang="es" aria-labelledby="es-heading">
           <h2 id="es-heading">Español</h2>
           <ul>
             <li>
-              <a href="interview/">Entrevista fantasma</a> (vista previa): practica una entrevista de trabajo corta. Escribe tu respuesta, revisa cómo se entendió y recibe comentarios de práctica basados en palabras clave.
+              <a href="interview/">Entrevista fantasma</a>: practica una entrevista de trabajo corta, por voz o escribiendo. Revisa cómo se entendió tu respuesta y recibe comentarios de práctica basados en palabras clave.
             </li>
             <li>
-              <a class="defense" href="defense/">Defensa fantasma</a>: <span class="status">en desarrollo, todavía no está disponible.</span>
+              <a class="defense" href="defense/">Defensa fantasma</a>: defiende tu propia tesis o proyecto. El fantasma te pregunta sobre tu archivo y lo cita. Usa la demo sin conexión o un modo con IA opcional que primero te pide tu consentimiento.
             </li>
           </ul>
-          <p>El modo demo funciona en tu navegador y esta app no envía tus respuestas a ningún servidor. Si respondes por voz, tu navegador puede enviar tu voz a la empresa que lo creó para convertirla en texto. Por favor, no escribas datos personales ni sensibles.</p>
+          <p>El modo demo funciona en tu navegador y no envía nada. En el modo con IA de la Defensa fantasma, partes de tu archivo y tus respuestas confirmadas van a Google Gemini a través de nuestro servidor; en su nivel gratuito, personas que lo revisan pueden leerlas. Las respuestas por voz pueden ir a la empresa de tu navegador. No escribas datos personales ni sensibles. <a href="https://github.com/jhojanins/Ghost-Examiner#accessibility-and-privacy">Detalles de privacidad</a></p>
         </section>
       </div>
 
