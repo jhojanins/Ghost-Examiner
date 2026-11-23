@@ -516,6 +516,32 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
         expect(s.lines.at(-1)?.text).toBe(fallback);
       }
     });
+    it('counts the streamed sentences that have started playing, so the app can show each when it is spoken (owner decision 2026-11-20)', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.push(`${head('acknowledgment')}"One.","Two.",`);
+      expect(s.view().state.reply?.say).toEqual(['One.', 'Two.']);
+      expect(s.view().replyPlayed).toBe(1); // "Two." waits behind "One."
+      await f.ctl.push('"Three."]}');
+      await f.ctl.finish();
+      expect(s.view().replyPlayed).toBe(1);
+      await s.finishLine();
+      expect(s.view().replyPlayed).toBe(2);
+      await s.finishLine();
+      expect(s.view().replyPlayed).toBe(3);
+      s.handle.dispatch({ type: 'next' });
+      await flush();
+      expect(s.view().replyPlayed).toBeUndefined(); // the next question has no reply yet
+    });
+    it('a reply that was not streamed has no count: it shows whole', async () => {
+      const s = setup(createDemoProvider());
+      await s.begin();
+      await s.finishLine();
+      await s.answer('It seemed like a good idea.');
+      expect(s.view().replyPlayed).toBeUndefined();
+    });
     it('records latency marks: requested, first byte, first sentence shown, first sentence played', async () => {
       const mark = vi.spyOn(performance, 'mark');
       const f = streaming();

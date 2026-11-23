@@ -82,6 +82,11 @@ export interface SessionView {
    * as a Preview session (spec b Req 10.4): the shell shows the Preview label and says what's missing.
    */
   preview?: { missing: InputMethodId[] };
+  /**
+   * A streamed reply: how many of its sentences have started playing, so the app can show each one
+   * when it is spoken (owner decision 2026-11-20). Undefined for a reply that came whole.
+   */
+  replyPlayed?: number;
   /** Dynamic sessions: whether replies now come from AI or from the demo rules (Req 10.3). */
   defense?: {
     /** Where the questions and replies so far came from: all AI, all demo rules, or some of each (Req 10.3). */
@@ -183,6 +188,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
   const demo = createDemoProvider();
   let demoPinned = defense?.provider.isDemo ?? true; // after the first fallback, demo for the rest (Req 10.3)
   let localLineId = 0; // runtime lines (the waiting line) count down, so they never meet an engine line id
+  const streamedLine = new Map<number, number>(); // line id → index of the streamed sentence it says
+  let replyPlayed: number | undefined;
   let awaitingFirstPlay = false; // for the latency mark of the first streamed sentence
   let fallbackPending = false; // the fallback line goes before the next lines the ghost says (Req 10.2)
   // What actually answered so far: the mode label must never call a demo answer AI, nor hide that
@@ -424,6 +431,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
   }
 
   function play(id: number, ref: LineRef) {
+    const sentence = streamedLine.get(id);
+    if (sentence !== undefined) replyPlayed = Math.max(replyPlayed ?? 0, sentence + 1);
     if (awaitingFirstPlay && state.replyStreaming) {
       awaitingFirstPlay = false;
       mark('first-sentence-played');
@@ -492,6 +501,15 @@ export function createSession(deps: SessionDeps): SessionHandle {
       lines.unshift({ id: --localLineId, ref: { text: kitMessages[state.locale]['defense.fallback'], locale: state.locale } });
     }
     const streamed = event.type === 'reply-partial' || (event.type === 'reply-ready' && before.replyStreaming);
+    if (streamed) {
+      const said = before.replyStreaming ? (before.reply?.say.length ?? 0) : 0;
+      effects.forEach((e, i) => e.type === 'speak' && streamedLine.set(e.lineId, said + i));
+      replyPlayed ??= 0;
+    }
+    if (!state.reply) {
+      streamedLine.clear();
+      replyPlayed = undefined;
+    }
     if (lines.length > 0 && streamed && line?.playing) {
       queued = [...queued, ...lines]; // a streamed sentence waits for the one playing (Req 5.1)
     } else if (lines.length > 0 && event.type === 'questions-ready' && line?.playing) {
@@ -518,7 +536,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
     if (state.phase === 'confirming' && before.phase !== 'confirming') cancelLine();
     if (state.locale !== before.locale) relocalize();
     syncInputs();
-    view = { state, line, transcript, preview, defense: defenseView() };
+    view = { state, line, transcript, preview, defense: defenseView(), ...(replyPlayed !== undefined && { replyPlayed }) };
     for (const listener of listeners) listener();
   }
 

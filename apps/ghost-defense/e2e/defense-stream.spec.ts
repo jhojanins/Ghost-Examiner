@@ -89,8 +89,9 @@ async function toReply(page: Page, lang: Lang) {
   await expect.poll(async () => (await stream.bodies(page)).length).toBe(1);
 }
 
-test.beforeEach(async ({ page }) => {
-  await installFakeSpeech(page);
+test.beforeEach(async ({ page }, info) => {
+  // One test drives the ghost's voice by hand; the rest let lines end on their own.
+  await installFakeSpeech(page, { manual: info.title.includes('when it is spoken') });
   await installFakeRecognition(page);
   await installFakeLlmStream(page);
 });
@@ -151,6 +152,31 @@ test('en: no first sentence within 8 s (page clock): the fallback line, the demo
     await page.clock.fastForward(5_000);
     await expect(page.getByRole('region', { name: 'Transcript' })).toContainText(T.en.fallback, { timeout: 200 });
   }).toPass({ timeout: 10_000 });
+  expect(foreign).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('en: with the voice on, each streamed sentence shows when it is spoken, not when it arrives', async ({ page, baseURL }) => {
+  const foreign = await guardNetwork(page, baseURL!);
+  const errors = watchErrors(page);
+  await serveQuestions(page);
+  const end = () => page.evaluate(() => window.__fakeSpeech!.control.end());
+  // Manual voice: end the greeting and the question as they play.
+  const answered = toReply(page, 'en');
+  await expect(async () => {
+    await end();
+    expect(await stream.bodies(page).catch(() => [])).toHaveLength(1);
+  }).toPass({ timeout: 15_000 });
+  await answered;
+  await stream.open(page);
+  await stream.push(page, '{"kind":"acknowledgment","say":["First sentence here.","Second sentence here."');
+  const panel = page.locator('.gd-panel > p');
+  await expect(panel).toHaveText(['First sentence here.']); // the second has arrived, but waits
+  await page.waitForTimeout(300);
+  await expect(panel).toHaveText(['First sentence here.']);
+  await end();
+  await expect(panel).toHaveText(['First sentence here.', 'Second sentence here.']);
+  await expect(page.locator('.ge-captions')).toHaveText('Second sentence here.');
   expect(foreign).toEqual([]);
   expect(errors).toEqual([]);
 });

@@ -52,6 +52,7 @@ import {
 import { useEffect, useId, useRef, useState } from 'react';
 import { config } from './config';
 import { messages } from './messages';
+import { visibleSentences } from './reply-text';
 import { SAMPLES } from './samples';
 import './App.css';
 
@@ -347,7 +348,7 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         <h2 id={panelId} ref={heading} tabIndex={-1}>
           {m['reply.heading']}
         </h2>
-        {reply.say.map((text, i) => (
+        {visibleSentences(reply.say, view.replyPlayed, sound).map((text, i) => (
           <p key={i}>{text}</p>
         ))}
         {reply.quote && <QuoteBlock locale={locale} quote={reply.quote} lang={fileLang} />}
