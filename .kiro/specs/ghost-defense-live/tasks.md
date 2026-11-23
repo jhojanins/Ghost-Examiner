@@ -104,6 +104,7 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - _Design §4.2, §5; Requirements: 5.1, 5.3, 10.5_ · Skills: `netlify-proxy-safety`
 - [x] 23. Sentence-by-sentence speech in the app **[Browser + axe]**
   - The runtime speaks each sentence as it arrives; latency marks.
+  - Owner decision 2026-11-20: each streamed sentence's text appears in the reply panel when that sentence is spoken, in sync with captions and mouth; with the voice off, no delay.
   - The non-streaming path stays and is the fallback: a provider without `stream`, a stream that fails before its head, or a missing streaming endpoint uses `complete` as today (owner note 2026-11-19, Req 5.6).
   - **Done when:** the walk-through with a chunked scripted route shows the quote appearing only after the head is verified, captions and mouth following each sentence, the transcript announcing each line once, and the timeout falling back after 8 s (page clock); axe passes; e2e covers the streamed reply.
   - _Design §4.3; Requirements: 5.1 to 5.5_ · Skills: `a11y-review`, `ghost-svg-animation`, `testing-strategy`
@@ -111,14 +112,16 @@ Fakes: unit tests use a fake provider, a fake clock and fake timers; the Edge Fu
   - **Done when:** the owner runs 5 turns in Chrome and in Safari on the branch deploy, reads the latency marks from the console, and the log records the median and worst values against the budget of Req 5.2, plus the gap between spoken sentences.
   - _Design §2.5; Requirements: 5.2, 15.7_
 ## Cuttable, in cut order
-- [ ] 25. Bring your own key **[Cuttable, cut first]**
+- [ ] 25. Bring your own key **[Cuttable, cut first]** — **cut** (owner decision 2026-11-20).
   - A spike first: a browser call to the Gemini REST endpoint with a test key (CORS). Then `GeminiProvider`, the key field on the consent screen (memory only, Forget key), the chain `withFallback(byok, proxy, demo)`, and consent again when the provider changes.
   - **Done when:** the spike result is logged; tests show the key never leaves memory (no storage API is called) and is never sent to `/api/llm`; e2e covers entering, using and forgetting a key with a fake endpoint.
   - _Design §4.2; Requirements: 3.4, 11.6 to 11.9_ · Skills: `netlify-proxy-safety`, `a11y-review`
 - [ ] 26. ghost-interview: real AI through the same consent **[Cuttable, cut second]** **[Browser + axe]**
+  - Runs after task 27, and only if we are ahead (owner decision 2026-11-20).
   - **Done when:** the walk-through shows the consent screen naming only the question and the answer, a real-mode evaluation through the scripted route, and the demo fallback with today's labels, in EN and ES; existing ghost-interview e2e tests pass.
   - _Design §7; Requirements: 16_ · Skills: `a11y-review`, `netlify-proxy-safety`
 - [ ] 27. PDF text **[Cuttable, cut third]**
+  - Now before task 26 (owner decision 2026-11-20). Messages for scanned, encrypted and over-limit PDFs, and the hidden-text warning; the parser bundled and lazy-loaded, not from a CDN.
   - `parsePdf` with lazy `pdfjs-dist`, and the golden thesis abstract as a PDF.
   - **Done when:** tests on fixture PDFs show text extracted, the 50-page limit, a PDF with no text layer giving its message, and `isEvalSupported: false`; the build shows the parser in a separate chunk not loaded for `.txt`; its size is logged with the bandwidth estimate of design §2.4.
   - _Design §2.4, §4.1; Requirements: 1.3 to 1.5_ · Skills: `prompt-injection-defense`, `testing-strategy`
