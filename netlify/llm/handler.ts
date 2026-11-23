@@ -44,9 +44,16 @@ const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_CAP = 300; // owner decision 3
 const WHOLE = /^\d+$/;
 
-type ErrorCode = 'method' | 'forbidden' | 'media-type' | 'too-large' | 'bad-request' | 'disabled' | 'rate-limited' | 'unavailable' | 'bad-output';
+type ErrorCode = 'method' | 'forbidden' | 'media-type' | 'too-large' | 'bad-request' | 'disabled' | 'rate-limited' | 'bad-output'; // unavailable has its own helper, with a reason
 const fail = (status: number, error: ErrorCode, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify({ error }), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers } });
+/**
+ * `unavailable` with a fixed reason code, so the owner can tell a missing key from a store or
+ * upstream failure from outside. Only these three words: never a value, a secret or upstream text.
+ */
+type Why = 'config' | 'store' | 'upstream';
+const unavailable = (status: number, why: Why) =>
+  new Response(JSON.stringify({ error: 'unavailable', why }), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 /** Same origin as the request, and that host is this site, its subdomain or one of its deploys. */
 function allowedOrigin(req: Request, site: LlmDeps['site']): boolean {
@@ -116,7 +123,7 @@ const TEXT_HEADERS = { 'content-type': 'text/plain; charset=utf-8', 'cache-contr
 async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
   const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
-  if (!key || !MODEL_ID.test(model)) return fail(503, 'unavailable');
+  if (!key || !MODEL_ID.test(model)) return unavailable(503, 'config');
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), deps.timeoutMs ?? TIMEOUT_MS);
   const signal = AbortSignal.any([timeout.signal, clientSignal]); // a client that goes away stops the call
@@ -128,13 +135,13 @@ async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Abor
       signal,
     });
     if (upstream.status === 429) return fail(429, 'rate-limited');
-    if (!upstream.ok) return fail(502, 'unavailable');
+    if (!upstream.ok) return unavailable(502, 'upstream');
     const raw = await readCapped(upstream.body, UPSTREAM_MAX_BYTES);
     const text = raw === undefined ? undefined : modelText(raw);
     if (text === undefined) return fail(502, 'bad-output');
     return new Response(text, { status: 200, headers: TEXT_HEADERS });
   } catch {
-    return timeout.signal.aborted ? fail(504, 'unavailable') : fail(502, 'unavailable');
+    return unavailable(timeout.signal.aborted ? 504 : 502, 'upstream');
   } finally {
     clearTimeout(timer);
   }
@@ -185,7 +192,7 @@ async function* deltas(body: ReadableStream<Uint8Array>): AsyncGenerator<string>
 async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
   const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
-  if (!key || !MODEL_ID.test(model)) return fail(503, 'unavailable');
+  if (!key || !MODEL_ID.test(model)) return unavailable(503, 'config');
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), deps.timeoutMs ?? TIMEOUT_MS);
   const upstreamAbort = new AbortController();
@@ -200,12 +207,12 @@ async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Ab
       signal,
     });
     if (upstream.status === 429) return fail(429, 'rate-limited');
-    if (!upstream.ok || !upstream.body) return fail(502, 'unavailable');
+    if (!upstream.ok || !upstream.body) return unavailable(502, 'upstream');
     source = deltas(upstream.body);
     first = await source.next();
     if (first.done) return fail(502, 'bad-output');
   } catch {
-    return timeout.signal.aborted ? fail(504, 'unavailable') : fail(502, 'unavailable');
+    return unavailable(timeout.signal.aborted ? 504 : 502, 'upstream');
   } finally {
     clearTimeout(timer);
   }
@@ -286,7 +293,7 @@ async function route(req: Request, deps: LlmDeps, seen: { task: string | null },
   try {
     gate = await admit(deps.control, started);
   } catch {
-    return fail(503, 'unavailable'); // fail closed: without the store, no kill switch and no cap
+    return unavailable(503, 'store'); // fail closed: without the store, no kill switch and no cap
   }
   if (gate === 'disabled') return fail(503, 'disabled');
   if (gate === 'capped') return fail(429, 'rate-limited');

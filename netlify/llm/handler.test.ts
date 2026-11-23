@@ -185,7 +185,7 @@ describe('Edge Function /api/llm: the upstream call (design §5, Req 11.2, 11.5)
       const r = await handleLlm(post(BODIES['defense-reply']), deps);
       expect(r.status).toBe(expected);
       const text = await r.text();
-      expect(JSON.parse(text)).toEqual({ error });
+      expect(JSON.parse(text)).toEqual(error === 'unavailable' ? { error, why: 'upstream' } : { error });
       expect(text).not.toContain('12345');
     }
     const { deps } = setup({}, async () => Promise.reject(new TypeError('network down')));
@@ -199,7 +199,7 @@ describe('Edge Function /api/llm: the upstream call (design §5, Req 11.2, 11.5)
     });
     const r = await handleLlm(post(BODIES['defense-reply']), deps);
     expect(r.status).toBe(504);
-    expect(await errorOf(r)).toBe('unavailable');
+    expect(await r.json()).toEqual({ error: 'unavailable', why: 'upstream' });
     expect(signal?.aborted).toBe(true);
   });
   it('aborts the upstream call when the client goes away', async () => {
@@ -247,7 +247,7 @@ describe('Edge Function /api/llm: the upstream call (design §5, Req 11.2, 11.5)
       const { deps, calls } = setup({ env: (n) => env[n] });
       const r = await handleLlm(post(BODIES['defense-questions']), deps);
       expect(r.status).toBe(503);
-      expect(await errorOf(r)).toBe('unavailable');
+      expect(await r.json()).toEqual({ error: 'unavailable', why: 'config' }); // a fixed code, never a value
       expect(calls).toHaveLength(0);
     }
   });
@@ -329,6 +329,8 @@ describe('Edge Function /api/llm: kill switch and daily cap in Netlify Blobs (de
     const store = fakeStore();
     store.failing = true;
     expect(await run(store)).toEqual({ status: 503, error: 'unavailable', calls: 0 });
+    const { deps } = setup({ control: store });
+    expect(await (await handleLlm(post(BODIES['defense-reply']), deps)).json()).toEqual({ error: 'unavailable', why: 'store' });
   });
 });
 
