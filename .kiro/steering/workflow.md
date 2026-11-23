@@ -31,3 +31,13 @@ A task is done only when all of these pass. If a step fails, fix the problem and
 Production deploys are never part of "done" without the owner's explicit approval in the conversation.
 
 Exception: a task with no runnable UI yet (early `packages/core` work) skips steps 3 and 4, says so in its report, and the first task that adds UI covers them.
+
+## Lean mode until submission (owner decision 2026-11-20; credits are the constraint)
+Overrides the steps above where they conflict.
+- No new specs or design documents: work from `tasks.md` as it is.
+- Tests first, as always.
+- Mutation checks only for pure logic with security or correctness weight (quote verification, proxy validation, limits). Never for UI or e2e.
+- A browser walk-through only when a batch changes something visible: one language, one viewport, relying on the existing e2e axe runs.
+- Run the full suite once, at the end of a batch.
+- One commit per task, with the diff summary in the same step as the commit.
+- Reports at most 15 lines. Do not re-verify what was already verified.
