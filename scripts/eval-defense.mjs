@@ -15,10 +15,13 @@ const ALL = [
   { name: 'essay-es', locale: 'es' },
   { name: 'injection-es', locale: 'es' },
 ];
-// Optional: a comma-separated list of file names, to rerun only some.
-const FILES = process.argv[3] ? ALL.filter((f) => process.argv[3].split(',').includes(f.name)) : ALL;
-const MAX_REQUESTS = 24; // the owner's cap is 25, and the probe already used one
-const PACE_MS = 3500;
+// Optional: a comma-separated list of file names, each with an optional answer count (name:1).
+const PICK = process.argv[3] ? Object.fromEntries(process.argv[3].split(',').map((x) => [x.split(':')[0], Number(x.split(':')[1] ?? 2)])) : undefined;
+const FILES = PICK ? ALL.filter((f) => f.name in PICK).map((f) => ({ ...f, answers: PICK[f.name] })) : ALL.map((f) => ({ ...f, answers: 2 }));
+const timings = []; // per request: path, status, ms
+// The owner sets the cap and the pace per run (EVAL_MAX, EVAL_PACE_MS); the defaults are the first run's.
+const MAX_REQUESTS = Number(process.env.EVAL_MAX ?? 24);
+const PACE_MS = Number(process.env.EVAL_PACE_MS ?? 3500);
 
 console.warn = () => {}; // the replay's Preview-pack warning is expected (keyboard only)
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
@@ -33,6 +36,7 @@ async function call(path, body) {
   used++;
   const started = performance.now();
   const res = await fetch(`${BASE}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', origin: BASE }, body: JSON.stringify(body) });
+  res.clone().text().then(() => timings.push({ path, task: body.task, status: res.status, ms: Math.round(performance.now() - started) }), () => {});
   return { res, started };
 }
 /** The status, plus the proxy's fixed error code for a failure (never model text). */
@@ -67,7 +71,7 @@ const has = (text, needles) => needles.filter((n) => text.toLowerCase().includes
 const results = [];
 const recorded = {}; // per file: the raw texts, kept in memory for the local replay only
 
-for (const { name, locale } of FILES) {
+for (const { name, locale, answers } of FILES) {
   const text = core.removeInvisible(await readFile(`apps/ghost-defense/content/samples/${name}.md`, 'utf8'));
   const x = JSON.parse(await readFile(`apps/ghost-defense/content/samples/${name}.expect.json`, 'utf8'));
   const excerpts = core.splitExcerpts(text, { maxChars: 1500 });
@@ -102,7 +106,7 @@ for (const { name, locale } of FILES) {
   const plan = [
     { question: kept[0], answer: kept[0]?.quote, label: 'grounded answer' },
     { question: target, answer: probes[name], label: 'probe' },
-  ].filter((p) => p.question);
+  ].filter((p) => p.question).slice(0, answers);
   for (const p of plan) {
     const rep = await call('/api/llm', {
       task: 'defense-reply',
@@ -126,9 +130,9 @@ for (const { name, locale } of FILES) {
 }
 
 // One streamed reply: time to first byte, chunk arrivals (is it buffered?), and the reader.
-if (FILES === ALL) {
-  // Any file whose questions came back.
-  const name = FILES.map((f) => f.name).find((n) => core.parseDefenseQuestions(parseJson(recorded[n].questions), { ...recorded[n], count: 4 }).ok) ?? FILES[0].name;
+if (!PICK || process.argv[4] === 'stream') {
+  // The last file whose questions came back (with a subset, the stream rides on it).
+  const name = [...FILES].reverse().map((f) => f.name).find((n) => core.parseDefenseQuestions(parseJson(recorded[n].questions), { ...recorded[n], count: 4 }).ok) ?? FILES[0].name;
   const { excerpts, locale } = recorded[name];
   const first = core.parseDefenseQuestions(parseJson(recorded[name].questions), { excerpts, locale, count: 4 });
   const qq = first.ok ? first.value[0] : undefined;
@@ -222,11 +226,13 @@ for (const { name } of FILES) {
   const qOk = core.parseDefenseQuestions(parseJson(questions), { excerpts, locale, count: 4 }).ok;
   const rOk = replies.every((t) => core.parseDefenseReply(parseJson(t), { excerpts, locale, followUpAllowed: true }).ok);
   const expected = !qOk ? 'demo' : rOk ? 'ai' : 'mixed';
+  const firstReplyOk = replies.length > 0 && core.parseDefenseReply(parseJson(replies[0]), { excerpts, locale, followUpAllowed: true }).ok;
   labels[name] = {
     [`live outputs → ${expected}`]: ok.mode === expected || `got ${ok.mode}`,
     // Only meaningful when the live questions came from the AI; otherwise demo is right.
     'reply fails → mixed': (qOk ? failed.mode === 'mixed' : failed.mode === 'demo') || `got ${failed.mode}`,
-    'questions fail → demo': noQuestions.mode === 'demo' || `got ${noQuestions.mode}`,
+    // Failed questions are one failure, not a pin: a good first reply makes the session mixed.
+    'questions fail → demo or mixed': noQuestions.mode === (firstReplyOk ? 'mixed' : 'demo') || `got ${noQuestions.mode}`,
     'shown quotes verified': ok.shownQuotesVerified && failed.shownQuotesVerified && noQuestions.shownQuotesVerified,
   };
 }
@@ -238,4 +244,6 @@ for (const r of results) {
   for (const [k, v] of Object.entries(r.checks)) console.log(`  ${k}: ${fmt(v)}`);
 }
 for (const [name, l] of Object.entries(labels)) console.log(`replay ${name}: ${Object.entries(l).map(([k, v]) => `${k} ${fmt(v)}`).join('; ')}`);
-console.log(`requests used: ${used} (plus the probe)`);
+await sleep(200); // let the last timing land
+for (const t of timings) console.log(`request ${t.task} ${t.path}: ${t.status} in ${t.ms} ms${t.ms > 8000 ? ' (over 8 s)' : ''}`);
+console.log(`requests used: ${used}`);
