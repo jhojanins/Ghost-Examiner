@@ -11,6 +11,8 @@ export interface InlineConfirmProps {
   onEdit: () => void;
   /** Answer again with the same method (spec b 6.3). */
   onRetry: () => void;
+  /** A spoken answer: listen again and add to the same words (ghost-defense voice conversation). */
+  onKeepTalking?: () => void;
 }
 
 /**
@@ -20,7 +22,7 @@ export interface InlineConfirmProps {
  * described by the text, the method and any notice, so a screen reader reads them once on focus.
  * Confirmation is always this explicit press.
  */
-export function InlineConfirm({ locale, candidate, onSend, onEdit, onRetry }: InlineConfirmProps) {
+export function InlineConfirm({ locale, candidate, onSend, onEdit, onRetry, onKeepTalking }: InlineConfirmProps) {
   const m = kitMessages[locale];
   const id = useId();
   const send = useRef<HTMLButtonElement>(null);
@@ -48,6 +50,11 @@ export function InlineConfirm({ locale, candidate, onSend, onEdit, onRetry }: In
         <button ref={send} type="button" className="ge-button ge-button--primary" aria-describedby={describedBy} onClick={() => onSend(candidate.candidateId)}>
           {m['defense.confirm.send']}
         </button>
+        {onKeepTalking && candidate.method === 'voice' && (
+          <button type="button" className="ge-button" onClick={onKeepTalking}>
+            {m['voice.keepTalking']}
+          </button>
+        )}
         <button type="button" className="ge-button" onClick={onEdit}>
           {m['confirm.edit']}
         </button>

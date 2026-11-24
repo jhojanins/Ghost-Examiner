@@ -46,6 +46,18 @@ describe('QuoteBlock', () => {
   });
 });
 
+describe('InlineConfirm: Keep talking (owner decision 2026-11-20)', () => {
+  it('offers Keep talking for a spoken answer when the app passes onKeepTalking, and never for a typed one', () => {
+    const onKeepTalking = vi.fn();
+    const base = { locale: 'en' as const, onSend: () => {}, onEdit: () => {}, onRetry: () => {} };
+    const { rerender } = render(<InlineConfirm {...base} candidate={{ text: 'Half of it', method: 'voice', candidateId: 1 }} onKeepTalking={onKeepTalking} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep talking' }));
+    expect(onKeepTalking).toHaveBeenCalledOnce();
+    expect(document.activeElement?.textContent).toBe('Send'); // Send still has focus first
+    rerender(<InlineConfirm {...base} candidate={{ text: 'Typed', method: 'keyboard', candidateId: 2 }} onKeepTalking={onKeepTalking} />);
+    expect(screen.queryByRole('button', { name: 'Keep talking' })).toBeNull();
+  });
+});
 describe('ModeLabel', () => {
   it('names the source of questions and replies, in a polite region', () => {
     const { rerender } = render(<ModeLabel locale="en" mode="ai" provider="Google Gemini" />);

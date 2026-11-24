@@ -93,7 +93,7 @@ async function toUpload(page: Page, lang: Lang, found?: string[]) {
   if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
   await expect(page.locator('html')).toHaveAttribute('lang', lang);
   if (found) found.push(...(await matrix(page, `${lang} intro`)));
-  await tabTo(page, page.getByRole('button', { name: t.start }));
+  await tabTo(page, page.getByRole('button', { name: lang === 'en' ? 'Type' : 'Escribir' }));
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog', { name: t.privacy })).toBeVisible();
   if (found) found.push(...(await matrix(page, `${lang} privacy notice`)));

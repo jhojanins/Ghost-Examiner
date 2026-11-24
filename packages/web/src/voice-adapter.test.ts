@@ -497,3 +497,28 @@ describe('createVoiceAdapter: setLocale (task 28)', () => {
     expect(instances).toHaveLength(0);
   });
 });
+
+describe('createVoiceAdapter: voice conversation helpers (ghost-defense voice flow, owner decision 2026-11-20)', () => {
+  it('listen(keep) starts with earlier words, so "Keep talking" adds to the same answer', () => {
+    const { adapter, instances, events, emit } = setup();
+    adapter.start(en, emit);
+    adapter.listen('I chose a queue');
+    expect(adapter.getSnapshot()).toMatchObject({ listening: true, final: 'I chose a queue' });
+    instances[0].result([['because it was slow', true]]);
+    adapter.stopListening();
+    instances[0].end();
+    expect(events.at(-1)).toEqual({ type: 'candidate', candidate: { text: 'I chose a queue because it was slow', method: 'voice' } });
+  });
+  it('cancelListening() releases the microphone and makes no candidate (typing or Mic off)', () => {
+    const { adapter, instances, events, emit } = setup();
+    adapter.start(en, emit);
+    adapter.listen();
+    instances[0].result([['half an answer', false]]);
+    adapter.cancelListening();
+    expect(instances[0].abort).toHaveBeenCalled();
+    instances[0].end();
+    expect(events.filter((e) => e.type === 'candidate')).toEqual([]);
+    expect(adapter.getSnapshot()).toMatchObject({ listening: false, final: '', interim: '' });
+  });
+});
+

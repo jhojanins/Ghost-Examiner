@@ -9,6 +9,8 @@ export interface KeyboardInputProps {
   onSubmit: KeyboardAdapter['submit'];
   /** Prefilled text after Edit (Req 7.3). Read on mount; give the component a new `key` to reset it. */
   draft?: string;
+  /** The user typed something: in a voice conversation, listening stops (ghost-defense). */
+  onType?: () => void;
 }
 
 /**
@@ -16,7 +18,7 @@ export interface KeyboardInputProps {
  * Ctrl+Enter / Cmd+Enter. Plain Enter adds a new line. An empty submit shows an inline error,
  * linked to the field and announced politely, and keeps focus in the field.
  */
-export function KeyboardInput({ locale, onSubmit, draft = '' }: KeyboardInputProps) {
+export function KeyboardInput({ locale, onSubmit, draft = '', onType }: KeyboardInputProps) {
   const m = kitMessages[locale];
   const id = useId();
   const [text, setText] = useState(draft);
@@ -58,6 +60,7 @@ export function KeyboardInput({ locale, onSubmit, draft = '' }: KeyboardInputPro
         onChange={(event) => {
           setText(event.target.value);
           setEmpty(false);
+          onType?.();
         }}
         onKeyDown={onKeyDown}
         aria-describedby={empty ? `${hintId} ${errorId}` : hintId}

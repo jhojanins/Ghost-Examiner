@@ -114,7 +114,7 @@ async function toConsent(page: Page, lang: Lang, file?: string) {
   const t = T[lang];
   await page.goto('');
   if (lang === 'es') await page.getByRole('button', { name: 'Español' }).press('Enter');
-  await tabTo(page, page.getByRole('button', { name: t.start }));
+  await tabTo(page, page.getByRole('button', { name: lang === 'en' ? 'Type' : 'Escribir' }));
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog', { name: t.privacy })).toBeVisible();
   await tabTo(page, page.getByRole('button', { name: t.accept }));

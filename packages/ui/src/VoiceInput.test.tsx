@@ -111,3 +111,11 @@ describe('VoiceInput (spec b task 32)', () => {
     expect(screen.getByText('Tus palabras')).toBeTruthy();
   });
 });
+
+describe('VoiceInput: voice conversation (ghost-defense, owner decision 2026-11-20)', () => {
+  it('with doneLabel, the stop button says "I\'m done" while listening', () => {
+    render(<VoiceInput locale="en" voice={{ availability: { available: true }, listening: true, final: '', interim: '' }} onListen={() => {}} onStop={() => {}} onPrivacy={() => {}} doneLabel />);
+    expect(screen.getByRole('button', { name: "I'm done" })).toBeTruthy();
+  });
+});
+

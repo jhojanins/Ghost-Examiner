@@ -53,6 +53,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { config } from './config';
 import { messages } from './messages';
 import { labelMode, visibleSentences } from './reply-text';
+import { shouldAutoListen } from './turn-taking';
 import { SAMPLES } from './samples';
 import './App.css';
 
@@ -138,6 +139,10 @@ function startRun(doc: Doc, locale: Locale, id: number, unavailable: readonly In
 export function App() {
   const [locale, setLocale] = useState<Locale>(browserLocale);
   const [step, setStep] = useState<Step>({ name: 'intro' });
+  // The start choice (owner decision 2026-11-20): the microphone stays off unless the user picks
+  // Voice conversation; that click counts as pressing the voice button. Page-level, never stored.
+  const [voiceChosen, setVoiceChosen] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const [unavailable, setUnavailable] = useState<readonly InputMethodId[]>();
   const [consentOpen, setConsentOpen] = useState(false);
   const [readOnlyPrivacy, setReadOnlyPrivacy] = useState(false);
@@ -180,6 +185,9 @@ export function App() {
         fileLang={doc.fileLang}
         motionPaused={motionPaused}
         onMotionChange={setMotionPaused}
+        voiceChosen={voiceChosen}
+        voiceMode={voiceMode}
+        onVoiceMode={setVoiceMode}
         onLocale={setLocale}
         onAgain={(at) => {
           setLocale(at);
@@ -200,9 +208,21 @@ export function App() {
         <h2 id={introHeadingId}>{m['intro.heading']}</h2>
         <p>{m['intro.text']}</p>
         <div className="gd-actions">
-          <button type="button" className="ge-button ge-button--primary" onClick={() => setConsentOpen(true)}>
-            {m['intro.start']}
-          </button>
+          {/* Two equal choices: the same class, neither preselected. */}
+          {([true, false] as const).map((voiced) => (
+            <button
+              key={String(voiced)}
+              type="button"
+              className="ge-button"
+              onClick={() => {
+                setVoiceChosen(voiced);
+                setVoiceMode(voiced);
+                setConsentOpen(true);
+              }}
+            >
+              {m[voiced ? 'intro.voice' : 'intro.type']}
+            </button>
+          ))}
         </div>
       </section>
     );
@@ -274,13 +294,16 @@ interface SessionProps {
   fileLang: Locale;
   motionPaused: boolean;
   onMotionChange: (paused: boolean) => void;
+  voiceChosen: boolean;
+  voiceMode: boolean;
+  onVoiceMode: (on: boolean) => void;
   onLocale: (locale: Locale) => void;
   onAgain: (locale: Locale) => void;
   onNew: (locale: Locale) => void;
 }
 
 /** One defense session: questions with their quotes, inline confirmation, replies, the summary (design §6). */
-function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgain, onNew }: SessionProps) {
+function Session({ run, fileLang, motionPaused, onMotionChange, voiceChosen, voiceMode, onVoiceMode, onLocale, onAgain, onNew }: SessionProps) {
   const { handle, keyboard } = run;
   const { view, dispatch } = useSession(handle);
   const { state, line, transcript } = view;
@@ -320,6 +343,27 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
     if (from?.phase === 'asking' && phase === 'answering' && from.key === questionKey) return; // the question finished playing
     heading.current?.focus();
   }, [phase, questionKey, lastMethod, state.draft]);
+
+  // Voice conversation (owner decision 2026-11-20): after the question has been spoken, listen once
+  // by itself; never while the ghost speaks. No timers of our own: the turn ends with "I'm done" or
+  // when recognition ends with an error. On an error or no voice, fall back to the typed field.
+  const autoListenedFor = useRef<string>(undefined);
+  const fellBackFor = useRef<string>(undefined);
+  const ghostSpeaking = !!line?.playing;
+  useEffect(() => {
+    const voiceState = { available: voiceView.availability.available, listening: voiceView.listening, error: voiceView.error };
+    if (shouldAutoListen({ voiceMode, phase, ghostSpeaking, voice: voiceState, questionKey, autoListenedFor: autoListenedFor.current })) {
+      autoListenedFor.current = questionKey;
+      voice.listen();
+      return;
+    }
+    const triedHere = autoListenedFor.current === questionKey || (voiceMode && !voiceState.available);
+    const failed = !voiceState.listening && (voiceState.error !== undefined || !voiceState.available);
+    if (voiceMode && phase === 'answering' && !ghostSpeaking && triedHere && failed && fellBackFor.current !== questionKey) {
+      fellBackFor.current = questionKey;
+      answerArea.current?.querySelector('textarea')?.focus();
+    }
+  }, [voiceMode, phase, ghostSpeaking, questionKey, voiceView.availability.available, voiceView.listening, voiceView.error]);
 
   const endButton = (
     <button type="button" className="ge-button" onClick={() => dispatch({ type: 'end' })}>
@@ -382,24 +426,51 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
               candidate={state.candidate}
               onSend={(candidateId) => dispatch({ type: 'confirm', candidateId })}
               onEdit={() => dispatch({ type: 'edit' })}
-              onRetry={() => dispatch({ type: 'retry' })}
+              onRetry={() => {
+                const spoken = state.candidate?.method === 'voice';
+                dispatch({ type: 'retry' });
+                if (spoken && voiceMode) voice.listen(); // Answer again restarts the method used (spec b 6.3)
+              }}
+              onKeepTalking={
+                voiceMode
+                  ? () => {
+                      const words = state.candidate?.text ?? '';
+                      dispatch({ type: 'retry' });
+                      voice.listen(words); // adds to the same answer
+                    }
+                  : undefined
+              }
             />
           ) : (
             answerable && (
               <>
-                <KeyboardInput key={questionKey} locale={locale} onSubmit={keyboard.submit} draft={state.draft} />
+                <KeyboardInput key={questionKey} locale={locale} onSubmit={keyboard.submit} draft={state.draft} onType={voice.cancelListening} />
                 <VoiceInput
                   locale={locale}
                   voice={voiceView}
-                  onListen={voice.listen}
+                  onListen={() => voice.listen()}
                   onStop={voice.stopListening}
                   onPrivacy={() => setReadOnlyPrivacy(true)}
+                  doneLabel={voiceMode}
                 />
               </>
             )
           )}
         </div>
+        <p aria-live="polite">{phase === 'evaluating' ? m['status.sending'] : ''}</p>
         <div className="gd-actions">
+          {voiceChosen && (
+            <button
+              type="button"
+              className="ge-button"
+              onClick={() => {
+                if (voiceMode) voice.cancelListening();
+                onVoiceMode(!voiceMode);
+              }}
+            >
+              {m[voiceMode ? 'mic.off' : 'mic.on']}
+            </button>
+          )}
           {answerable && (
             <button type="button" className="ge-button" onClick={() => dispatch({ type: 'skip' })}>
               {k['defense.skip']}

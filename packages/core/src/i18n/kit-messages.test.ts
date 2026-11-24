@@ -32,8 +32,8 @@ describe('kitMessages: honest voice and privacy copy (spec b task 31, Req 9)', (
   });
 
   it.each<[Locale, string[]]>([
-    ['en', ['may send your voice', 'Google for Chrome', 'Apple for Safari', 'only receives the text', 'never records or stores audio', 'only when you press the voice button', 'typing always works']],
-    ['es', ['puede enviar tu voz', 'Google en Chrome', 'Apple en Safari', 'solo recibe el texto', 'nunca graba ni guarda audio', 'solo cuando presionas el botón de voz', 'escribir siempre funciona']],
+    ['en', ['may send your voice', 'Google for Chrome', 'Apple for Safari', 'only receives the text', 'never records or stores audio', 'only when you press the voice button', 'after each question if you chose Voice conversation', 'turn it off at any time', 'typing always works']],
+    ['es', ['puede enviar tu voz', 'Google en Chrome', 'Apple en Safari', 'solo recibe el texto', 'nunca graba ni guarda audio', 'solo cuando presionas el botón de voz', 'después de cada pregunta si elegiste Conversación por voz', 'apagarlo en cualquier momento', 'escribir siempre funciona']],
   ])('the voice privacy point (%s) names who may hear the voice, what the app gets, and when the microphone is asked for', (locale, parts) => {
     for (const part of parts) expect(kitMessages[locale]['privacy.voice']).toContain(part);
   });

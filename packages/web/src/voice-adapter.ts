@@ -48,8 +48,13 @@ export interface VoiceView {
 export interface VoiceAdapter extends InputAdapter {
   getSnapshot(): VoiceView;
   subscribe(listener: () => void): () => void;
-  /** Start listening (the voice button); the browser asks for the microphone on the first time. */
-  listen(): void;
+  /**
+   * Start listening (the voice button); the browser asks for the microphone on the first time.
+   * `keep`: earlier words of this answer, so "Keep talking" adds to them.
+   */
+  listen(keep?: string): void;
+  /** Stop listening with no candidate: the user is typing, or turned the microphone off. */
+  cancelListening(): void;
   /** Stop listening (the voice button again): the answer becomes a candidate once the last results arrive. */
   stopListening(): void;
 }
@@ -204,12 +209,12 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
     if (ctx) begin(ctx);
   }
 
-  function listen() {
+  function listen(keep = '') {
     if (!Recognition || !availability.available || !ctx || recognizer) return;
     stopping = false;
-    committed = '';
+    committed = keep.trim();
     quickEnds = 0;
-    update({ listening: true, final: '', interim: '', error: undefined });
+    update({ listening: true, final: committed, interim: '', error: undefined });
     begin(ctx);
   }
 
@@ -253,6 +258,14 @@ export function createVoiceAdapter(deps: VoiceAdapterDeps): VoiceAdapter {
       if (!recognizer) return;
       stopping = true;
       recognizer.stop(); // the browser sends its last results, then `end`
+    },
+    cancelListening() {
+      const r = recognizer;
+      recognizer = undefined;
+      stopping = false;
+      committed = '';
+      r?.abort(); // its late events are ignored
+      if (r || view.final || view.interim) update({ listening: false, final: '', interim: '' });
     },
     getSnapshot: () => view,
     subscribe(listener) {

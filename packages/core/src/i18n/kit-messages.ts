@@ -50,7 +50,7 @@ export const kitMessages = defineCatalog(
       'Demo mode runs in your browser and sends your answers to no server. Ghost Defense also has an AI mode, which you choose before anything is sent; it is described below. This app stores nothing: your file, answers and feedback are gone when you close the page. If you answer by voice, read the next point.',
     // Spec b Req 9.1, 9.4 and the owner's wording (task 31): never claims recognition stays on the device.
     'privacy.voice':
-      'Answering by voice is optional; typing always works. The microphone is asked for only when you press the voice button. To turn your speech into text, your browser may send your voice to the company that makes it, for example Google for Chrome or Apple for Safari. This app only receives the text. It never records or stores audio.',
+      'Answering by voice is optional; typing always works. The microphone listens only when you press the voice button, or, in Ghost Defense, after each question if you chose Voice conversation; you can turn it off at any time. To turn your speech into text, your browser may send your voice to the company that makes it, for example Google for Chrome or Apple for Safari. This app only receives the text. It never records or stores audio.',
     // Spec b Req 9.2: true because the kit only ever picks local voices (pickVoice, Req 1.3).
     'privacy.ghostVoice':
       'The ghost speaks with voices installed on your device, so its lines are not sent anywhere to be spoken.',
@@ -75,6 +75,8 @@ export const kitMessages = defineCatalog(
     'voice.heading': 'Answer by voice',
     'voice.start': 'Start speaking',
     'voice.stop': 'Stop speaking',
+    'voice.done': "I'm done",
+    'voice.keepTalking': 'Keep talking',
     'voice.listening': 'Listening…',
     'voice.stopped': 'Stopped listening.',
     'voice.yourWords': 'Your words',
@@ -230,7 +232,7 @@ export const kitMessages = defineCatalog(
     'privacy.local':
       'El modo demo funciona en tu navegador y no envía tus respuestas a ningún servidor. La Defensa fantasma también tiene un modo con IA, que eliges antes de que se envíe nada; se explica más abajo. Esta app no guarda nada: tu archivo, tus respuestas y los comentarios desaparecen al cerrar la página. Si respondes por voz, lee el punto siguiente.',
     'privacy.voice':
-      'Responder por voz es opcional; escribir siempre funciona. El micrófono se pide solo cuando presionas el botón de voz. Para convertir tu voz en texto, tu navegador puede enviar tu voz a la empresa que lo creó, por ejemplo Google en Chrome o Apple en Safari. Esta app solo recibe el texto y nunca graba ni guarda audio.',
+      'Responder por voz es opcional; escribir siempre funciona. El micrófono escucha solo cuando presionas el botón de voz o, en la Defensa fantasma, después de cada pregunta si elegiste Conversación por voz; puedes apagarlo en cualquier momento. Para convertir tu voz en texto, tu navegador puede enviar tu voz a la empresa que lo creó, por ejemplo Google en Chrome o Apple en Safari. Esta app solo recibe el texto y nunca graba ni guarda audio.',
     'privacy.ghostVoice':
       'El fantasma habla con voces instaladas en tu dispositivo, así que sus frases no se envían a ningún sitio para ser leídas.',
     'privacy.noPersonalData':
@@ -251,6 +253,8 @@ export const kitMessages = defineCatalog(
     'voice.heading': 'Responder por voz',
     'voice.start': 'Empezar a hablar',
     'voice.stop': 'Dejar de hablar',
+    'voice.done': 'Ya terminé',
+    'voice.keepTalking': 'Seguir hablando',
     'voice.listening': 'Escuchando…',
     'voice.stopped': 'Dejé de escuchar.',
     'voice.yourWords': 'Tus palabras',

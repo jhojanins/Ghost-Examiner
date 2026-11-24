@@ -21,6 +21,8 @@ export interface VoiceInputProps {
   onStop: () => void;
   /** Opens the privacy notice (Req 9.5). */
   onPrivacy: () => void;
+  /** A voice conversation: the stop button says "I'm done" (ghost-defense). */
+  doneLabel?: boolean;
 }
 
 /** Every message the status can show; hidden copies reserve the room of the longest one (no layout shift). */
@@ -54,7 +56,7 @@ const isKitKey = (key: string): key is KitMessageKey => key in kitMessages.en;
  * - "Your words" keeps the room of three lines; final text is plain, interim text is italic with a
  *   dotted underline (Req 5.2), in the answer's language (Req 5.4), and is not a live region.
  */
-export function VoiceInput({ locale, voice, onListen, onStop, onPrivacy }: VoiceInputProps) {
+export function VoiceInput({ locale, voice, onListen, onStop, onPrivacy, doneLabel = false }: VoiceInputProps) {
   const m = kitMessages[locale];
   const headingId = useId();
   const statusId = useId();
@@ -89,7 +91,7 @@ export function VoiceInput({ locale, voice, onListen, onStop, onPrivacy }: Voice
         }}
       >
         <span className="ge-voice-sign" aria-hidden="true" />
-        {voice.listening ? m['voice.stop'] : m['voice.start']}
+        {voice.listening ? m[doneLabel ? 'voice.done' : 'voice.stop'] : m['voice.start']}
       </button>
       <div className="ge-voice-messages">
         {MESSAGES.map((key) => (

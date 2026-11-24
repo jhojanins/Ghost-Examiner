@@ -104,3 +104,13 @@ describe('KeyboardInput', () => {
     expect(screen.getByRole('button', { name: 'Enviar respuesta' })).toBeTruthy();
   });
 });
+
+describe('KeyboardInput: onType (owner decision 2026-11-20)', () => {
+  it('tells the app the user started typing, so listening stops', () => {
+    const onType = vi.fn();
+    render(<KeyboardInput locale="en" onSubmit={() => ({ ok: true })} onType={onType} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your answer' }), { target: { value: 'H' } });
+    expect(onType).toHaveBeenCalled();
+  });
+});
+
