@@ -254,13 +254,25 @@ describe('Edge Function /api/llm: the upstream call (design §5, Req 11.2, 11.5)
 });
 
 describe('Edge Function /api/llm: logs (Req 11.5, 12.2)', () => {
+  it("adds Gemini's numeric status to the log line, never its body; the response body stays the same", async () => {
+    for (const [status, up] of [[429, 429], [500, 500], [403, 403]] as const) {
+      const { deps, logs } = setup({}, async () => new Response('quota 12345 for key test-key-not-real-0001', { status }));
+      const r = await handleLlm(post(BODIES['defense-reply']), deps);
+      expect(JSON.parse(logs[0])).toMatchObject({ up });
+      expect(logs[0]).not.toContain('12345');
+      expect(Object.keys(await r.json())).not.toContain('up');
+    }
+    const { deps, logs } = setup({}, async () => Promise.reject(new TypeError('network down')));
+    await handleLlm(post(BODIES['defense-reply']), deps);
+    expect(JSON.parse(logs[0])).toMatchObject({ up: 0 });
+  });
   it('logs one line per request with only the task, the status and the latency', async () => {
     const { deps, logs } = setup();
     await handleLlm(post(BODIES['defense-reply']), deps);
     await handleLlm(post('{not json'), deps);
     expect(logs.map((l) => JSON.parse(l))).toEqual([
-      { task: 'defense-reply', status: 200, ms: 25 },
-      { task: null, status: 400, ms: 25 },
+      { task: 'defense-reply', status: 200, ms: 25, up: 200 }, // up: Gemini's status, a number only
+      { task: null, status: 400, ms: 25 }, // no upstream call, no up
     ]);
     for (const line of logs) {
       expect(line).not.toContain('SECRET-ANSWER');
@@ -429,6 +441,6 @@ describe('Edge Function /api/llm/stream: streamed replies (design §5, task 22)'
   it('times out with 504 when the first event is slow, and logs task, status and latency only', async () => {
     const { deps, logs } = setup({ timeoutMs: 30 }, (init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
     expect((await stream(deps)).status).toBe(504);
-    expect(logs.map((l) => Object.keys(JSON.parse(l)))).toEqual([['task', 'status', 'ms']]);
+    expect(logs.map((l) => JSON.parse(l))).toEqual([{ task: 'defense-reply', status: 504, ms: 25, up: 0 }]); // 0: no answer
   });
 });

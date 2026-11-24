@@ -52,6 +52,8 @@ const fail = (status: number, error: ErrorCode, headers: Record<string, string> 
  * upstream failure from outside. Only these three words: never a value, a secret or upstream text.
  */
 type Why = 'config' | 'store' | 'upstream';
+/** What the log line records: the task and, when Gemini was called, its HTTP status (0: no answer). */
+type Seen = { task: string | null; up?: number };
 const unavailable = (status: number, why: Why) =>
   new Response(JSON.stringify({ error: 'unavailable', why }), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
@@ -120,7 +122,7 @@ function geminiBody(req: DefenseRequest, deps: LlmDeps): string {
 
 const TEXT_HEADERS = { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' };
 
-async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
+async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal, seen: Seen): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
   const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
   if (!key || !MODEL_ID.test(model)) return unavailable(503, 'config');
@@ -134,6 +136,7 @@ async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Abor
       body: geminiBody(req, deps),
       signal,
     });
+    seen.up = upstream.status;
     if (upstream.status === 429) return fail(429, 'rate-limited');
     if (!upstream.ok) return unavailable(502, 'upstream');
     const raw = await readCapped(upstream.body, UPSTREAM_MAX_BYTES);
@@ -141,6 +144,7 @@ async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Abor
     if (text === undefined) return fail(502, 'bad-output');
     return new Response(text, { status: 200, headers: TEXT_HEADERS });
   } catch {
+    seen.up ??= 0;
     return unavailable(timeout.signal.aborted ? 504 : 502, 'upstream');
   } finally {
     clearTimeout(timer);
@@ -189,7 +193,7 @@ async function* deltas(body: ReadableStream<Uint8Array>): AsyncGenerator<string>
  * timeout covers the time to the first byte. Afterwards a problem only ends the stream early,
  * which the client reads as a cut (Req 10.5). Total text is capped at 16,000 characters.
  */
-async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal): Promise<Response> {
+async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal, seen: Seen): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
   const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
   if (!key || !MODEL_ID.test(model)) return unavailable(503, 'config');
@@ -206,12 +210,14 @@ async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Ab
       body: geminiBody(req, deps),
       signal,
     });
+    seen.up = upstream.status;
     if (upstream.status === 429) return fail(429, 'rate-limited');
     if (!upstream.ok || !upstream.body) return unavailable(502, 'upstream');
     source = deltas(upstream.body);
     first = await source.next();
     if (first.done) return fail(502, 'bad-output');
   } catch {
+    seen.up ??= 0;
     return unavailable(timeout.signal.aborted ? 504 : 502, 'upstream');
   } finally {
     clearTimeout(timer);
@@ -271,7 +277,7 @@ async function admit(store: ControlStore, now: number): Promise<'ok' | 'disabled
   return 'ok';
 }
 
-async function route(req: Request, deps: LlmDeps, seen: { task: string | null }, started: number): Promise<Response> {
+async function route(req: Request, deps: LlmDeps, seen: Seen, started: number): Promise<Response> {
   if (req.method !== 'POST') return fail(405, 'method', { allow: 'POST' });
   const streaming = new URL(req.url).pathname.endsWith('/stream');
   if (!allowedOrigin(req, deps.site)) return fail(403, 'forbidden');
@@ -297,14 +303,14 @@ async function route(req: Request, deps: LlmDeps, seen: { task: string | null },
   }
   if (gate === 'disabled') return fail(503, 'disabled');
   if (gate === 'capped') return fail(429, 'rate-limited');
-  return streaming ? streamGemini(parsed.value, deps, req.signal) : callGemini(parsed.value, deps, req.signal);
+  return streaming ? streamGemini(parsed.value, deps, req.signal, seen) : callGemini(parsed.value, deps, req.signal, seen);
 }
 
 export async function handleLlm(req: Request, deps: LlmDeps): Promise<Response> {
   const started = deps.now();
-  const seen: { task: string | null } = { task: null };
+  const seen: Seen = { task: null };
   const res = await route(req, deps, seen, started);
-  // Only the task, the status and the latency: never a body, a key or a header (Req 11.5, 12.2).
-  deps.log(JSON.stringify({ task: seen.task, status: res.status, ms: deps.now() - started }));
+  // Only the task, the status, the latency and Gemini's numeric status: never a body, a key or a header (Req 11.5, 12.2).
+  deps.log(JSON.stringify({ task: seen.task, status: res.status, ms: deps.now() - started, ...(seen.up !== undefined && { up: seen.up }) }));
   return res;
 }
