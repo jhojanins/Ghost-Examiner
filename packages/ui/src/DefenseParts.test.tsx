@@ -54,6 +54,12 @@ describe('ModeLabel', () => {
     rerender(<ModeLabel locale="en" mode="demo" />);
     expect(screen.getByText('Demo mode: questions and feedback come from simple rules, not AI.')).toBe(label);
   });
+  it('marks one reply from the demo rules while the session goes on with AI, in EN and ES (owner decision 2026-11-20)', () => {
+    const { rerender } = render(<ModeLabel locale="en" mode="turn-demo" />);
+    expect(screen.getByText('This reply comes from simple rules, not AI. The next turn tries AI again.')).toBeTruthy();
+    rerender(<ModeLabel locale="es" mode="turn-demo" />);
+    expect(screen.getByText('Esta respuesta sale de reglas simples, no de IA. El siguiente turno vuelve a intentar con IA.')).toBeTruthy();
+  });
   it('says so when the session mixes AI and the demo rules, in EN and ES (owner decision 2026-11-19)', () => {
     const { rerender } = render(<ModeLabel locale="en" mode="mixed" provider="Google Gemini" />);
     expect(screen.getByText('Mixed: some questions or replies come from simple rules, the rest from AI (Google Gemini).').getAttribute('aria-live')).toBe('polite');

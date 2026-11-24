@@ -280,7 +280,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     s.handle.dispatch({ type: 'next' });
     await flush();
     await s.answer('Because of the peak.');
-    expect(s.lines.filter((l) => l.text === fallback)).toHaveLength(1); // once per session
+    expect(s.lines.filter((l) => l.text === fallback)).toHaveLength(2); // once for each turn where the AI failed
     expect(s.view().transcript.some((t) => t.text === fallback)).toBe(true);
   });
   it('a failed question request says the fallback line after the greeting, then the first demo question', async () => {
@@ -298,19 +298,67 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     await s.answer('It seemed like a good idea.');
     expect(s.lines.some((l) => l.text === kitMessages.en['defense.fallback'])).toBe(false);
   });
-  it('reports the mode: AI until the first fallback, then mixed (AI questions, demo replies), with demo pinned', async () => {
-    const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
+  it('reports the mode: AI, then mixed after a failed reply, with that turn marked demo', async () => {
+    const { provider } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
     const s = setup(provider);
     await s.begin();
     expect(s.view().defense).toEqual({ mode: 'ai' });
-    await s.answer('Because of the peak.'); // the provider fails: demo answers
-    expect(s.view().defense).toEqual({ mode: 'mixed' });
-    await s.finishLine();
-    s.handle.dispatch({ type: 'next' });
-    await flush();
-    await s.answer('Because of the peak.');
-    expect(calls.filter((c) => c.task === 'defense-reply')).toHaveLength(1); // demo stays pinned
+    await s.answer('Because of the peak.'); // the provider fails: demo answers this turn
+    expect(s.view().defense).toEqual({ mode: 'mixed', replyFrom: 'demo' });
     expect(setup(createDemoProvider()).view().defense).toEqual({ mode: 'demo' });
+  });
+  describe('pinning to demo after 2 consecutive failures (owner decision 2026-11-20)', () => {
+    const next = async (s: ReturnType<typeof setup>) => {
+      await s.finishLine();
+      await s.finishLine();
+      s.handle.dispatch({ type: 'next' });
+      await flush();
+    };
+    it('one failure: that turn is demo, the next turn tries the AI again', async () => {
+      let n = 0;
+      const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => (++n === 1 ? undefined : { kind: 'acknowledgment', say: ['Good.'] }) });
+      const s = setup(provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      expect(s.view().defense).toMatchObject({ replyFrom: 'demo' });
+      await next(s);
+      await s.answer('Because of the peak.');
+      expect(calls.filter((c) => c.task === 'defense-reply')).toHaveLength(2);
+      expect(s.view().defense).toEqual({ mode: 'mixed', replyFrom: 'ai' });
+      expect(s.view().state.reply?.say).toEqual(['Good.']);
+    });
+    it('two failures in a row pin demo: the third turn sends nothing', async () => {
+      const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => undefined });
+      const s = setup(provider);
+      await s.begin();
+      for (let i = 0; i < 3; i++) {
+        await s.answer('Because of the peak.');
+        await next(s);
+      }
+      expect(calls.filter((c) => c.task === 'defense-reply')).toHaveLength(2);
+    });
+    it('a success resets the count: fail, succeed, fail still tries the AI on the fourth turn', async () => {
+      let n = 0;
+      const { provider, calls } = scripted({ 'defense-questions': fourQuestions, 'defense-reply': () => (++n % 2 === 1 ? undefined : { kind: 'acknowledgment', say: ['Good.'] }) });
+      const s = setup(provider);
+      await s.begin();
+      for (let i = 0; i < 4; i++) {
+        await s.answer('Because of the peak.');
+        await next(s);
+      }
+      expect(calls.filter((c) => c.task === 'defense-reply')).toHaveLength(4);
+    });
+    it('failed questions count as the first failure: one more failed reply pins demo', async () => {
+      const { provider, calls } = scripted({ 'defense-reply': () => undefined });
+      const s = setup(provider);
+      await s.begin();
+      await s.finishLine();
+      await s.finishLine();
+      await s.answer('Because of the peak.');
+      await next(s);
+      await s.answer('Because of the peak.');
+      expect(calls.map((c) => c.task)).toEqual(['defense-questions', 'defense-reply']);
+    });
   });
   it('is demo, not mixed, when the very first request already fails: nothing came from the AI', async () => {
     const s = setup(scripted({}).provider);
@@ -323,7 +371,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
     await s.begin();
     expect(s.view().defense).toEqual({ mode: 'mixed' });
     await s.answer('Because of the peak.'); // the AI still answers: no fallback, still mixed
-    expect(s.view().defense).toEqual({ mode: 'mixed' });
+    expect(s.view().defense).toEqual({ mode: 'mixed', replyFrom: 'ai' });
     expect(s.lines.some((l) => l.text === kitMessages.en['defense.fallback'])).toBe(false);
   });
   it('names who wrote the summary on its own: the AI, or the demo rules after a fallback', async () => {
@@ -405,7 +453,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
       expect(said.filter((t) => t === 'Your file says otherwise.')).toHaveLength(1);
       expect(said.filter((t) => t === 'Compare it with your answer.')).toHaveLength(1);
       expect(f.calls).toEqual(['complete:defense-questions', 'stream:defense-reply']);
-      expect(s.view().defense).toEqual({ mode: 'ai' });
+      expect(s.view().defense).toEqual({ mode: 'ai', replyFrom: 'ai' });
     });
     it("a correction whose quote isn't in the file says the local line and none of its sentences", async () => {
       const f = streaming();
@@ -437,7 +485,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
       expect(s.lines.some((l) => l.text === 'Too late.')).toBe(false);
       expect(mark.mock.calls.map(([n]) => n)).not.toContain('ghost-defense:first-byte'); // a late chunk is not measured
       mark.mockRestore();
-      expect(s.view().defense).toEqual({ mode: 'mixed' });
+      expect(s.view().defense).toEqual({ mode: 'mixed', replyFrom: 'demo' });
       expect(f.calls).not.toContain('complete:defense-reply');
     });
     it('the 8 s timer is cancelled once the first sentence is shown', async () => {
@@ -448,7 +496,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
       await f.ctl.push(`${head('acknowledgment')}"Good."`);
       expect(s.timers.find((t) => t.ms === 8000)?.cancelled).toBe(true);
     });
-    it('a stream cut after a sentence keeps it and the turn, says the fallback line, and stays in demo', async () => {
+    it('a stream cut after a sentence keeps it and the turn, says the fallback line, and counts one failure', async () => {
       const f = streaming();
       const s = setup(f.provider);
       await s.begin();
@@ -464,8 +512,25 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
       s.handle.dispatch({ type: 'next' });
       await flush();
       await s.answer('Because of the peak.');
-      expect(f.calls.filter((c) => c.startsWith('stream:'))).toHaveLength(1); // demo pinned
-      expect(s.view().defense).toEqual({ mode: 'mixed' });
+      // A cut counts as one failure: the next turn streams again. Its sentences came from the AI.
+      expect(f.calls.filter((c) => c.startsWith('stream:'))).toHaveLength(2);
+    });
+    it('a cut counts once: a 429 on the next turn makes two failures in a row and pins demo', async () => {
+      const f = streaming();
+      const s = setup(f.provider);
+      await s.begin();
+      await s.answer('Because of the peak.');
+      await f.ctl.push(`${head('acknowledgment')}"That matches your file.",`);
+      await f.ctl.finish({ ok: false, error: 'unavailable' });
+      for (let i = 0; i < 2; i++) {
+        await s.finishLine();
+        await s.finishLine();
+        s.handle.dispatch({ type: 'next' });
+        await flush();
+        await s.answer('Because of the peak.');
+        if (i === 0) await f.ctl.finish({ ok: false, error: 'rate-limited' });
+      }
+      expect(f.calls.filter((c) => c.startsWith('stream:'))).toHaveLength(2);
     });
     it('a stream that fails before any sentence with unavailable tries the whole reply instead (non-streaming fallback)', async () => {
       const f = streaming();
@@ -475,7 +540,7 @@ describe('session runtime: dynamic (ghost-defense-live) sessions', () => {
       await f.ctl.finish({ ok: false, error: 'unavailable' });
       expect(f.calls).toContain('complete:defense-reply');
       expect(s.view().state.reply?.say).toEqual(['Whole reply.']);
-      expect(s.view().defense).toEqual({ mode: 'ai' });
+      expect(s.view().defense).toEqual({ mode: 'ai', replyFrom: 'ai' });
       expect(s.lines.some((l) => l.text === fallback)).toBe(false);
     });
     it('a 429 before any sentence goes straight to the demo rules, without a second request', async () => {

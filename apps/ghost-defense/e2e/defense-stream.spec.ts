@@ -26,7 +26,7 @@ const T = {
     transcript: 'Transcript',
     prompt: 'What does this part show about your project?',
     say: ['Your file says something a little different.', 'Compare it with your answer.'],
-    mixed: 'Mixed: some questions or replies come from simple rules',
+    mixed: 'This reply comes from simple rules, not AI.',
     fallback: "My crystal ball is busy. I'll continue with my own notes.",
   },
   es: {
@@ -43,7 +43,7 @@ const T = {
     transcript: 'Transcripción',
     prompt: '¿Qué muestra esta parte sobre tu proyecto?',
     say: ['Tu archivo dice algo un poco distinto.', 'Compáralo con tu respuesta.'],
-    mixed: 'Mixto: algunas preguntas o respuestas salen de reglas simples',
+    mixed: 'Esta respuesta sale de reglas simples, no de IA.',
     fallback: 'Mi bola de cristal está ocupada. Seguiré con mis propias notas.',
   },
 } as const;
@@ -133,7 +133,7 @@ for (const lang of ['en', 'es'] as const) {
   });
 }
 
-test('en: no first sentence within 8 s (page clock): the fallback line, the demo reply, the mixed label; the stream is stopped', async ({ page, baseURL }) => {
+test('en: no first sentence within 8 s (page clock): the fallback line, the demo reply labeled as one demo turn; the stream is stopped', async ({ page, baseURL }) => {
   await page.clock.install();
   const foreign = await guardNetwork(page, baseURL!);
   const errors = watchErrors(page);
@@ -141,9 +141,10 @@ test('en: no first sentence within 8 s (page clock): the fallback line, the demo
   await toReply(page, 'en');
   await stream.open(page);
   await stream.push(page, '{"kind":"acknowledgment","say":['); // bytes arrive (the provider's first-byte timer is met), but no sentence
-  await page.clock.fastForward(7_900);
+  // The installed clock keeps running during setup, so leave a margin below 8 s.
+  await page.clock.fastForward(6_500);
   await expect(h2(page, T.en.reply)).toHaveCount(0);
-  await page.clock.fastForward(200);
+  await page.clock.fastForward(1_600);
   await expect(h2(page, T.en.reply)).toBeFocused();
   await expect(page.getByText(T.en.mixed)).toBeVisible();
   await expect.poll(() => stream.aborted(page)).toBe(1);

@@ -8,3 +8,12 @@ export function visibleSentences(say: readonly string[], played: number | undefi
   const voiced = sound.on && sound.reason === undefined;
   return played === undefined || !voiced ? say : say.slice(0, played);
 }
+
+/**
+ * The mode label for the screen (owner decision 2026-11-20): a reply from the demo rules, while
+ * the session will try AI again, is labeled as that one turn; otherwise the session's mode.
+ */
+export function labelMode(defense: { mode: 'ai' | 'demo' | 'mixed'; replyFrom?: 'ai' | 'demo' } | undefined): 'ai' | 'demo' | 'mixed' | 'turn-demo' {
+  if (!defense) return 'demo';
+  return defense.replyFrom === 'demo' && defense.mode !== 'demo' ? 'turn-demo' : defense.mode;
+}

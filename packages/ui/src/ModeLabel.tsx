@@ -5,7 +5,7 @@ import './QuoteBlock.css';
 export interface ModeLabelProps {
   locale: Locale;
   /** `mixed`: some questions or replies came from the demo rules and the rest from AI. */
-  mode: 'ai' | 'demo' | 'mixed';
+  mode: 'ai' | 'demo' | 'mixed' | 'turn-demo';
   /** The AI provider's name, shown in AI mode. */
   provider?: string;
 }
@@ -20,7 +20,11 @@ export function ModeLabel({ locale, mode, provider = '' }: ModeLabelProps) {
   const m = kitMessages[locale];
   return (
     <p className="ge-mode-label" aria-live="polite">
-      {mode === 'demo' ? m['defense.demoLabel'] : format(m[mode === 'mixed' ? 'defense.mode.mixed' : 'defense.mode.ai'], { provider })}
+      {mode === 'demo'
+        ? m['defense.demoLabel']
+        : mode === 'turn-demo'
+          ? m['defense.mode.turnDemo']
+          : format(m[mode === 'mixed' ? 'defense.mode.mixed' : 'defense.mode.ai'], { provider })}
     </p>
   );
 }

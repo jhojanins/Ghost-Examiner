@@ -33,6 +33,7 @@ const T = {
     aiLabel: "Questions and replies come from AI: Google Gemini, through this site's server.",
     demoLabel: 'Demo mode: questions and feedback come from simple rules, not AI.',
     mixedLabel: "Mixed: some questions or replies come from simple rules, the rest from AI (Google Gemini, through this site's server).",
+    turnDemoLabel: 'This reply comes from simple rules, not AI. The next turn tries AI again.',
     fallback: "My crystal ball is busy. I'll continue with my own notes.",
     demoSource: 'Written by the offline demo rules.',
     prompt: 'What does this part show about your project?',
@@ -60,6 +61,7 @@ const T = {
     aiLabel: 'Las preguntas y respuestas salen de IA: Google Gemini, a través del servidor de este sitio.',
     demoLabel: 'Modo demo: las preguntas y los comentarios salen de reglas simples, no de IA.',
     mixedLabel: 'Mixto: algunas preguntas o respuestas salen de reglas simples y el resto de IA (Google Gemini, a través del servidor de este sitio).',
+    turnDemoLabel: 'Esta respuesta sale de reglas simples, no de IA. El siguiente turno vuelve a intentar con IA.',
     fallback: 'Mi bola de cristal está ocupada. Seguiré con mis propias notas.',
     demoSource: 'Escrito por las reglas de la demo sin conexión.',
     prompt: '¿Qué muestra esta parte sobre tu proyecto?',
@@ -198,7 +200,7 @@ for (const lang of ['en', 'es'] as const) {
 
     await expect(h2(page, t.question(3))).toBeFocused();
     await answer(page, lang); // the proxy answers 429: the demo rules take the same turn
-    await expect(page.getByText(t.mixedLabel)).toBeVisible(); // AI questions and replies so far, demo from now on
+    await expect(page.getByText(t.turnDemoLabel)).toBeVisible(); // this one turn is demo; the next tries AI again
     await expect(page.getByRole('region', { name: lang === 'en' ? 'Transcript' : 'Transcripción' })).toContainText(t.fallback);
     found.push(...(await matrix(page, `${lang} fallback`)));
     await tabTo(page, page.getByRole('button', { name: t.end }));
@@ -207,8 +209,8 @@ for (const lang of ['en', 'es'] as const) {
     await expect(page.getByText(t.demoSource, { exact: false })).toBeVisible();
     await expect(page.getByText(t.mixedLabel)).toBeVisible(); // persistent
 
-    // Demo stayed pinned: no reply after the 429 and no summary went to the proxy.
-    expect(bodies.map((b) => b.task)).toEqual(['defense-questions', 'defense-reply', 'defense-reply', 'defense-reply']);
+    // One failure doesn't pin: the summary tried the AI again, got a 429 too, and the demo wrote it.
+    expect(bodies.map((b) => b.task)).toEqual(['defense-questions', 'defense-reply', 'defense-reply', 'defense-reply', 'defense-summary']);
     for (const b of bodies) expect(Object.keys(b).sort()).toEqual(['input', 'locale', 'task']); // no prompt, no output cap
     expect(found).toEqual([]);
     expect(foreign).toEqual([]);
@@ -227,7 +229,8 @@ test('en: the kill switch (503 disabled) on the first request: the fallback line
   await expect(page.getByText(T.en.demoLabel)).toBeVisible();
   await expect(page.getByRole('region', { name: 'Transcript' })).toContainText(T.en.fallback, { timeout: 15_000 });
   await answer(page, 'en');
-  expect(bodies.map((b) => b.task)).toEqual(['defense-questions']);
+  // The reply tried the AI once more (the stream, then the whole request, both 503): two failures in a row pin demo.
+  expect(bodies.map((b) => b.task)).toEqual(['defense-questions', 'defense-reply', 'defense-reply']);
   expect(foreign).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -282,7 +285,7 @@ test('es: the injection golden file goes out only as excerpt data, and hostile o
   const questionsBody = bodies[0] as { input: { excerpts: { text: string }[] } };
   expect(Object.keys(bodies[0]).sort()).toEqual(['input', 'locale', 'task']);
   expect(questionsBody.input.excerpts.some((e) => e.text.includes('Ignora todas las instrucciones anteriores'))).toBe(true);
-  expect(bodies.length).toBe(1); // demo pinned after the bad output
+  expect(bodies.length).toBe(2); // the reply tried the AI once more; its hostile output failed too, so demo is pinned
   expect(foreign).toEqual([]);
   expect(errors).toEqual([]);
 });

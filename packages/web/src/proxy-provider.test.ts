@@ -211,13 +211,14 @@ describe('the provider chain in a session (Req 10.1, 10.3, 10.5)', () => {
     await flush();
     await flush();
     const after = handle.getSnapshot();
-    expect(after.defense).toEqual({ mode: 'mixed' }); // AI questions, a demo reply
+    expect(after.defense).toEqual({ mode: 'mixed', replyFrom: 'demo' }); // AI questions, a demo reply
     expect(after.state.phase).toBe('feedback'); // the turn was not lost
     expect(after.state.turns?.[0].answer).toBe('Because the evening peak was too much for the payment service.');
     handle.dispatch({ type: 'end' });
     await flush();
     expect(handle.getSnapshot().state.summary).toBeDefined(); // the demo summary
-    expect(replies).toBe(1); // demo pinned: no second proxy call
-    expect(calls.map((c) => JSON.parse(String(c.init.body)).task)).toEqual(['defense-questions', 'defense-reply']);
+    // One failure doesn't pin: the summary tries the AI again, fails, and the demo writes it.
+    expect(replies).toBe(2);
+    expect(calls.map((c) => JSON.parse(String(c.init.body)).task)).toEqual(['defense-questions', 'defense-reply', 'defense-summary']);
   });
 });

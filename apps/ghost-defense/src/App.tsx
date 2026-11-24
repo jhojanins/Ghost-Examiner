@@ -52,7 +52,7 @@ import {
 import { useEffect, useId, useRef, useState } from 'react';
 import { config } from './config';
 import { messages } from './messages';
-import { visibleSentences } from './reply-text';
+import { labelMode, visibleSentences } from './reply-text';
 import { SAMPLES } from './samples';
 import './App.css';
 
@@ -445,7 +445,7 @@ function Session({ run, fileLang, motionPaused, onMotionChange, onLocale, onAgai
         </div>
         <Captions line={line} />
       </div>
-      <ModeLabel locale={locale} mode={view.defense?.mode ?? 'demo'} provider={k['defense.provider.gemini']} />
+      <ModeLabel locale={locale} mode={labelMode(view.defense)} provider={k['defense.provider.gemini']} />
       {panel}
       <Transcript lines={transcript} locale={locale} />
       <PrivacyDialog open={readOnlyPrivacy} locale={locale} mode="read-only" onAccept={() => {}} onDismiss={() => setReadOnlyPrivacy(false)} />

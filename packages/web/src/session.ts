@@ -93,6 +93,8 @@ export interface SessionView {
     mode: 'ai' | 'demo' | 'mixed';
     /** Who wrote the summary, once it is there (Req 8.2). */
     summaryFrom?: 'ai' | 'demo';
+    /** Who wrote the reply on screen: one failed turn is demo while the session tries AI again. */
+    replyFrom?: 'ai' | 'demo';
   };
 }
 
@@ -116,6 +118,7 @@ const ANSWER_MAX = 2000;
 const SUMMARY_ANSWER_MAX = 400;
 const WAITING_MS = 1500;
 const FIRST_SENTENCE_MS = 8000; // Req 5.3
+const PIN_AFTER = 2; // failed AI requests in a row before the rest of the session is demo
 /** Latency marks for the owner's check (design §4.3): read them with performance.getEntriesByType('mark'). */
 const mark = (name: string) => globalThis.performance?.mark?.(`ghost-defense:${name}`);
 /**
@@ -124,7 +127,7 @@ const mark = (name: string) => globalThis.performance?.mark?.(`ghost-defense:${n
  * was said and the demo rules answer: a timeout, a rate limit, a bad head or first sentence), or
  * `whole` (the stream failed before anything was said: try the non-streaming request).
  */
-type StreamOutcome = { kind: 'done'; reply: DefenseReply } | { kind: 'unsupported' } | { kind: 'demo' } | { kind: 'whole' };
+type StreamOutcome = { kind: 'done'; reply: DefenseReply; cut?: true } | { kind: 'unsupported' } | { kind: 'demo' } | { kind: 'whole' };
 const MAX_OUTPUT_TOKENS: Record<Exclude<LLMRequest['task'], 'evaluate-answer'>, number> = {
   'defense-questions': 800,
   'defense-reply': 400,
@@ -186,7 +189,10 @@ export function createSession(deps: SessionDeps): SessionHandle {
   if (deps.pack.dynamic && !defense) throw new Error('A dynamic pack needs `defense` (provider and excerpts).');
   const schedule = deps.schedule ?? defaultSchedule;
   const demo = createDemoProvider();
-  let demoPinned = defense?.provider.isDemo ?? true; // after the first fallback, demo for the rest (Req 10.3)
+  let demoPinned = defense?.provider.isDemo ?? true; // after 2 failures in a row, demo for the rest (Req 10.3)
+  let failures = 0; // consecutive failed AI requests; a success resets it (owner decision 2026-11-20)
+  let lastFrom: 'ai' | 'demo' = 'demo'; // who answered the last request
+  let replyFrom: 'ai' | 'demo' | undefined;
   let localLineId = 0; // runtime lines (the waiting line) count down, so they never meet an engine line id
   const streamedLine = new Map<number, number>(); // line id → index of the streamed sentence it says
   let replyPlayed: number | undefined;
@@ -199,7 +205,7 @@ export function createSession(deps: SessionDeps): SessionHandle {
   const defenseView = (): SessionView['defense'] => {
     if (!defense) return undefined;
     const mode = used.ai && used.demo ? 'mixed' : used.ai || (!used.demo && !demoPinned) ? 'ai' : 'demo';
-    return summaryFrom ? { mode, summaryFrom } : { mode };
+    return { mode, ...(summaryFrom && { summaryFrom }), ...(state.reply && replyFrom && { replyFrom }) };
   };
   let view: SessionView = { state, transcript, preview, defense: defenseView() };
   const listeners = new Set<() => void>();
@@ -208,19 +214,32 @@ export function createSession(deps: SessionDeps): SessionHandle {
    * Asks the provider, checks the output with its guard, and falls back to the demo rules on any
    * failure (Req 10.1, 10.2, 10.5): the turn is never lost. Demo output always passes the guards.
    */
-  async function ask<T>(req: LLMRequest, parse: (value: unknown) => Parsed<T>, fallback: T): Promise<T> {
-    if (!demoPinned && defense) {
+  /** The AI answered: the count of failures in a row starts again. */
+  function aiOk() {
+    failures = 0;
+    lastFrom = 'ai';
+  }
+  /** The AI failed: the demo rules answer this turn, with the fallback line; 2 in a row pin demo. */
+  function aiFailed() {
+    failures++;
+    fallbackPending = true;
+    if (failures >= PIN_AFTER) demoPinned = true;
+  }
+
+  async function ask<T>(req: LLMRequest, parse: (value: unknown) => Parsed<T>, fallback: T, skipAi = false): Promise<T> {
+    if (!demoPinned && !skipAi && defense) {
       const r = await defense.provider.complete(req).catch(() => ({ ok: false }) as const);
       const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
       if (parsed?.ok) {
         used.ai = true;
+        aiOk();
         if (req.task === 'defense-summary') summaryFrom = 'ai';
         return parsed.value;
       }
-      demoPinned = true;
-      fallbackPending = true;
+      aiFailed();
     }
     used.demo = true;
+    lastFrom = 'demo';
     if (req.task === 'defense-summary') summaryFrom = 'demo';
     const r = await demo.complete(req);
     const parsed = r.ok ? parse(parseJson(r.text)) : undefined;
@@ -277,22 +296,24 @@ export function createSession(deps: SessionDeps): SessionHandle {
     const m = kitMessages[locale];
     const ctx = { excerpts: defense.excerpts, locale, followUpAllowed };
     mark('reply-requested');
+    let skipAi = false;
     if (!demoPinned && defense.provider.stream) {
       const outcome = await streamReply(req, ctx);
       if (outcome.kind === 'done' || outcome.kind === 'unsupported') {
         used.ai = true;
+        if (!(outcome.kind === 'done' && outcome.cut)) aiOk(); // a cut already counted as a failure
+        replyFrom = 'ai'; // what was said came from the AI
         const r = outcome.kind === 'done' ? outcome.reply : { kind: 'unsupported' as const, say: [m['defense.cantPoint']] };
         return dispatch({ type: 'reply-ready', reply: r });
       }
-      if (outcome.kind === 'demo') {
-        demoPinned = true;
-        fallbackPending = true;
-      }
+      if (outcome.kind === 'demo') aiFailed();
+      skipAi = outcome.kind === 'demo'; // this turn goes to the demo rules; the next one tries AI again
     }
     let r: DefenseReply = await ask(req, (v) => parseDefenseReply(v, ctx), {
       kind: 'acknowledgment',
       say: [m['defense.demo.partly']],
-    });
+    }, skipAi);
+    replyFrom = lastFrom;
     // A correction without a verified quote: the ghost says so in its own words (Req 6.3).
     if (r.kind === 'unsupported') r = { kind: 'unsupported', say: [m['defense.cantPoint']] };
     dispatch({ type: 'reply-ready', reply: r });
@@ -327,9 +348,8 @@ export function createSession(deps: SessionDeps): SessionHandle {
       /** The stream broke: keep what was said, or let the demo rules answer when nothing was. */
       function cut() {
         if (!shown) return settle({ kind: 'demo' });
-        demoPinned = true;
-        fallbackPending = true;
-        settle({ kind: 'done', reply: shown }); // a cut follow-up asks nothing more: next goes on
+        aiFailed();
+        settle({ kind: 'done', reply: shown, cut: true }); // a cut follow-up asks nothing more: next goes on
       }
       function sentence(text: string) {
         if (!inLanguage(text, ctx.locale)) return cut();
