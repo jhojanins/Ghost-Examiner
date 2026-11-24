@@ -107,14 +107,17 @@ function system(req: DefenseRequest, tag: string): string {
     case 'defense-questions': {
       const { count } = req.input;
       return `${head}Task: write ${count} questions about the file, and up to ${count + 2} if you can, so spares can replace any that fail checks.
-- Each question is about one excerpt and comes with an exact quote from it.
+- The first question is about the file's central claim, thesis or purpose: what the student must be able to defend above all.
+- The next questions go through the file in the order of its main sections or claims, the most important first. List the questions in that order.
+- Never ask about trivia, formatting, minor details of examples, or anything not needed to defend the work.
+- Each question is answerable from the file, is about one excerpt, and comes with an exact quote from it.
 - Check understanding (why, how, what if, what does this mean, how would you defend this), never recall of exact wording.
-- One question at a time, at most 25 words, in ${LANGUAGE[req.locale]}. Spread the questions over the whole file.
+- One question at a time, at most 25 words, in ${LANGUAGE[req.locale]}.
 Output: one JSON object only: {"questions": [{"excerptId": string, "quote": string, "prompt": string}]}.`;
     }
     case 'defense-reply': {
       const followUp = req.input.followUpAllowed
-        ? '- "follow-up" when the answer is partial or vague: ask one follow-up question on the same point in "followUp", at most 25 words.'
+        ? '- "follow-up" when the answer is partial or vague: ask one follow-up question in "followUp", at most 25 words. Stay on the same passage and topic, and push on what the student just said: ask them to justify it, give evidence from the file, or define a term they used; never open a new topic.'
         : '- Never use "follow-up" for this answer: it already answers a follow-up question.';
       return `${head}Task: reply to the student's answer to the question about the quoted passage. Choose one kind:
 - "correction" when the answer disagrees with the file: say what the file says, with "excerptId" and an exact "quote".

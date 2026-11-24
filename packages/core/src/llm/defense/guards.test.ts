@@ -26,6 +26,20 @@ describe('parseDefenseQuestions', () => {
     expect(r).toEqual({ ok: true, value: [{ excerptId: 'e1', quote, prompt: 'Why did you choose a queue for this?' }] });
   });
 
+  it('keeps the questions in the order the model gave them, after dropping one, so the first stays the central one', () => {
+    const results = 'the checkout page now answers in under one second';
+    const r = parseDefenseQuestions(
+      {
+        questions: [
+          { excerptId: 'e2', quote: results, prompt: 'What does this result show about your design?' },
+          { excerptId: 'e1', quote: 'a sentence that is not in the file at all', prompt: 'Why did you pick this option?' },
+          { excerptId: 'e1', quote, prompt: 'Why did you choose a queue for this?' },
+        ],
+      },
+      { ...ctx, count: 3 },
+    );
+    expect(r.ok && r.value.map((q) => q.excerptId)).toEqual(['e2', 'e1']);
+  });
   it('rejects more than count + 2 questions, an unknown excerpt id, and markup in a prompt', () => {
     const q = { excerptId: 'e1', quote, prompt: 'Why a queue?' };
     expect(parseDefenseQuestions({ questions: Array(7).fill(q) }, { ...ctx, count: 4 }).ok).toBe(false);
