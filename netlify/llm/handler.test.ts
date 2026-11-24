@@ -80,6 +80,7 @@ function setup(over: Partial<LlmDeps> = {}, upstream: (init?: RequestInit) => Pr
     log: (line) => logs.push(line),
     timeoutMs: 1000,
     control: fakeStore(),
+    retryDelayMs: 1,
     ...over,
   };
   return { deps, calls, logs };
@@ -442,5 +443,61 @@ describe('Edge Function /api/llm/stream: streamed replies (design §5, task 22)'
     const { deps, logs } = setup({ timeoutMs: 30 }, (init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
     expect((await stream(deps)).status).toBe(504);
     expect(logs.map((l) => JSON.parse(l))).toEqual([{ task: 'defense-reply', status: 504, ms: 25, up: 0 }]); // 0: no answer
+  });
+});
+
+describe('Edge Function /api/llm: one retry on a passing upstream failure (owner decision 2026-11-20)', () => {
+  /** An upstream that answers from a list, one item per call. */
+  const sequence = (...items: (number | 'network' | 'ok' | 'sse')[]) => {
+    let i = 0;
+    return async () => {
+      const item = items[Math.min(i++, items.length - 1)];
+      if (item === 'network') throw new TypeError('network down');
+      if (item === 'ok') return gemini();
+      if (item === 'sse') return new Response(`data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"kind":"acknowledgment","say":["Good."]}' }] }, finishReason: 'STOP' }] })}\n\n`, { status: 200 });
+      return new Response('detail', { status: item });
+    };
+  };
+  it('retries once after 429, 500, 503 or a network error, and returns the second answer', async () => {
+    for (const first of [429, 500, 503, 'network'] as const) {
+      const { deps, calls, logs } = setup({}, sequence(first, 'ok'));
+      const r = await handleLlm(post(BODIES['defense-reply']), deps);
+      expect(r.status, String(first)).toBe(200);
+      expect(calls).toHaveLength(2);
+      expect(JSON.parse(logs[0])).toMatchObject({ status: 200, up: 200 });
+    }
+  });
+  it('a failed retry maps as today: 429 stays 429, the rest 502 upstream; never a third call', async () => {
+    for (const [codes, status] of [[[429, 429], 429], [[500, 503], 502], [['network', 'network'], 502], [[503, 429], 429]] as const) {
+      const { deps, calls } = setup({}, sequence(...codes));
+      expect((await handleLlm(post(BODIES['defense-reply']), deps)).status, JSON.stringify(codes)).toBe(status);
+      expect(calls).toHaveLength(2);
+    }
+  });
+  it('does not retry other 4xx answers, or a timeout', async () => {
+    for (const code of [400, 403, 404]) {
+      const { deps, calls } = setup({}, sequence(code, 'ok'));
+      expect((await handleLlm(post(BODIES['defense-reply']), deps)).status).toBe(502);
+      expect(calls).toHaveLength(1);
+    }
+    const slow = setup({ timeoutMs: 30 }, (init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+    expect((await handleLlm(post(BODIES['defense-reply']), slow.deps)).status).toBe(504);
+    expect(slow.calls).toHaveLength(1);
+  });
+  it('waits the retry delay between the calls (1.5 s by default)', async () => {
+    const times: number[] = [];
+    const { deps } = setup({ retryDelayMs: 60 }, async () => {
+      times.push(performance.now());
+      return times.length === 1 ? new Response('x', { status: 503 }) : gemini();
+    });
+    await handleLlm(post(BODIES['defense-reply']), deps);
+    expect(times[1] - times[0]).toBeGreaterThanOrEqual(55);
+  });
+  it('the stream endpoint retries only before the first byte', async () => {
+    const before = setup({}, sequence(503, 'sse'));
+    const r = await handleLlm(post(BODIES['defense-reply'], { path: '/api/llm/stream' }), before.deps);
+    expect(r.status).toBe(200);
+    expect(await r.text()).toBe('{"kind":"acknowledgment","say":["Good."]}');
+    expect(before.calls).toHaveLength(2);
   });
 });

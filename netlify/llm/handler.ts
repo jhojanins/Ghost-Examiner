@@ -30,6 +30,8 @@ export interface LlmDeps {
   now: () => number;
   log: (line: string) => void;
   control: ControlStore;
+  /** Wait before the one retry, in ms. Defaults to 1.5 s. */
+  retryDelayMs?: number;
   /** Upstream timeout in ms. Below the client's 20 s, so the client gets our answer first. */
   timeoutMs?: number;
 }
@@ -39,6 +41,8 @@ const UPSTREAM_MAX_BYTES = 256 * 1024;
 const TEXT_MAX_CHARS = 16_000;
 const TIMEOUT_MS = 18_000;
 const MODEL_ID = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+const RETRY_DELAY_MS = 1500;
+const RETRY_STATUSES = new Set([429, 500, 503]); // passing failures; other 4xx would fail again
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite'; // when GEMINI_MODEL is not set (docs/DEPLOY.md)
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_CAP = 300; // owner decision 3
@@ -122,6 +126,27 @@ function geminiBody(req: DefenseRequest, deps: LlmDeps): string {
 
 const TEXT_HEADERS = { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' };
 
+/**
+ * One upstream call with one retry (owner decision 2026-11-20): after 429, 500, 503 or a network
+ * error, wait `retryDelayMs` and call again, once. A timeout or a client that went away is not
+ * retried; both calls share the request's one timeout, which stays under the client's 20 s.
+ */
+async function fetchOnceMore(url: string, body: string, key: string, deps: LlmDeps, signal: AbortSignal): Promise<Response> {
+  const attempt = () => deps.fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, body, signal });
+  try {
+    const first = await attempt();
+    if (!RETRY_STATUSES.has(first.status)) return first;
+    await first.body?.cancel().catch(() => {});
+  } catch (e) {
+    if (signal.aborted) throw e;
+  }
+  await new Promise<void>((resolve) => {
+    const t = setTimeout(resolve, deps.retryDelayMs ?? RETRY_DELAY_MS);
+    signal.addEventListener('abort', () => (clearTimeout(t), resolve()), { once: true });
+  });
+  return attempt(); // aborted already if the timeout fired during the wait
+}
+
 async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: AbortSignal, seen: Seen): Promise<Response> {
   const key = deps.env('GEMINI_API_KEY');
   const model = deps.env('GEMINI_MODEL') || DEFAULT_MODEL;
@@ -130,12 +155,7 @@ async function callGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Abor
   const timer = setTimeout(() => timeout.abort(), deps.timeoutMs ?? TIMEOUT_MS);
   const signal = AbortSignal.any([timeout.signal, clientSignal]); // a client that goes away stops the call
   try {
-    const upstream = await deps.fetch(`${GEMINI}/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: geminiBody(req, deps),
-      signal,
-    });
+    const upstream = await fetchOnceMore(`${GEMINI}/${model}:generateContent`, geminiBody(req, deps), key, deps, signal);
     seen.up = upstream.status;
     if (upstream.status === 429) return fail(429, 'rate-limited');
     if (!upstream.ok) return unavailable(502, 'upstream');
@@ -204,12 +224,8 @@ async function streamGemini(req: DefenseRequest, deps: LlmDeps, clientSignal: Ab
   let source: AsyncGenerator<string>;
   let first: IteratorResult<string>;
   try {
-    const upstream = await deps.fetch(`${GEMINI}/${model}:streamGenerateContent?alt=sse`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: geminiBody(req, deps),
-      signal,
-    });
+    // Retried only here, before the first byte: once text flows, a failure is a cut.
+    const upstream = await fetchOnceMore(`${GEMINI}/${model}:streamGenerateContent?alt=sse`, geminiBody(req, deps), key, deps, signal);
     seen.up = upstream.status;
     if (upstream.status === 429) return fail(429, 'rate-limited');
     if (!upstream.ok || !upstream.body) return unavailable(502, 'upstream');
